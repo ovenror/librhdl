@@ -1,0 +1,23 @@
+def XOR
+	a0: AND
+	i0: Inverter
+
+	XOR.b -> i0
+	XOR.a -> a0.in0
+	i0 -> a0.in1
+
+	a1: AND
+	i1: Inverter
+
+	XOR.a -> i1
+	i1 -> a1.in0
+	XOR.b -> a1.in1
+
+	a0.out -> XOR.out
+	a1.out -> XOR.out	
+enddef
+
+synth XOR
+
+
+	
