@@ -1,0 +1,21 @@
+target_sources(rhdl_obj
+	PRIVATE
+		boundinterface.cpp
+		component.cpp
+		connectible.cpp
+		connectibleentity.cpp
+		connectionpredicate.cpp
+		constructionexception.cpp
+		entityhandle.cpp
+		entityinterface.cpp
+		existingentityhandle.cpp
+		exported.cpp
+		interfacecompatexception.cpp
+		interfacible.cpp
+		library.cpp
+		newentityhandle.cpp
+		parthandle.cpp
+		partinterface.cpp
+		structure.cpp
+)
+

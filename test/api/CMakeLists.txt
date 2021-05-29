@@ -1,0 +1,7 @@
+add_executable(apitests construction.cpp misconstruction.cpp)
+#link_directories(${CMAKE_SOURCE_DIR})
+target_include_directories(apitests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(apitests rhdl ${GTEST_BOTH_LIBRARIES} pthread) 
+#target_link_libraries(apitests rhdl)
+gtest_discover_tests(apitests)
+#gtest_add_tests(TARGET apitests)

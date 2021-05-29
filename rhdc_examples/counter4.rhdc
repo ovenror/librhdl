@@ -1,0 +1,51 @@
+stateful Counter
+	d : D_Flipflop
+	ri : Inverter
+	nq : Inverter
+
+	Counter.clk -> d.clk
+	d.NQ -> Counter.out
+	d.Q -> Counter.next 
+	d.Q -> nq
+	nq -> d.D
+	Counter.nreset -> ri
+	ri -> d.D
+enddef
+
+
+stateful Counter2
+	c0 : Counter
+	c1 : Counter
+	inext : Inverter
+
+	Counter2.clk -> c0.clk
+	c0.next -> c1.clk	
+
+	Counter2.nreset -> c0.nreset
+	Counter2.nreset -> c1.nreset
+
+	c0.out -> Counter2.out0
+	c1.out -> Counter2.out1
+	c1.next -> Counter2.next
+enddef
+
+
+stateful Counter4
+	c0 : Counter2
+	c1 : Counter2
+
+	Counter4.clk -> c0.clk
+	c0.next -> c1.clk
+	
+	Counter4.nreset -> c0.nreset
+	Counter4.nreset -> c1.nreset
+
+	c0.out0 -> Counter4.out0
+	c0.out1 -> Counter4.out1
+	c1.out0 -> Counter4.out2
+	c1.out1 -> Counter4.out3
+enddef
+
+
+synth Counter4
+

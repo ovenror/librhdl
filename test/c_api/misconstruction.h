@@ -1,0 +1,13 @@
+int incompatibleDirections();
+int wrongOp();
+int open2open();
+int ambiguousConnection();
+int alreadyConnectedToOpen();
+int statefulComponentInStatelessStructure();
+int introduceCycle();
+int noSuchInterface();
+int noSuchEntity();
+int entityExists();
+int unknownStruct();
+int wrongStruct();
+int passThrough();

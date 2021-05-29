@@ -1,0 +1,17 @@
+[package]
+name = "rhdc"
+version = "0.1.0"
+authors = ["ovenror <85027062+ovenror@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+bindgen = "0.53"
+
+[dependencies]
+libc = "0.2"
+regex = "1"
+lazy_static = "1.4.0"
+const_format = "0.2"
+
