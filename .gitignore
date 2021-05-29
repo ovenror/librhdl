@@ -1,0 +1,17 @@
+/build/
+/bin/
+/lib/
+*.a
+*.o
+*.so
+*.so.*
+*.sw?
+Makefile
+*.cmake
+CMakeCache.txt
+**/CMakeFiles
+**/Testing/Temporary
+test/api/apitests
+test/c_api/c_apitests
+test/internal/internaltests
+
