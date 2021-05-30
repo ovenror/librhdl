@@ -141,7 +141,7 @@ In Minecraft, you can execute the function in the console via
   
 Plop. If you don't see anything, that is because the circuit is placed at (0,0,0), very much at the bottom. If you don't want to dig, use "superflat" as world type. Or issue a feature request :o)
 
-Anyway, in a superflat world it looks like the image above. Not the most efficient design, but hold your oofs till you see the D-Flipflop or more complex circuits. 💩 Yes, further (lol) optimization is part of the plan.
+Anyway, in a superflat world it looks like the image above. Not the most efficient design, but further (lol) optimization is part of the plan.
 
 ![Synthesized XOR in superflat Minecraft world](../assets/xor.png)
 
