@@ -37,35 +37,6 @@ PartIdx Structural::add(const Entity *what)
 	return NetImpl::add(what);
 }
 
-#if 0
-bool EComposite::expose(PartIdx part, const std::string &part_interface_name, const std::string &ext_interface_name)
-{
-	const Interface *pinterface = parts()[part] -> interface().get(part_interface_name);
-
-	if (!pinterface)
-	{
-		//std::cerr << "ERROR: no such interface in inner component" << std::endl;
-		return false;
-	}
-
-	std::string new_iname = ext_interface_name.empty() ? part_interface_name : ext_interface_name;
-
-	return expose (part, pinterface, new_iname);
-}
-
-bool EComposite::expose(PartIdx part, const Interface *part_interface, const std::string &ext_interface_name)
-{
-	const Interface *iexposed = entity().ilookup(ext_interface_name);
-
-	if (!iexposed) {
-		iexposed = part_interface -> clone();
-		entity_.interface_.add (iexposed);
-	}
-
-	return expose(part, part_interface, iexposed);
-}
-#endif
-
 /*
  * When an (single) interface is exposed, which already has another part connected, that interface is considered open. (1)
  * The other part's corresponding interface must not contain open subinterfaces. (2)
