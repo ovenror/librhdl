@@ -1,10 +1,10 @@
+#include <interface/visitors/predicateevaluator.h>
 #include <iostream>
 #include "netimpl.h"
 #include "entity/entity.h"
 #include "temporarynet.h"
 #include "interface/isingle.h"
 #include "interface/predicate.h"
-#include "interface/visitors/evalpredicate.h"
 
 namespace rhdl {
 

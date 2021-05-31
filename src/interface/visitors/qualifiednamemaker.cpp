@@ -1,4 +1,4 @@
-#include "qnvisitor.h"
+#include <interface/visitors/qualifiednamemaker.h>
 #include "../isingle.h"
 #include "../icomposite.h"
 #include "../iplaceholder.h"
@@ -7,12 +7,12 @@
 
 namespace rhdl {
 
-QNVisitor::QNVisitor(const Interface &target) :
+QualifiedNameMaker::QualifiedNameMaker(const Interface &target) :
 	target_(target)
 {
 }
 
-bool QNVisitor::generic(const Interface &i)
+bool QualifiedNameMaker::generic(const Interface &i)
 {
 	if (&i != &target_)
 		return false;
@@ -21,7 +21,7 @@ bool QNVisitor::generic(const Interface &i)
 	return true;
 }
 
-void QNVisitor::visit(const IComposite &i)
+void QualifiedNameMaker::visit(const IComposite &i)
 {
 	//std::cerr << typeid(*this).name() << " visiting " << typeid(i).name() << std::endl;
 
@@ -40,7 +40,7 @@ void QNVisitor::visit(const IComposite &i)
 	}
 }
 
-void QNVisitor::visit(const ISingle &i)
+void QualifiedNameMaker::visit(const ISingle &i)
 {
 	//std::cerr << typeid(*this).name() << " visiting " << typeid(i).name() << std::endl;
 
@@ -50,7 +50,7 @@ void QNVisitor::visit(const ISingle &i)
 	result_ += i.is_open()?"-":"|";
 }
 
-void QNVisitor::visit(const IPlaceholder &i)
+void QualifiedNameMaker::visit(const IPlaceholder &i)
 {
 	//std::cerr << typeid(*this).name() << " visiting " << typeid(i).name() << std::endl;
 	if (generic(i)) {

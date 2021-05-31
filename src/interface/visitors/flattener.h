@@ -8,10 +8,10 @@
 
 namespace rhdl {
 
-class FlattenVisitor : public InterfaceVisitor<true>
+class Flattener : public InterfaceVisitor<true>
 {
 public:
-	FlattenVisitor(std::vector<const ISingle *> &flat_interface);
+	Flattener(std::vector<const ISingle *> &flat_interface);
 
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;

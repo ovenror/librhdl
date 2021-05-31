@@ -1,13 +1,13 @@
 target_sources(rhdl_obj
 	PRIVATE
-		evalpredicate.cpp
-		flattenconnectionsvisitor.cpp
-		flattenvisitor.cpp
-		getcorrespondingsubinterface.cpp
+		connectionflattener.cpp
+		correspondingsubinterfacefinder.cpp
+		flattener.cpp
 		interfacedoublevisitor.cpp
-		interfacetovertexvisitor.cpp
 		interfacevisitor.cpp
-		qnvisitor.cpp
-		setopenvisitor.cpp
+		opener.cpp
+		predicateevaluator.cpp
+		qualifiednamemaker.cpp
+		vertexmerger.cpp
 )
 

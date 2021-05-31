@@ -24,6 +24,7 @@ namespace rhdl {
 class ISingle;
 class IComposite;
 class Interface;
+class Predicate_2nd;
 
 bool operator>=(const Interface &super, const Interface &sub);
 
@@ -55,10 +56,15 @@ public:
 	virtual CResult eq_struct_int (const IComposite &other, const Predicate2 &predicate) const;
 
 	bool is_partially_open() const;
-	void setAllOpen() const;
+	std::string qualifiedName(const Interface &top) const;
+	std::vector<const ISingle *> flat() const;
+	bool evalPredicate(Predicate_2nd predicate) const;
 	const Interface& getCorrespondingSubInterface(
 			const Interface &counterpart, const Interface &sub,
 			const Predicate2 &pred) const;
+
+
+	void setAllOpen() const;
 
 	bool eq_name (const Interface &other) const;
 	bool eq_names (const Interface &other) const;

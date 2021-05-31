@@ -2,16 +2,17 @@
 #define QNVISITOR_H
 
 #include "interfacevisitor.h"
+
 #include <string>
 
 namespace rhdl {
 
 class Interface;
 
-class QNVisitor : public InterfaceVisitor<true>
+class QualifiedNameMaker : public InterfaceVisitor<true>
 {
 public:
-	QNVisitor(const Interface &target);
+	QualifiedNameMaker(const Interface &target);
 
 	//void visit(const Interface &i) override;
 	void visit(const ISingle &i) override;

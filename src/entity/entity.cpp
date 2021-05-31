@@ -91,9 +91,7 @@ const Representation &Entity::addRepresentation_internal(std::unique_ptr<Represe
 
 std::string Entity::fqn(const Interface *sub) const
 {
-	QNVisitor visitor(*sub);
-	interface_.accept(visitor);
-	return visitor.result();
+	return sub -> qualifiedName(interface_);
 }
 
 const Representation *Entity::getRepresentation(Representation::TypeID type, const Representation *source) const

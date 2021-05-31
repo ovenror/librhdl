@@ -9,12 +9,10 @@ namespace rhdl {
 
 class Interface;
 
-class GetCorrespondingSubinterface : public InterfaceDoubleVisitor<true>
+class CorrespondingSubInterfaceFinder : public InterfaceDoubleVisitor<true>
 {
 public:
-	GetCorrespondingSubinterface(
-			//const Interface &target,
-			//const Interface &reference,
+	CorrespondingSubInterfaceFinder(
 			const Interface &sub, const Interface::Predicate2 &predicate);
 
 	void visit(const ISingle &i1, const ISingle &i2)  override;
@@ -27,8 +25,6 @@ public:
 	const Interface *result() {return result_;}
 
 private:
-	//const Interface &target_;
-	//const Interface &reference_;
 	const Interface &sub_;
 	const Interface::Predicate2 predicate_;
 	const Interface *result_;

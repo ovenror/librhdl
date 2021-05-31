@@ -1,4 +1,7 @@
 #include "simtester.h"
+
+#include <interface/visitors/flattener.h>
+
 #include "simprinter.h"
 
 #include "simulation/netlistsim.h"
@@ -12,8 +15,6 @@
 #include "transformation/bgtree/bgtree.h"
 
 #include "interface/isingle.h"
-#include "interface/visitors/flattenvisitor.h"
-
 #include <string>
 #include <sstream>
 
@@ -21,8 +22,7 @@ using namespace rhdl;
 
 SimTester::SimTester(const Entity &e)
 {
-    FlattenVisitor fv(ifaces_);
-    e.interface().accept(fv);
+    ifaces_ = e.interface().flat();
 
     for (const ISingle *iface : ifaces_)
     {

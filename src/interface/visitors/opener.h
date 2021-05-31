@@ -5,10 +5,10 @@
 
 namespace rhdl {
 
-class SetOpenVisitor : public InterfaceVisitor<true>
+class Opener : public InterfaceVisitor<true>
 {
 public:
-	SetOpenVisitor();
+	Opener();
 
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;

@@ -7,10 +7,10 @@
 
 namespace rhdl {
 
-class FlattenConnectionsVisitor : public InterfaceDoubleVisitor<true>
+class ConnectionFlattener : public InterfaceDoubleVisitor<true>
 {
 public:
-	FlattenConnectionsVisitor(std::vector<Structural::FlatConnection> &flat_connections, PartIdx from, PartIdx to);
+	ConnectionFlattener(std::vector<Structural::FlatConnection> &flat_connections, PartIdx from, PartIdx to);
 
 	void visit(const ISingle &i1, const ISingle &i2) override;
 

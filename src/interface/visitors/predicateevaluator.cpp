@@ -1,21 +1,21 @@
-#include "evalpredicate.h"
+#include <interface/visitors/predicateevaluator.h>
 #include "../icomposite.h"
 #include "../iplaceholder.h"
 
 namespace rhdl {
 
-EvalPredicate::EvalPredicate(Predicate_2nd &&predicate) :
+PredicateEvaluator::PredicateEvaluator(Predicate_2nd &&predicate) :
 	predicate_(std::forward<Predicate_2nd>(predicate))
 {
 
 }
 
-void EvalPredicate::visit(const ISingle &i)
+void PredicateEvaluator::visit(const ISingle &i)
 {
 	predicate_(i);
 }
 
-void EvalPredicate::visit(const IComposite &i)
+void PredicateEvaluator::visit(const IComposite &i)
 {
 	predicate_(i);
 
@@ -27,13 +27,13 @@ void EvalPredicate::visit(const IComposite &i)
 	}
 }
 
-void EvalPredicate::visit(const IPlaceholder &i)
+void PredicateEvaluator::visit(const IPlaceholder &i)
 {
 	predicate_(i);
 	i.realization() -> accept(*this);
 }
 
-bool EvalPredicate::eval(const Interface &i)
+bool PredicateEvaluator::eval(const Interface &i)
 {
 	i.accept(*this);
 	return predicate_.result();

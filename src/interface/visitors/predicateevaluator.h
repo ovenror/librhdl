@@ -6,10 +6,10 @@
 
 namespace rhdl {
 
-class EvalPredicate : public InterfaceVisitor<true>
+class PredicateEvaluator : public InterfaceVisitor<true>
 {
 public:
-	EvalPredicate(Predicate_2nd &&predicate);
+	PredicateEvaluator(Predicate_2nd &&predicate);
 
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;

@@ -1,7 +1,7 @@
+#include <interface/visitors/correspondingsubinterfacefinder.h>
 #include <rhdl/construction/constructionexception.h>
 #include "net.h"
 #include "temporarynet.h"
-#include "interface/visitors/getcorrespondingsubinterface.h"
 #include "entity/entity.h"
 #include <cassert>
 

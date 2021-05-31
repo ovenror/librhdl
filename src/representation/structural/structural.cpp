@@ -1,13 +1,13 @@
+#include <interface/visitors/connectionflattener.h>
+#include <interface/visitors/correspondingsubinterfacefinder.h>
+#include <interface/visitors/opener.h>
+#include <interface/visitors/vertexmerger.h>
 #include <rhdl/construction/constructionexception.h>
 #include "structural.h"
 #include "representation/netlist/graph_impl.h"
 #include "interface/interface.h"
 #include "interface/iplaceholder.h"
 #include "interface/predicate.h"
-#include "interface/visitors/interfacetovertexvisitor.h"
-#include "interface/visitors/getcorrespondingsubinterface.h"
-#include "interface/visitors/setopenvisitor.h"
-#include "interface/visitors/flattenconnectionsvisitor.h"
 #include "simulation/hierarchicalsim.h"
 #include "entity/entity.h"
 #include <iostream>
@@ -104,8 +104,6 @@ static void check_exposures(const Structural::Connection &assumed_super, const S
 bool Structural::expose(PartIdx part, const Interface *part_interface, const Interface *ext_interface)
 {
 	Port to_expose(part, part_interface);
-	SetOpenVisitor set_open; //FIXME: delete
-
 	Connection new_exposure(to_expose, Port(0, ext_interface));
 
 	for (const Connection &connection: connections()) {
@@ -164,8 +162,8 @@ void Structural::makeFlatConnections() const
 		return;
 
 	for (auto &connection : connections()) {
-		FlattenConnectionsVisitor(flat_connections_,
-								  connection.first.first, connection.second.first).
+		ConnectionFlattener(flat_connections_,
+				connection.first.first, connection.second.first).
 				go_visit(connection.first.second, connection.second.second);
 	}
 

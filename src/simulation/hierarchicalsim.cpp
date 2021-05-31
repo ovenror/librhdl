@@ -1,7 +1,5 @@
 #include "hierarchicalsim.h"
 #include "representation/structural/structural.h"
-#include "interface/visitors/getcorrespondingsubinterface.h"
-#include "interface/visitors/flattenvisitor.h"
 #include "entity/entity.h"
 #include <tuple>
 #include <memory>
@@ -237,11 +235,7 @@ void HierarchicalSim::setPort(const HierarchicalSim::FlatPort &p)
 
 std::vector<const ISingle *> HierarchicalSim::getIFaces(const Entity &entity) const
 {
-	std::vector<const ISingle*> ifaces;
-	FlattenVisitor fv(ifaces);
-	entity.interface().accept(fv);
-
-	return ifaces;
+	return entity.interface().flat();
 }
 
 }

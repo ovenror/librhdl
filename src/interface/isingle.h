@@ -33,7 +33,6 @@ protected:
 
 private:
 	friend class CSingle;
-	friend class SetOpenVisitor;
 };
 
 }

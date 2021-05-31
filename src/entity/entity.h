@@ -5,7 +5,6 @@
 #include "timing.h"
 
 #include "interface/icomposite.h"
-#include "interface/visitors/qnvisitor.h"
 
 #include "simulation/simulator.h"
 

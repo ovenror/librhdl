@@ -4,9 +4,11 @@
 #include "interface/predicate.h"
 #include "interface/cresult/cdifftypes.h"
 
-#include "interface/visitors/evalpredicate.h"
-#include "interface/visitors/getcorrespondingsubinterface.h"
-#include "interface/visitors/setopenvisitor.h"
+#include "visitors/correspondingsubinterfacefinder.h"
+#include "visitors/flattener.h"
+#include "visitors/opener.h"
+#include "visitors/predicateevaluator.h"
+#include "visitors/qualifiednamemaker.h"
 
 #include <iostream>
 #include <cassert>
@@ -75,8 +77,19 @@ Interface::CResult Interface::eq_struct_int(const IComposite &other, const Predi
 }
 
 void Interface::setAllOpen() const {
-	SetOpenVisitor set_open;
-	accept(set_open);
+	accept(Opener());
+}
+
+std::vector<const ISingle*> Interface::flat() const {
+	std::vector<const ISingle *> result;
+	accept(Flattener(result));
+	return result;
+}
+
+std::string Interface::qualifiedName(const Interface &top) const {
+	QualifiedNameMaker qnmaker(*this);
+	top.accept(qnmaker);
+	return qnmaker.result();
 }
 
 Interface::operator std::string() const
@@ -90,15 +103,19 @@ bool Interface::eq_names(const Interface &other) const
 	return eq_name (other) && eq_inner_names (other);
 }
 
+bool Interface::evalPredicate(Predicate_2nd predicate) const {
+	return PredicateEvaluator(std::move(predicate)).eval(*this);
+}
+
 bool Interface::is_partially_open() const
 {
-	return EvalPredicate(Exists(Predicate<ISingle>([](const ISingle &i){return i.is_open();}))).eval(*this);
+	return evalPredicate(Exists(Predicate<ISingle>([](const ISingle &i){return i.is_open();})));
 }
 
 bool operator>=(const Interface &super, const Interface &sub)
 {
 	const Interface *subptr = &sub;
-	return EvalPredicate(Exists(Predicate<Interface>([subptr](const Interface &i){return &i == subptr;}))).eval(super);
+	return super.evalPredicate(Exists(Predicate<Interface>([subptr](const Interface &i){return &i == subptr;})));
 }
 
 std::ostream &operator<<(std::ostream &os, const Interface &i)
@@ -117,10 +134,10 @@ const Interface* Interface::operator [](const std::string& iname) const {
 const Interface &Interface::getCorrespondingSubInterface
 	(const Interface& counterpart, const Interface& sub, const Predicate2 &pred) const
 {
-	GetCorrespondingSubinterface find(sub, pred);
-	find.go_visit(this, &counterpart);
+	CorrespondingSubInterfaceFinder finder(sub, pred);
+	finder.go_visit(this, &counterpart);
 
-	const Interface *result = find.result();
+	const Interface *result = finder.result();
 	assert(result);
 	return *result;
 }

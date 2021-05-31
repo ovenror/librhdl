@@ -1,7 +1,7 @@
+#include <interface/visitors/vertexmerger.h>
 #include "transformation/structure2netlist.h"
 #include "representation/netlist/netlist.h"
 #include "representation/structural/structural.h"
-#include "interface/visitors/interfacetovertexvisitor.h"
 #include "entity/entity.h"
 
 namespace rhdl {
@@ -51,8 +51,8 @@ void StructureToNetlist::to_netlist_internal(const Structural &structure, Netlis
 	for (auto connection : structure.flatConnections())
 	//for (auto connection : connections_) // works too
 	{
-		InterfaceToVertexVisitor itvv(target.graph_, parts_nl_interfaces, connection.first.first, connection.second.first);
-		itvv.go_visit(connection.first.second, connection.second.second);
+		VertexMerger vm(target.graph_, parts_nl_interfaces, connection.first.first, connection.second.first);
+		vm.go_visit(connection.first.second, connection.second.second);
 	}
 
 	//std::cerr << "exported NLInterface looks like:" << std::endl;

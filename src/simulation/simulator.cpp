@@ -1,7 +1,5 @@
 #include "simulator.h"
 #include "entity/entity.h"
-#include "interface/visitors/flattenvisitor.h"
-
 #include <vector>
 #include <algorithm>
 

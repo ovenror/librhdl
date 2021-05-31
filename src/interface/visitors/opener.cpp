@@ -1,28 +1,28 @@
-#include "setopenvisitor.h"
+#include <interface/visitors/opener.h>
 #include "../isingle.h"
 #include "../icomposite.h"
 #include "../iplaceholder.h"
 
 namespace rhdl {
 
-SetOpenVisitor::SetOpenVisitor()
+Opener::Opener()
 {
 
 }
 
-void SetOpenVisitor::visit(const ISingle &i)
+void Opener::visit(const ISingle &i)
 {
 	i.setOpen();
 }
 
-void SetOpenVisitor::visit(const IComposite &i)
+void Opener::visit(const IComposite &i)
 {
 	for (const Interface *c : i) {
 		c -> accept(*this);
 	}
 }
 
-void SetOpenVisitor::visit(const IPlaceholder &i)
+void Opener::visit(const IPlaceholder &i)
 {
 	i.realization() -> accept(*this);
 }

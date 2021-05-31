@@ -2,18 +2,20 @@
 #define INTERFACEEXPOSUREVISITOR_H
 
 #include "interfacedoublevisitor.h"
+
 #include "representation/structural/structural.h" //FIXME: Only needed for PartIdx?
 #include "representation/netlist/netlist.h"
+
 #include <iostream>
 
 namespace rhdl {
 
-class InterfaceToVertexVisitor : public InterfaceDoubleVisitor<true>
+class VertexMerger : public InterfaceDoubleVisitor<true>
 {
 public:
 	using Super = InterfaceDoubleVisitor<true>;
 
-	InterfaceToVertexVisitor(
+	VertexMerger(
 			Netlist::Graph &netlist, std::vector<Netlist::Interface> &parts,
 			PartIdx source, PartIdx destination);
 

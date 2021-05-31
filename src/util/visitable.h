@@ -54,6 +54,9 @@ public:
 
 	virtual void accept(Visitor<false> &v) = 0;
 	virtual void accept(Visitor<true> &v) const = 0;
+
+	virtual void accept(Visitor<false> &&v) {accept(v);}
+	virtual void accept(Visitor<true> &&v) const {accept(v);}
 };
 
 

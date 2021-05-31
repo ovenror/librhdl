@@ -1,9 +1,9 @@
-#include "interfacetovertexvisitor.h"
+#include <interface/visitors/vertexmerger.h>
 
 namespace rhdl {
 
 
-InterfaceToVertexVisitor::InterfaceToVertexVisitor(
+VertexMerger::VertexMerger(
 		Netlist::Graph &netlist, std::vector<Netlist::Interface> &parts,
 		PartIdx source, PartIdx destination)
 	:
@@ -13,7 +13,7 @@ InterfaceToVertexVisitor::InterfaceToVertexVisitor(
 }
 
 
-void InterfaceToVertexVisitor::visit(const ISingle &i1,const ISingle &i2)
+void VertexMerger::visit(const ISingle &i1,const ISingle &i2)
 {
 	//std::cerr << "setting vertex of " << (std::string) i1 << " to vertex of " << (std::string) i2 << std::endl;
 
@@ -32,7 +32,7 @@ void InterfaceToVertexVisitor::visit(const ISingle &i1,const ISingle &i2)
 	}
 }
 
-void InterfaceToVertexVisitor::replace(VertexRef v1, VertexRef v2)
+void VertexMerger::replace(VertexRef v1, VertexRef v2)
 {
 
 	if (v1 == v2)
