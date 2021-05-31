@@ -3,7 +3,11 @@
 #include "interface/icomposite.h"
 #include "interface/predicate.h"
 #include "interface/cresult/cdifftypes.h"
+
 #include "interface/visitors/evalpredicate.h"
+#include "interface/visitors/getcorrespondingsubinterface.h"
+#include "interface/visitors/setopenvisitor.h"
+
 #include <iostream>
 #include <cassert>
 
@@ -70,6 +74,11 @@ Interface::CResult Interface::eq_struct_int(const IComposite &other, const Predi
 	return CResult(new CDiffTypes(*this, other, predicate));
 }
 
+void Interface::setAllOpen() const {
+	SetOpenVisitor set_open;
+	accept(set_open);
+}
+
 Interface::operator std::string() const
 {
 	return std::string("Interface '") + name_ + "' (" + typeid(*this).name() + ")";
@@ -103,6 +112,17 @@ const Interface* Interface::operator [](const std::string& iname) const {
 		throw ConstructionException(Errorcode::E_CANNOT_GET_ANONYMOUS_INTERFACE);
 
 	return get(iname);
+}
+
+const Interface &Interface::getCorrespondingSubInterface
+	(const Interface& counterpart, const Interface& sub, const Predicate2 &pred) const
+{
+	GetCorrespondingSubinterface find(sub, pred);
+	find.go_visit(this, &counterpart);
+
+	const Interface *result = find.result();
+	assert(result);
+	return *result;
 }
 
 }

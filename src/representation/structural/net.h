@@ -45,7 +45,9 @@ protected:
 	virtual void absorb_dispatch(Net &victim);
 
 	static void check(const Net::Connection &greater, const Net::Connection &lesser);
-	static void check(const Net::Port &super, const Net::Port &sub, const Net::Port &different1, const Net::Port &different2);
+	static void checkInterfaceReuse(
+			const Net::Port &super, const Net::Port &sub,
+			const Net::Port &different1, const Net::Port &different2);
 };
 
 

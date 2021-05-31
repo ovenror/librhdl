@@ -55,6 +55,10 @@ public:
 	virtual CResult eq_struct_int (const IComposite &other, const Predicate2 &predicate) const;
 
 	bool is_partially_open() const;
+	void setAllOpen() const;
+	const Interface& getCorrespondingSubInterface(
+			const Interface &counterpart, const Interface &sub,
+			const Predicate2 &pred) const;
 
 	bool eq_name (const Interface &other) const;
 	bool eq_names (const Interface &other) const;

@@ -95,32 +95,30 @@ Net::operator std::string() const
 	return res;
 }
 
-void Net::check(const Port &super, const Port &sub, const Port &different1, const Port &different2)
+void Net::checkInterfaceReuse(const Port &super, const Port &sub, const Port &peer1, const Port &peer2)
 {
-	if (different2.second -> is_partially_open())
+	if (peer2.second -> is_partially_open())
 		throw ConstructionException(Errorcode::E_ALREADY_CONNECTED_TO_OPEN); // (2)
 		//no other connections to an interface, if there is an open interface connected
 
-	GetCorrespondingSubinterface find(*sub.second, Interface::Predicate2::ptp_nondir());
-	find.go_visit(different1.second, super.second);
+	const Interface &peer1_sub = peer1.second -> getCorrespondingSubInterface(
+			*super.second, *sub.second, Interface::Predicate2::ptp_nondir());
 
-	assert (find.result());
-
-	if (find.result() -> is_partially_open())
+	if (peer1_sub.is_partially_open())
 		throw ConstructionException(Errorcode::E_ALREADY_CONNECTED_TO_OPEN); // (2)
 }
 
-/* to be called with both orders */
+/* to be called in both orders */
 void Net::check(const Connection &greater, const Connection &lesser)
 {
 	if (greater.first >= lesser.first) {
 		if (greater.second >= lesser.second)
 			throw ConstructionException(Errorcode::E_ILLEGAL_RECONNECTION);
 
-		check(greater.first, lesser.first, greater.second, lesser.second);
+		checkInterfaceReuse(greater.first, lesser.first, greater.second, lesser.second);
 	}
 	else if (greater.second >= lesser.second) {
-		check(greater.second, lesser.second, greater.first, lesser.first);
+		checkInterfaceReuse(greater.second, lesser.second, greater.first, lesser.first);
 	}
 }
 

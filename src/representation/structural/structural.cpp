@@ -41,43 +41,37 @@ PartIdx Structural::add(const Entity *what)
  * When an (single) interface is exposed, which already has another part connected, that interface is considered open. (1)
  * The other part's corresponding interface must not contain open subinterfaces. (2)
  */
-static void check_ec(const Net::Port &to_expose, const Interface *ext_interface, const Net::Port &reference, const Net::Port &connected)
+static void check_ec(const Net::Port &exposed, const Interface *ext_interface, const Net::Port &connected, const Net::Port &other)
 {
-	SetOpenVisitor set_open;
+	auto nondir = Interface::Predicate2::pte_nondir();
 
-	if (to_expose >= reference) {
-		GetCorrespondingSubinterface find(*reference.second, Interface::Predicate2::pte_nondir());
-		find.go_visit(ext_interface, to_expose.second);
+	if (exposed >= connected) {
+		const Interface &own_sub = ext_interface -> getCorrespondingSubInterface(
+				*exposed.second, *connected.second, nondir);
 
-		assert(find.result());
-
-		if (connected.second -> is_partially_open())
+		if (other.second -> is_partially_open())
 			throw ConstructionException(Errorcode::E_ALREADY_CONNECTED_TO_OPEN); // (2)
 
-		find.result() -> accept(set_open); // (1)
+		own_sub.setAllOpen(); // (1)
 	}
-	else if (reference >= to_expose) {
-		GetCorrespondingSubinterface find(*to_expose.second, Interface::Predicate2::ptp_nondir());
-		find.go_visit(connected.second, reference.second);
+	else if (connected >= exposed) {
+		const Interface &other_sub = other.second -> getCorrespondingSubInterface(
+				*connected.second, *exposed.second, nondir);
 
-		assert(find.result());
-
-		if (find.result() -> is_partially_open())
+		if (other_sub.is_partially_open())
 			throw ConstructionException(Errorcode::E_ALREADY_CONNECTED_TO_OPEN); // (2)
 
-		ext_interface -> accept(set_open); // (1)
+		ext_interface -> setAllOpen(); // (1)
 	}
 }
 
 static void check_joining_exposures(const Net::Port &p1, const Interface *ext_super, const Net::Port &p2, const Interface *ext_sub)
 {
-	GetCorrespondingSubinterface find(*ext_sub, Interface::Predicate2::pte_nondir());
-	find.go_visit(p1.second, ext_super);
-
-	assert (find.result()); //should always work
+	const Interface &p1_sub = p1.second -> getCorrespondingSubInterface(
+			*ext_super, *ext_sub, Interface::Predicate2::pte_nondir());
 
 	//(2) cannot expose to ext interface, when an open interface was already exposed to it
-	if (find.result() -> is_partially_open())
+	if (p1_sub.is_partially_open())
 		throw ConstructionException(Errorcode::E_ALREADY_CONNECTED_TO_OPEN); // (2)
 	if (p2.second -> is_partially_open())
 		throw ConstructionException(Errorcode::E_ALREADY_CONNECTED_TO_OPEN); // (2)
@@ -85,15 +79,12 @@ static void check_joining_exposures(const Net::Port &p1, const Interface *ext_su
 
 static void open_splitting_exposures(const Net::Port &super, const Interface *ext1, const Net::Port &sub, const Interface *ext2)
 {
-	GetCorrespondingSubinterface find(*sub.second, Interface::Predicate2::pte_nondir());
-	find.go_visit(ext1, super.second);
-
-	assert(find.result()); //should always work
+	const Interface &ext1_sub = ext1 -> getCorrespondingSubInterface(
+			*super.second, *sub.second, Interface::Predicate2::pte_nondir());
 
 	//(1) set both external interfaces to open
-	SetOpenVisitor set_open;
-	ext2 -> accept(set_open);
-	find.result() -> accept(set_open);
+	ext2 -> setAllOpen();
+	ext1_sub.setAllOpen();
 }
 
 
