@@ -43,10 +43,10 @@ void VertexMerger::replace(VertexRef v1, VertexRef v2)
 
 	// we are producing fully bi-partite connection graphs here
 	// TODO: check beforehand, if we are really bi-partitely connected
-	for (Netlist::Interface &nl : parts_) {
-		for (auto kv : nl) {
+	for (Netlist::Interface &nli : parts_) {
+		for (auto kv : nli) {
 			if (kv.second == v1)
-				nl[kv.first] = v2;
+				nli[kv.first] = v2;
 		}
 	}
 

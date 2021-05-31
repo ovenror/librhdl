@@ -20,7 +20,6 @@ Netlist StructureToNetlist::execute(const Structural &source) const
 
 void StructureToNetlist::to_netlist_internal(const Structural &structure, Netlist &target) const
 {
-	//FIXME: use pointers instead of interface copies
 	std::vector <Netlist::Interface> parts_nl_interfaces;
 
 	// dummy interface for ourself
@@ -58,8 +57,7 @@ void StructureToNetlist::to_netlist_internal(const Structural &structure, Netlis
 	//std::cerr << "exported NLInterface looks like:" << std::endl;
 	//std::cerr << Netlist::InterfaceToString(parts_nl_interfaces[0]);
 
-	//FIXME: see above: because of this
-	target.interface_ = parts_nl_interfaces[0];
+	target.interface_ = std::move(parts_nl_interfaces[0]);
 }
 
 }
