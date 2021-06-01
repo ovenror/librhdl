@@ -64,9 +64,4 @@ bool NetImpl::connect(PartIdx from, const Interface *from_interface, PartIdx to,
 	return true;
 }
 
-void NetImpl::insert_connection(const Connection &connection)
-{
-	connections_.emplace_back(connection);
-}
-
 }

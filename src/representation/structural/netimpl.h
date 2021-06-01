@@ -27,8 +27,6 @@ public:
 	void makeFlatConnections();
 
 protected:
-	void insert_connection (const Connection &connection) override;
-
 	std::vector <Connection> connections_;
 	std::vector <const Entity *> parts_;   
 };
