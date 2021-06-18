@@ -5,6 +5,8 @@
 namespace rhdl {
 namespace TM {
 
+using blocks::Blocks;
+
 SingleWire::SingleWire(Container &owner, bool vertical, const std::shared_ptr<Connection> &connection, bool anchor) :
 	SingleWire(owner, vertical, anchor)
 {

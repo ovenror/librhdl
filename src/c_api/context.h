@@ -15,13 +15,14 @@
 namespace rhdl {
 
 class Handle;
-template <class H> class TypedHandle;
+
+namespace structural::builder { class Port; }
 
 class Context {
 public:
 	~Context();
 
-	template <class H, class... Args> TypedHandle<H> &make(Args&&... args);
+	Handle &make(structural::builder::Port &port);
 	void checkContains(const Handle* handle) const;
 
 private:
@@ -32,20 +33,6 @@ private:
 
 	std::unordered_set<const Handle *> handles_;
 };
-
-} /* namespace rhdl */
-
-#include "typedhandle.h"
-
-namespace rhdl {
-
-template <class H, class... Args>
-TypedHandle<H> &Context::make(Args&&... args)
-{
-	auto *h = new TypedHandle<H>(*this, std::forward<Args>(args)...);
-	handles_.insert(static_cast<const Handle *>(h));
-	return *h;
-}
 
 }
 #endif /* C_API_CONTEXT_H_ */

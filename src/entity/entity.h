@@ -11,7 +11,6 @@
 #include "representation/behavioral/timedbehavior.h"
 #include "representation/behavioral/functionalbehavior.h"
 #include "representation/netlist/netlist.h"
-
 #include "util/util.h"
 #include "util/iterable.h"
 #include "util/catiterator.h"
@@ -25,13 +24,14 @@
 
 namespace rhdl {
 
-class Blocks;
 class Timing;
 
 class Entity
 {
 public:
-	Entity(const std::string &name, bool stateless = true);
+	Entity(
+			const std::string &name,
+			std::vector<const Interface *>, bool stateless = true);
 	virtual ~Entity();
 
 	const std::string &name() const {return name_;}
@@ -41,14 +41,6 @@ public:
 	//virtual operator std::string() const =0;
 
 	std::string fqn(const Interface *sub) const;
-
-	/*
-	 * FIXME: Does it belong here?
-	 */
-	const Interface* ilookup(const std::string &iname) const
-	{
-		return interface_[iname];
-	}
 
 	template <class RepType>
 	const RepType &addRepresentation(RepType &&rep) const {
@@ -104,12 +96,10 @@ public:
 	const Timing *defaultTiming() const;
 
 protected:
-	friend class NewEntityHandle;
-
 	const Representation *generate(Representation::TypeID dstType, const Representation *source = nullptr) const;
 	const Representation &addRepresentation_internal(std::unique_ptr<Representation> &&representation) const;
 
-	IComposite interface_;
+	const IComposite interface_;
 	const std::string name_;
 	mutable std::vector<std::unique_ptr<Timing>> timings_;
 	bool stateless_;

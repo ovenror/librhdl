@@ -9,6 +9,7 @@
 #define C_API_HANDLE_H_
 
 #include <rhdl/construction/c/types.h>
+#include <rhdl/construction/porthandle.h>
 #include "c_api/wrapper.h"
 
 #include <memory>
@@ -18,41 +19,34 @@ namespace rhdl {
 
 class Context;
 class Structure;
-class EntityInterface;
-class PartInterface;
-class PartHandle;
+class StructureConnector;
+class Connector;
 
-template <class T> class TypedHandle;
+namespace structural::builder { class Port; }
 
 class Handle {
 public:
-	virtual Handle &select(const std::string &name) const = 0;
-	virtual void connect(const Handle &h) const = 0;
+	Handle &select(const std::string &name) const;
+	void connect(Handle &h);
 
 protected:
 	void pt() const;
 
 private:
-	Handle(Context &context);
+	friend class Context;
+
+	Handle(Context &context, structural::builder::Port &port);
 	virtual ~Handle();
 
-	virtual void getConnectedFrom(const TypedHandle<Structure> &) const = 0;
-	virtual void getConnectedFrom(const TypedHandle<EntityInterface> &) const = 0;
-	virtual void getConnectedFrom(const TypedHandle<PartHandle> &) const = 0;
-	virtual void getConnectedFrom(const TypedHandle<PartInterface> &) const = 0;
+	void updateC();
 
 	Context &context_;
+	PortHandle ph_;
 
 public:
 	using C_Struct = rhdl_connector;
 
 private:
-	friend class TypedHandle<Structure>;
-	friend class TypedHandle<EntityInterface>;
-	friend class TypedHandle<PartHandle>;
-	friend class TypedHandle<PartInterface>;
-
-	friend class Context;
 	friend class Wrapper<Handle>;
 	static constexpr unsigned long C_ID = 0x49D1E5;
 	Wrapper<Handle> c_;

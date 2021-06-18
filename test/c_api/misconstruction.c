@@ -50,23 +50,6 @@ int wrongOp()
 	return ACCEPT(rhdl_connect(i0in, i0out) == E_DIRECTION_OPPOSES_OPERATOR);
 }
 
-int open2open()
-{
-	rhdl_structure_t *s = rhdl_begin_structure(0, "test3", F_CREATE_STATELESS);
-	REQUIRE(s);
-
-	rhdl_entity_t *rsl = rhdl_entity(0, "RS_Latch");
-	rhdl_connector_t *r0 = rhdl_component(s, rsl);
-	rhdl_connector_t *r1 = rhdl_component(s, rsl);
-	REQUIRE(r0 && r1);
-
-	rhdl_connector_t *r0Q = rhdl_select(r0, "Q");
-	rhdl_connector_t *r1S = rhdl_select(r0, "S");
-	REQUIRE(r0Q && r1S);
-
-	return ACCEPT(rhdl_connect(r0Q, r1S) == E_OPEN_TO_OPEN);
-}
-
 int ambiguousConnection()
 {
 	rhdl_structure_t *s = rhdl_begin_structure(0, "test4", F_CREATE_STATELESS);
@@ -77,29 +60,6 @@ int ambiguousConnection()
 	REQUIRE(nand0);
 
 	return ACCEPT(rhdl_connect(nand0, nand0) == E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES);
-}
-
-int alreadyConnectedToOpen()
-{
-	rhdl_structure_t *s = rhdl_begin_structure(0, "test5", F_CREATE_STATELESS);
-	REQUIRE(s);
-
-	rhdl_entity_t *nor = rhdl_entity(0, "NOR");
-	rhdl_connector_t *nor0 = rhdl_component(s, nor);
-	REQUIRE(nor0);
-
-	rhdl_connector_t *nor_in0 = rhdl_select(nor0, "in0");
-	rhdl_connector_t *nor_in1 = rhdl_select(nor0, "in1");
-	REQUIRE(nor_in0 && nor_in1);
-
-	REQUIRE_NOERR(rhdl_connect(nor0, nor_in0));
-
-	REQUIRE(rhdl_connect(nor0, s -> connector) == E_ALREADY_CONNECTED_TO_OPEN);
-	REQUIRE(rhdl_errno() == E_ALREADY_CONNECTED_TO_OPEN);
-	REQUIRE(rhdl_connect(nor0, nor_in1) == E_ALREADY_CONNECTED_TO_OPEN);
-	REQUIRE(rhdl_errno() == E_ALREADY_CONNECTED_TO_OPEN);
-
-	return SUCCESS;
 }
 
 int statefulComponentInStatelessStructure()

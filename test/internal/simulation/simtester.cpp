@@ -1,6 +1,6 @@
 #include "simtester.h"
 
-#include <interface/visitors/flattener.h>
+#include <representation/structural/structure.h>
 
 #include "simprinter.h"
 
@@ -10,11 +10,10 @@
 #include "entity/entity.h"
 #include "entity/timing.h"
 
-#include "representation/structural/structural.h"
-
 #include "transformation/bgtree/bgtree.h"
 
 #include "interface/isingle.h"
+
 #include <string>
 #include <sstream>
 
@@ -56,7 +55,7 @@ SimTester::SimTester(const Entity &e)
 
 void SimTester::addSimulator(const Representation &r)
 {
-    if (r.typeID() == Structural::ID) {
+    if (r.typeID() == structural::Structure::ID) {
         addSimulator(r, true);
     }
 

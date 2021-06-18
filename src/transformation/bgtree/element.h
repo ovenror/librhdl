@@ -17,8 +17,8 @@ public:
 
 	unsigned int index() const {return index_;}
 
-	Blocks::index_t position() const;
-	void setPosition(Blocks::index_t position);
+	blocks::Blocks::index_t position() const;
+	void setPosition(blocks::Blocks::index_t position);
 	bool hasPosition() const {return has_position_;}
 
 protected:
@@ -27,7 +27,7 @@ protected:
 private:
 	unsigned int index_;
 	bool has_position_;
-	Blocks::index_t position_;
+	blocks::Blocks::index_t position_;
 };
 
 }

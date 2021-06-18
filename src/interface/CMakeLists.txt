@@ -1,9 +1,9 @@
 target_sources(rhdl_obj
 	PRIVATE
 		direction.cpp
+		compositedirection.cpp
 		icomposite.cpp
 		interface.cpp
-		iplaceholder.cpp
 		isingle.cpp
 		predicate.cpp
 )

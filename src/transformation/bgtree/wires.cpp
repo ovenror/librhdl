@@ -6,6 +6,9 @@
 #include "treemodel.h"
 
 namespace rhdl {
+
+using blocks::Blocks;
+
 namespace TM {
 
 Wires::Wires(Container &owner, bool vertical, bool anchors)

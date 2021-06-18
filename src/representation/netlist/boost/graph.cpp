@@ -11,7 +11,7 @@
 
 using namespace boost;
 
-namespace rhdl {
+namespace rhdl::netlist {
 
 bool Graph_Impl_Boost::isomorphic(Graph_Impl_Boost &g) const
 {

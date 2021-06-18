@@ -7,16 +7,19 @@ namespace rhdl {
 
 class IComposite;
 
-class CComposite : public CBase<IComposite>
-{
-public:
-	using BASE = CBase<IComposite>;
+struct CCompositeOps : public CSametypeOpsBase<IComposite&, CCompositeOps> {
+	using Super::Super;
 
-	CComposite(const IComposite &from, const IComposite &to, const Predicate &predicate);
-	~CComposite();
+	template <class RESULT>
+	void eval_common(RESULT &result) const;
 
-	void eval_int() const override;
+private:
+	Errorcode fail_num(std::ostream &) const;
+
+	Errorcode fail_component(std::ostream &, size_t &idx, Interface::CResult sub) const;
 };
+
+using CComposite = CBase<CCompositeOps>;
 
 }
 

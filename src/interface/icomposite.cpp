@@ -8,21 +8,37 @@
 
 namespace rhdl {
 
-IComposite::IComposite(const std::string &name)
-	: VisitableBase (name)
+IComposite::IComposite(
+		const std::string &name, std::vector<const Interface *> components)
+	: VisitableBase (name), components_(components)
 {
 	c_.content().type = RHDL_COMPOSITE;
+
+	for (auto *comp : components)
+	{
+		direction_ |= comp -> compositeDirection();
+		c_strings_.push_back(comp -> name().data());
+	}
+
+	c_strings_.push_back(nullptr);
 	c_.content().composite.interfaces = c_strings_.data();
 }
 
-IComposite::IComposite(const IComposite &tmpl)
-	: IComposite(tmpl.name_)
+static std::vector<const Interface *> cloneComponents(
+		const std::vector<const Interface *> &ifaces)
 {
-	for (const Interface *component : tmpl.components_)
-	{
-		add(component -> clone());
+	std::vector<const Interface *> result;
+
+	for (auto *iface : ifaces) {
+		result.push_back(iface -> clone());
 	}
+
+	return result;
 }
+
+IComposite::IComposite(const IComposite &tmpl)
+	: IComposite(tmpl.name_, cloneComponents(tmpl.components_))
+{}
 
 IComposite::~IComposite()
 {
@@ -32,9 +48,9 @@ IComposite::~IComposite()
 	}
 }
 
-IComposite *IComposite::clone() const
+IComposite *IComposite::clone(const std::string &newName) const
 {
-	return new IComposite (*this);
+	return new IComposite (newName, cloneComponents(components_));
 }
 
 const Interface *IComposite::get(const std::string &name) const
@@ -48,102 +64,9 @@ const Interface *IComposite::get(const std::string &name) const
 	return nullptr;
 }
 
-const Interface *IComposite::find_connectible_components(const Interface *to, const Interface::Predicate2 &predicate) const
-{
-	const Interface *found = nullptr;
-	//std::cerr << "   Composite: inspect own components" << std::endl;
-
-	for (const Interface *interface : components_) {
-		const Interface *current = interface -> find_connectible(to, predicate);
-
-		if (!current)
-			continue;
-
-		if (found) {
-			//std::cerr << "R(C~I): MULTIPLE" << std::endl;
-			throw ConstructionException(Errorcode::E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES);
-			return nullptr;
-		}
-
-		found = current;
-	}
-
-	return found;
-}
-
-const Interface *IComposite::find_connectible(const Interface *to, const Predicate2 &predicate) const
-{
-	//std::cerr << name_ << " C~I: inspect self" << std::endl;
-
-	const Interface *found = Super::find_connectible(to, predicate);
-
-	if (found)
-		return found;
-
-	return find_connectible_components(to, predicate);
-}
-
-std::pair<const Interface *, const Interface *> IComposite::find_connectibles(const Interface *to, const Predicate2 &predicate) const
-{
-	//std::cerr << name_ << " C~I: super for each own component" << std::endl;
-
-	std::queue <const Interface *> bfs_backlog;
-	std::pair<const Interface *, const Interface *> found(0,0);
-
-	bfs_backlog.push(this);
-
-	while (!bfs_backlog.empty()) {
-		const Interface *current = bfs_backlog.front();
-		bfs_backlog.pop();
-		auto current_result = current -> Super::find_connectibles(to, predicate);
-
-		if (!current_result.first || !current_result.second) {
-			current -> add_components_to_queue(bfs_backlog);
-			continue;
-		}
-
-		if (found.first) {
-			//std::cerr << "C~I: MULTIPLE" << std::endl;
-			throw ConstructionException(Errorcode::E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES);
-			return {0,0};
-		}
-
-		found = current_result;
-	}
-
-	return found;
-}
-
-void IComposite::add_components_to_queue(std::queue<const Interface *> &bfs_backlog) const
-{
-	for (const Interface *component : components_) {
-		bfs_backlog.push(component);
-	}
-}
-
-Interface::CResult IComposite::eq_struct_int(const Interface &other, const Predicate2 &predicate) const
-{
-	//std::cerr << "generic struct C to I(" << typeid(other).name() << ") reverse comp struct" << std::endl;
-
-	return other.eq_struct_int (*this, predicate.reversed());
-}
-
-Interface::CResult IComposite::eq_struct_int(const IComposite &other, const Predicate2 &predicate) const
-{
-	return CResult(new CComposite(*this, other, predicate));
-}
-
-void IComposite::add(const Interface *comp)
-{
-	components_.push_back(comp);
-	c_strings_.back() = comp -> name().data();
-	c_strings_.push_back(nullptr);
-	c_.content().composite.interfaces = c_strings_.data();
-}
-
 bool IComposite::eq_inner_names(const Interface &other) const
 {
-	if (!eq_struct_int (other, Predicate2::ptp()) -> success())
+	if (!compatTo(other, Predicate2::ptp()) -> success())
 	{
 		return false;
 	}
@@ -162,8 +85,83 @@ bool IComposite::eq_inner_names(const Interface &other) const
 	return true;
 }
 
-const char* const * rhdl::IComposite::ls() const {
-	return c_strings_.data();
+SingleDirection IComposite::preferredDirection() const
+{
+	assert (!components_.empty());
+	assert (!direction_.free());
+
+	if (direction_.mixed())
+		return components_.front() -> preferredDirection();
+
+	return static_cast<SingleDirection>(direction_);
+}
+
+bool IComposite::componentWise(
+		const IComposite &other,
+		const std::function<bool(const Interface &, const Interface &)> &f) const
+{
+	assert (size() == other.size());
+
+	auto c = begin();
+	auto oc = other.begin();
+
+	while (c != end()) {
+		if (!f(**c++, **oc++))
+			return false;
+	}
+
+	return true;
+}
+
+bool IComposite::componentWise(
+		const std::vector<const IComposite *> &interfaces,
+		const std::function<bool(const std::vector<const Interface *> &)> &f)
+{
+	if (interfaces.empty())
+		return true;
+
+	std::vector<const_iterator> iterators;
+	std::vector<const Interface *> subs;
+
+	const auto size = interfaces.size();
+
+	subs.reserve(size);
+	iterators.reserve(size);
+
+	for (auto *iface : interfaces)
+		iface -> assert_not_empty();
+
+	auto iface = interfaces.begin();
+	auto &first_iface = **iface;
+	auto num_components = first_iface.size();
+
+	for (; iface != interfaces.end(); ++iface)
+	{
+		const auto &riface = **iface;
+		assert (riface.size() == num_components);
+
+		auto iterator = riface.begin();
+		subs.push_back(*iterator++);
+		iterators.push_back(iterator);
+	}
+
+	const auto &first_iterator = iterators.front();
+
+	while (true) {
+		if (!f(subs))
+			return false;
+
+		if (first_iterator != first_iface.end())
+			break;
+
+		auto sub = subs.begin();
+		auto iterator = iterators.begin();
+
+		while (sub != subs.end())
+			*sub++ = *(*iterator++)++;
+	}
+
+	return true;
 }
 
 } // namespace rhdl

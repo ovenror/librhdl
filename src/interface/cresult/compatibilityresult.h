@@ -20,10 +20,12 @@ public:
 
 protected:
 	virtual void eval_int() const = 0;
+	std::stringstream &incompatibility(Errorcode) const;
+	void use(CompatibilityResult &&result) const;
 
-	mutable bool evald_;
-	mutable bool success_;
-	mutable Errorcode ec_;
+	mutable bool evald_ = false;
+	mutable bool success_ = true;
+	mutable Errorcode ec_ = Errorcode::E_NO_ERROR;
 	mutable std::stringstream msg_;
 };
 

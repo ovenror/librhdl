@@ -11,12 +11,12 @@
 
 namespace rhdl {
 
-std::ostream& operator<<(std::ostream& os, InterfaceDirection dir) {
+std::ostream& operator<<(std::ostream& os, SingleDirection dir) {
 	switch (dir) {
-	case InterfaceDirection::IN:
+	case SingleDirection::IN:
 		os << "IN(" << (int) dir << ")";
 		break;
-	case InterfaceDirection::OUT:
+	case SingleDirection::OUT:
 		os << "OUT(" << (int) dir << ")";
 		break;
 	default:

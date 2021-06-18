@@ -2,7 +2,7 @@
 #include "simulation/blockssim.h"
 #include <cassert>
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 Blocks::Blocks(const Entity &entity, const Representation *parent,
 			   const Timing *timing)
@@ -193,9 +193,9 @@ std::ostream &operator<<(std::ostream &os, const Blocks::Wall &blocks)
 std::ostream &operator<<(std::ostream &os, Block block)
 {
 	switch (block) {
-	case rhdl::Block::OPAQUE: os << "X"; break;
-	case rhdl::Block::REDSTONE: os << "+"; break;
-	case rhdl::Block::TORCH: os << "O"; break;
+	case Block::OPAQUE: os << "X"; break;
+	case Block::REDSTONE: os << "+"; break;
+	case Block::TORCH: os << "O"; break;
 	default: os << " ";
 	}
 

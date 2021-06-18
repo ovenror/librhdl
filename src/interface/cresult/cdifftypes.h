@@ -7,16 +7,21 @@ namespace rhdl {
 
 class Interface;
 
-class CDiffTypes : public CBase<Interface>
+class CDiffTypesOps : public CSametypeOpsBase<Interface&, CDiffTypesOps>
+{
+	using Super::Super;
+};
+
+class CDiffTypes : public CBase<CDiffTypesOps>
 {
 public:
-	using BASE = CBase<Interface>;
+	using Super::Super;
 
-	CDiffTypes(const Interface &from, const Interface &to, const Predicate &predicate);
 	~CDiffTypes();
 
-	//bool success() const override {return false;}
 	void eval_int() const override;
+	static bool compatible(const Interface &, const Interface &, const Predicate &)
+		{return false;}
 };
 
 }

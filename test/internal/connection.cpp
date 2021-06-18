@@ -12,9 +12,11 @@ using namespace rhdl::TM;
 
 TEST(ConnectionTest, addNodeWire)
 {
-	rhdl::Entity dummy("DUMMY");
-	std::map<const Connection *, rhdl::VertexRef> dummyMap;
-	rhdl::TreeModel model(rhdl::Netlist(dummy, nullptr, nullptr), {}, {}, dummyMap);
+	namespace nl = rhdl::netlist;
+
+	rhdl::Entity dummy("DUMMY", {});
+	std::map<const Connection *, nl::VertexRef> dummyMap;
+	rhdl::TreeModel model(nl::Netlist(dummy, nullptr, nullptr), {}, {}, dummyMap);
 	SingleWire first(model, false);
 	MutableLayer layer(model, 0);
 	Wire &manifold(layer.cross().make());

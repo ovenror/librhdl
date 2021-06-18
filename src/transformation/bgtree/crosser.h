@@ -26,7 +26,7 @@ public:
 
 	virtual void tryInsertCrosser(Wire &crosser) = 0;
 	virtual void replaceCrosser(Wire &newCrosser) = 0;
-	virtual bool mayBeCrossed(const Wire &wire, Blocks::index_t at) const = 0;
+	virtual bool mayBeCrossed(const Wire &wire, blocks::Blocks::index_t at) const = 0;
 
 	const std::set<Crosser *> &getCrossers() const {return crossers_;}
 

@@ -4,7 +4,7 @@
 #include "siminterface.h"
 #include <boost/circular_buffer.hpp>
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 class SISingle_Base
 {

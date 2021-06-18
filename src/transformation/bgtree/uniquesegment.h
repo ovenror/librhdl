@@ -16,7 +16,7 @@ class UniqueSegment : public Segment
 {
 public:   
 	UniqueSegment(
-			const Wire &wire, Blocks::index_t start, Blocks::index_t end,
+			const Wire &wire, blocks::Blocks::index_t start, blocks::Blocks::index_t end,
 			Connector &frontConnector, Connector &backConnector);
 
 	const Wire &wire() const {return wire_;}
@@ -35,7 +35,7 @@ public:
 	const UniqueSegment *straightBefore() const;
 	const UniqueSegment *straightAfter() const;
 
-	void placeRepeaterAbs(Blocks::index_t absPos, bool reverse, Blocks &b) const override;
+	void placeRepeaterAbs(blocks::Blocks::index_t absPos, bool reverse, blocks::Blocks &b) const override;
 
 protected:
 	bool noFrontCrossConnections() const override;
@@ -43,7 +43,7 @@ protected:
 	void addToStream(std::ostream &os) const override;
 
 private:
-	friend bool operator<(Blocks::index_t lhs, const UniqueSegment &rhs);
+	friend bool operator<(blocks::Blocks::index_t lhs, const UniqueSegment &rhs);
 
 	const Wire &wire_;
 

@@ -18,7 +18,7 @@ public:
 	DefaultTransformation() {}
 	virtual ~DefaultTransformation() {}
 
-	ToRep execute(const FromRep &source) const override {ToRep(source);}
+	ToRep execute(const FromRep &source) const override {return ToRep(source);}
 };
 
 } /* namespace rhdl */

@@ -3,8 +3,9 @@
 
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
-#include <array>
 
+#include <array>
+#include <iostream>
 
 namespace rhdl {
 

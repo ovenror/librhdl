@@ -3,7 +3,7 @@
 
 #include "representation/representationbase.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 class FunctionalBehavior : public RepresentationBase<FunctionalBehavior>
 {

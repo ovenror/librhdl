@@ -1,10 +1,5 @@
 #include "library.h"
-
 #include "entity/einverter.h"
-
-#include "representation/structural/structural.h"
-#include "representation/structural/temporarynet.h"
-
 #include "init/init.h"
 
 #include <cassert>
@@ -43,11 +38,6 @@ Entity& Library::at(const std::string& name) {
 		throw ConstructionException(Errorcode::E_NO_SUCH_ENTITY);
 
 	return *entities_.at(name);
-}
-
-PartHandle Library::New(const std::string &name)
-{
-	return PartHandle(&at(name));
 }
 
 Entity &Library::regist_internal(std::unique_ptr<Entity> &&entity)

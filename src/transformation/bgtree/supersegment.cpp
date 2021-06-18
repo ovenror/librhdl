@@ -5,6 +5,8 @@
 
 namespace rhdl::TM {
 
+using blocks::Blocks;
+
 SuperSegment::SuperSegment(const std::vector<const UniqueSegment *> &segments)
 	: Segment(segments.front()->start(), segments.back()->end()),
 	  first_(*segments.front()), last_(*segments.back())

@@ -1,9 +1,10 @@
 target_sources(rhdl_obj
 	PRIVATE
-		cbase.cpp
 		ccomposite.cpp
+		cdirection.cpp
 		cdifftypes.cpp
 		compatibilityresult.cpp
+		copdirection.cpp
 		csingle.cpp
 		ctrue.cpp
 )

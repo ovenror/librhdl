@@ -5,7 +5,6 @@ target_sources(rhdl_obj
 		hierarchicalsim.cpp
 		invertersim.cpp
 		netlistsim.cpp
-		simfactory.cpp
 		simulator.cpp
 )
 

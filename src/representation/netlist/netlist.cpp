@@ -6,7 +6,7 @@
 
 #include <forward_list>
 
-namespace rhdl {
+namespace rhdl::netlist {
 
 Netlist::Netlist(
 		const Entity &entity, const Representation *parent,
@@ -95,6 +95,13 @@ void Netlist::remapInterface(const std::map<VertexRef, VertexRef> &vertexMap)
 	for (auto &kv : interface_) {
 		kv.second = vertexMap.at(kv.second);
 	}
+}
+
+void Netlist::createOneway(VertexRef from, VertexRef to)
+{
+	auto middle = graph_.addVertex();
+	graph_.connect(from, middle);
+	graph_.connect(middle, to);
 }
 
 }

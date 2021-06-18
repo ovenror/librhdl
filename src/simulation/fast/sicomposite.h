@@ -7,7 +7,7 @@
 #include "siminterfacecontainer.h"
 #include "sisingle_base.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 template <class NAME, class... COMPONENTS>
 class SIComposite : public SimInterface<IComposite, NAME> {

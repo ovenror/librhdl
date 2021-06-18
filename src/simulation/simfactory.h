@@ -2,22 +2,17 @@
 #define SIMFACTORY_H
 
 #include <memory>
-#include "simulator.h"
 
 namespace rhdl {
 
-class Entity;
 class Interface;
+class Simulator;
 
 class SimFactory
 {
 public:
-	SimFactory(const Entity &e);
-
-	virtual std::unique_ptr<Simulator> make() = 0;
-
-protected:
-	const Interface *iface_;
+	virtual ~SimFactory() {}
+	virtual std::unique_ptr<Simulator> make(const Interface &iface) = 0;
 };
 
 }

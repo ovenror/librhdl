@@ -9,18 +9,40 @@
 
 namespace rhdl {
 
-class Blocks;
-class Netlist;
-class Structural;
+namespace behavioral {
 class TimedBehavior;
 class FunctionalBehavior;
-class InvalidRepresentation;
+}
+
+namespace structural {
+class CompressedStructure;
+class Structure;
+}
+
+namespace netlist {
+class Netlist;
+}
+
+namespace blocks {
+class Blocks;
+}
+
+namespace txt {
 class Commands;
+}
+
+class InvalidRepresentation;
 
 class Representations
 {
 public:
-	using Types = List<TimedBehavior, FunctionalBehavior, Structural, Netlist, Blocks, Commands, InvalidRepresentation>;
+	using Types = List<
+			behavioral::TimedBehavior, behavioral::FunctionalBehavior,
+			structural::CompressedStructure, structural::Structure,
+			netlist::Netlist,
+			blocks::Blocks,
+			txt::Commands,
+			InvalidRepresentation>;
 	using RepTypeID = RepresentationTypeID;
 
 	Representations();

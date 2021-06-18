@@ -14,22 +14,22 @@ namespace rhdl {
 
 struct ConnectionPredicate {
 public:
-	using Direction = InterfaceDirection;
+	using Direction = SingleDirection;
 
 	ConnectionPredicate(bool samedir = false, bool check_first_dir = false,
 			Direction first_dir = Direction::OUT);
 
-	static ConnectionPredicate ptp() {return {false, true, Direction::OUT};}
-	static ConnectionPredicate pte() {return {true, true, Direction::OUT};}
-	static ConnectionPredicate pte_nondir() {return {true, false, Direction::OUT};}
-	static ConnectionPredicate ptp_nondir() {return {false, false, Direction::OUT};}
+	static ConnectionPredicate ptp(bool directional = true) {return {false, directional, Direction::OUT};}
+	static ConnectionPredicate pte(bool directional = true) {return {true, directional, Direction::OUT};}
+	static ConnectionPredicate etp(bool directional = true) {return {true, directional, Direction::IN};}
+	static ConnectionPredicate equal() {return pte(false);}
 
 	ConnectionPredicate reversed() const;
 	ConnectionPredicate entity_corrected() const;
 
 	bool samedir_;
 	bool check_first_dir_;
-	InterfaceDirection first_dir_;
+	SingleDirection first_dir_;
 };
 
 }

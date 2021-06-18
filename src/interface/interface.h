@@ -1,9 +1,10 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-#include "interface/direction.h"
+#include "interface/compositedirection.h"
 
 #include "visitors/interfacevisitor.h"
+#include "visitors/interfacecaster.h"
 #include "cresult/compatibilityresult.h"
 
 #include "construction/connectionpredicate.h"
@@ -31,29 +32,27 @@ bool operator>=(const Interface &super, const Interface &sub);
 class Interface : public AbstractVisitable<Interface, InterfaceVisitor>
 {
 public:
-	using Direction = InterfaceDirection;
+	using Direction = SingleDirection;
 	using Predicate2 = ConnectionPredicate;
-
 	using CResult = std::unique_ptr<CompatibilityResult>;
+
+	enum class Type {SINGLE = RHDL_SINGLE, COMPOSITE = RHDL_COMPOSITE, PLACEHOLDER = RHDL_UNSPECIFIED};
 
 	Interface(const std::string &name = "");
 	virtual ~Interface();
 
-	virtual Interface *clone() const = 0;
+	virtual Interface *clone(const std::string &newName) const = 0;
+	Interface *clone() const {return clone(name());}
 
 	const std::string &name() const {return name_;}
+	Type type() const;
+	virtual CompositeDirection compositeDirection() const = 0;
+	virtual SingleDirection preferredDirection() const = 0;
+
+	template <class T>
+	const T &cast();
 
 	const Interface *operator[] (const std::string &iname) const;
-	virtual const char *const *ls() const = 0;
-
-	virtual const Interface *find_connectible(const Interface *to, const Predicate2 &predicate) const;
-	virtual std::pair<const Interface *, const Interface *> find_connectibles(const Interface *to, const Predicate2 &predicate) const;
-	virtual void add_components_to_queue(std::queue<const Interface *> &bfs_backlog) const;
-
-	virtual CResult eq_struct(const Interface &other, const Predicate2 &predicate) const;
-	virtual CResult eq_struct_int(const Interface &other, const Predicate2 &predicate) const = 0;
-	virtual CResult eq_struct_int (const ISingle &other, const Predicate2 &predicate) const;
-	virtual CResult eq_struct_int (const IComposite &other, const Predicate2 &predicate) const;
 
 	bool is_partially_open() const;
 	std::string qualifiedName(const Interface &top) const;
@@ -62,13 +61,18 @@ public:
 	const Interface& getCorrespondingSubInterface(
 			const Interface &counterpart, const Interface &sub,
 			const Predicate2 &pred) const;
+	CResult compatTo(const Interface &other, const Predicate2 &predicate) const;
+	bool compatibleTo(const Interface &, const Predicate2 &) const;
 
+	template <class RESULT> RESULT checkCompatTo(
+			const Interface &, const Predicate2 &) const;
 
 	void setAllOpen() const;
 
 	bool eq_name (const Interface &other) const;
 	bool eq_names (const Interface &other) const;
 	virtual bool eq_inner_names (const Interface &other) const = 0;
+	virtual void add_components_to_queue(std::queue<const Interface *> &bfs_backlog) const;
 
 	operator std::string() const;
 
@@ -77,9 +81,6 @@ private:
 
 protected:
 	std::string name_;
-
-
-	friend class IPlaceholder;
 
 public:
 	using C_Struct = rhdl_iface_struct;
@@ -93,6 +94,14 @@ protected:
 };
 
 std::ostream &operator<<(std::ostream &os, const Interface &i);
+
+template<class T>
+inline const T &Interface::cast()
+{
+	InterfaceCaster<T, true> caster;
+	accept(caster);
+	return caster();
+}
 
 }
 

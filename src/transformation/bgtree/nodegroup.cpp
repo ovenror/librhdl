@@ -6,6 +6,9 @@
 #include <numeric>
 
 namespace rhdl {
+
+using blocks::Blocks;
+
 namespace TM {
 
 NodeGroup::NodeGroup(Layer &container, unsigned int index,

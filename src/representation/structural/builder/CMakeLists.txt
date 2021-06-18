@@ -1,0 +1,25 @@
+target_sources(rhdl_obj
+	PRIVATE
+		builderport.cpp
+		cbuilderportcontainer.cpp
+		cbuildersimple.cpp
+		completestructurebuilder.cpp
+		complexconnection.cpp
+		complexport.cpp
+		connection.cpp
+		connectionsbuilder.cpp
+		cpeerdirection.cpp
+		element.cpp
+		existingentitystructure.cpp
+		existingport.cpp
+		newentitystructure.cpp
+		part.cpp
+		partialstructurebuilder.cpp
+		port.cpp
+		portcontainer.cpp
+		portscreator.cpp
+		simpleconnection.cpp
+		simpleport.cpp
+		structure.cpp
+		structurebuilder.cpp
+)

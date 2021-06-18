@@ -20,6 +20,7 @@ const rhdl_connector_t *rhdl_component(const rhdl_structure_t *structure, const 
 const rhdl_connector_t *rhdl_select(const rhdl_connector_t *connector, const char *iface_name);
 int rhdl_connect(const rhdl_connector_t *from, const rhdl_connector_t *to);
 int rhdl_finish_structure(const rhdl_structure_t *structure);
+int rhdl_abort_structure(const rhdl_structure_t *structure);
 
 int rhdl_print_commands(const char *entity_name);
 

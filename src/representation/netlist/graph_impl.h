@@ -3,13 +3,12 @@
 
 #include "boost/graph.h"
 
-namespace rhdl {
+namespace rhdl::netlist {
 
 class Graph_Impl : public Graph_Impl_Boost {
 public:
 	Graph_Impl();
 };
-
 
 }
 

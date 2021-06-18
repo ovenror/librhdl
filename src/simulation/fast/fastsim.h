@@ -6,8 +6,7 @@
 #include "sisingle_base.h"
 #include <functional>
 
-namespace rhdl {
-
+namespace rhdl::behavioral {
 
 template<class SIFACE, class INTERNAL_STATE>
 class FastSim : public ExposableInternalStateSim

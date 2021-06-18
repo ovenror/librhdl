@@ -14,19 +14,9 @@ TEST(CApi_misconstructionTest,wrongOp)
 	EXPECT_TRUE(::wrongOp());
 }
 
-TEST(CApi_misconstructionTest,open2open)
-{
-	EXPECT_TRUE(::open2open());
-}
-
 TEST(CApi_misconstructionTest,ambiguousConnection)
 {
 	EXPECT_TRUE(::ambiguousConnection());
-}
-
-TEST(CApi_misconstructionTest,alreadyConnectedToOpen)
-{
-	EXPECT_TRUE(::alreadyConnectedToOpen());
 }
 
 TEST(CApi_misconstructionTest,statefulComponentInStatelessStructure)

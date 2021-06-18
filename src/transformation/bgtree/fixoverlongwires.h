@@ -8,8 +8,9 @@
 
 namespace rhdl {
 
-class Blocks;
 class ISingle;
+
+namespace blocks { class Blocks; }
 
 namespace TM {
 
@@ -23,7 +24,9 @@ using Links = std::vector<Link>;
 using WorkingAndBrokenLinks = std::pair<Links, Links>;
 using ConnectionLinks = std::map<const TM::Connection *, WorkingAndBrokenLinks>;
 
-std::forward_list<const Connection *> fixBrokenConnections(const ConnectionLinks &connectionsLinks, Blocks &b);
+std::forward_list<const Connection *> fixBrokenConnections(
+		const ConnectionLinks &connectionsLinks,
+		blocks::Blocks &b);
 
 const Connector &getOutputConnector(const Node &node);
 const Connector &getInputConnector(const Node &node);

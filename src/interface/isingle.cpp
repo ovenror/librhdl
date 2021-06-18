@@ -1,6 +1,8 @@
-#include "interface/isingle.h"
-#include "interface/predicate.h"
-#include "interface/cresult/csingle.h"
+#include "isingle.h"
+#include "predicate.h"
+#include "cresult/csingle.h"
+
+#include <cassert>
 #include <iostream>
 #include <typeinfo>
 
@@ -17,20 +19,9 @@ ISingle::ISingle(const std::string &name, Direction dir, bool open) :
 	c.single.open = open;
 }
 
-// "visitor::accept()"
-Interface::CResult ISingle::eq_struct_int(const Interface &other, const Predicate2 &predicate) const
-{
-	return other.eq_struct_int (*this, predicate.reversed());
-}
-
-Interface::CResult ISingle::eq_struct_int(const ISingle &other, const Predicate2 &predicate) const
-{
-	return CResult(new CSingle(*this, other, predicate));
-}
-
 bool ISingle::eq_inner_names(const Interface &other) const
 {
-	CResult wat(eq_struct_int (other, Predicate2::ptp_nondir()));
+	CResult wat(compatTo(other, Predicate2::ptp(false)));
 	bool result = wat -> success();
 
 	return result;

@@ -7,12 +7,11 @@
 //using namespace boost;
 
 
-namespace rhdl {
+namespace rhdl::netlist {
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS> GraphRep;
 typedef GraphRep::vertex_descriptor VertexRef;
 typedef GraphRep::edge_descriptor EdgeRef;
-
 
 class Graph_Impl_Boost {
 

@@ -3,46 +3,48 @@
 
 namespace rhdl {
 
-
-CComposite::CComposite(const IComposite &from, const IComposite &to, const Predicate &predicate) :
-	BASE(from, to, predicate)
+Errorcode CCompositeOps::fail_num(std::ostream &os) const
 {
+	os << "* different number of components\n";
+	return Errorcode::E_DIFFERENT_NUMBER_OF_COMPONENTS;
 }
 
-CComposite::~CComposite()
+Errorcode CCompositeOps::fail_component(std::ostream &os, size_t &idx, Interface::CResult sub) const
 {
-
+	os << "incompatible components at index " << idx
+	   <<	":" << std::endl << sub -> error_msg();
+	return sub -> error_code();
 }
 
-void CComposite::eval_int() const
-{
-	size_t num_components = from_.components_.size();
-
-	if (num_components != to_.components_.size ())
+template <class RESULT>
+void CCompositeOps::eval_common(RESULT &result) const {
+	if (lhs.size() != rhs.size())
 	{
-		msg_ << "* different number of components\n";
-		ec_ = Errorcode::E_DIFFERENT_NUMBER_OF_COMPONENTS;
-		success_ = false;
+		issue(&CCompositeOps::fail_num, result);
 		return;
 	}
 
-	for (size_t index = 0; index < num_components; ++index)
-	{
-		Interface::CResult subresult(from_.components_ [index] -> eq_struct_int (*to_.components_ [index], predicate_));
+	auto lhc = lhs.begin();
+	auto rhc = rhs.begin();
 
-		if (!subresult -> success())
-		{
-			msg_ << std::string("incompatible components at index ") << index;
-			msg_ << ":" << std::endl;
-			msg_ << subresult -> error_msg();
-			ec_ = subresult -> error_code();
-			success_ = false;
+	for (size_t index = 0; index < lhs.size(); ++index)
+	{
+		assert (lhc != lhs.end());
+		assert (rhc != rhs.end());
+
+		auto subresult = (*lhc) -> checkCompatTo<SubType<RESULT>>(**rhc, predicate);
+
+		if (!checkSub(subresult)) {
+			issue(&CCompositeOps::fail_component, result, index, smartmove(subresult));
 			return;
 		}
-	}
 
-	ec_ = Errorcode::E_NO_ERROR;
-	success_ = true;
+		++lhc;
+		++rhc;
+	}
 }
+
+template void CCompositeOps::eval_common(bool &) const;
+template void CCompositeOps::eval_common(const CComposite &) const;
 
 }

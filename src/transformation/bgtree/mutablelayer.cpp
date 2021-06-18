@@ -3,6 +3,9 @@
 #include "util/iterator_pair.h"
 
 namespace rhdl {
+
+using blocks::Blocks;
+
 namespace TM {
 
 MutableLayer::MutableLayer(TreeModel &container, unsigned int index)

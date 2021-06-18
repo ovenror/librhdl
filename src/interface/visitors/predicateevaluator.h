@@ -13,7 +13,6 @@ public:
 
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;
-	void visit(const IPlaceholder &i) override;
 
 	bool eval(const Interface &i);
 

@@ -1,20 +1,25 @@
+#include <representation/structural/connection.h>
+#include <representation/structural/structure.h>
 #include "hierarchicalsim.h"
-#include "representation/structural/structural.h"
+
 #include "entity/entity.h"
+
 #include <tuple>
 #include <memory>
 #include <iostream>
 
-namespace rhdl {
+namespace rhdl::structural {
 
-HierarchicalSim::HierarchicalSim(const Structural &structure, bool use_behavior) :
+HierarchicalSim::HierarchicalSim(const Structure &structure, bool use_behavior) :
 	structure_(structure), stepping_(false)
 {
-	auto ipart = structure.parts().begin();
+	using behavioral::TimedBehavior;
+
+	auto ipart = structure.elements().begin();
 	++ipart; //skip ourself
 	part_sims_.push_back(this);
 
-	for (;ipart != structure.parts().end(); ++ipart) {
+	for (;ipart != structure.elements().end(); ++ipart) {
 		const Entity &part = **ipart;
 		const Representation *partRep = nullptr;
 
@@ -22,10 +27,10 @@ HierarchicalSim::HierarchicalSim(const Structural &structure, bool use_behavior)
 			partRep = part.getRepresentation(TimedBehavior::ID);
 
 			if (!partRep || partRep -> timing() != part.defaultTiming())
-				partRep = part.getRepresentation(Structural::ID);
+				partRep = part.getRepresentation(Structure::ID);
 		}
 		else {
-			partRep = part.getRepresentation(Structural::ID);
+			partRep = part.getRepresentation(Structure::ID);
 
 			if (!partRep)
 				partRep = part.getRepresentation(TimedBehavior::ID);
@@ -163,6 +168,7 @@ void HierarchicalSim::propagateDeep()
 
 /* TODO: Maybe remember "changed" individually for each subsim,
  * so there is no need to propagate (or check for input changes) */
+// FIXME: it shouldn't be necessary anymore to call propagateConnectionsOnce() in a loop
 bool HierarchicalSim::propagateConnections()
 { 
 	bool changed = false;
@@ -177,60 +183,58 @@ bool HierarchicalSim::propagateConnections()
 bool HierarchicalSim::propagateConnectionsOnce()
 {
 	bool changed = false;
-	for (const FlatConnection &c : structure_.flatConnections()) {
+	for (const Connection &c : structure_.connections()) {
 		if (propagateConnection(c))
 			changed = true;
 	}
 	return changed;
 }
 
-bool HierarchicalSim::propagateConnection(const FlatConnection &c)
+bool HierarchicalSim::propagateConnection(const Connection &c)
 {
-	FlatPort p1, p2;
-	std::tie(p1, p2) = c;
+	bool any_output = false;
+	bool all_inputs = true;
 
-	bool changed;
+	for (const Port &port : c) {
+		if (!getPortInput(port))
+			all_inputs = false;
 
-	changed = propagateConnection(p1, p2);
+		if (getPortOutput(port))
+			any_output = true;
 
-	if (propagateConnection(p2, p1))
-		changed = true;
+		if (any_output && !all_inputs)
+			break;
+	}
 
-	return changed;
-}
-
-bool HierarchicalSim::propagateConnection(const HierarchicalSim::FlatPort &from, const HierarchicalSim::FlatPort &to)
-{
-	if (!getPortOutput(from))
+	if (!any_output || all_inputs)
 		return false;
 
-	if (getPortInput(to))
-		return false;
+	for (const Port &port : c)
+		setPort(port);
 
-	setPort(to);
 	return true;
 }
 
-bool HierarchicalSim::getPortInput(const HierarchicalSim::FlatPort &p) const
+bool HierarchicalSim::getPortInput(const Port &p) const
 {
-	if (Structural::isExternal(p))
-		return stateCache_.at(p.second);
+	if (p.isExternal())
+		return stateCache_.at(&p.iface());
 	else
-		return part_sims_[p.first]->getInput(p.second);
+		return part_sims_[p.element()]->getInput(&p.iface());
 }
 
 
-bool HierarchicalSim::getPortOutput(const HierarchicalSim::FlatPort &p) const
+bool HierarchicalSim::getPortOutput(const Port &p) const
 {
-	return part_sims_[p.first]->get(p.second);
+	return part_sims_[p.element()]->get(&p.iface());
 }
 
-void HierarchicalSim::setPort(const HierarchicalSim::FlatPort &p)
+void HierarchicalSim::setPort(const Port &p)
 {
-	if (Structural::isExternal(p))
-		stateCache_.at(p.second) = true;
+	if (p.isExternal())
+		stateCache_.at(&p.iface()) = true;
 	else
-		part_sims_[p.first]->set(p.second);
+		part_sims_[p.element()]->set(&p.iface());
 }
 
 std::vector<const ISingle *> HierarchicalSim::getIFaces(const Entity &entity) const

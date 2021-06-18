@@ -9,6 +9,8 @@ namespace rhdl {
 class ISingle;
 class Simulator;
 
+namespace netlist {
+
 struct Netlist : public RepresentationBase<Netlist>
 {
 	typedef Graph_Impl Graph;
@@ -24,6 +26,7 @@ struct Netlist : public RepresentationBase<Netlist>
 	Netlist::Interface copyInto(Netlist &target) const;
 	void removeDisconnectedVertices();
 
+	void createOneway(VertexRef from, VertexRef to);
 	void splitVertex(VertexRef vertex);
 	void removeVertex(VertexRef vertex);
 
@@ -34,7 +37,6 @@ struct Netlist : public RepresentationBase<Netlist>
 	Graph graph_;
 };
 
-
-}
+}}
 
 #endif // NETLIST_H

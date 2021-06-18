@@ -2,7 +2,6 @@ add_executable(internaltests $<TARGET_OBJECTS:rhdl_obj>
 	divisivewires.cpp
 	fixoverlongwires.cpp
 	connection.cpp
-	construction.cpp
 )
 
 add_subdirectory(simulation)

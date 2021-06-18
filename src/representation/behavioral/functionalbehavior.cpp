@@ -1,7 +1,7 @@
 #include "functionalbehavior.h"
 #include "simulation/simulator.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 FunctionalBehavior::FunctionalBehavior(const Entity &entity, const Representation *parent)
 	: RepresentationBase<FunctionalBehavior>(entity, parent, nullptr)

@@ -1,8 +1,8 @@
 target_sources(rhdl_obj
 	PRIVATE
-		net.cpp
-		netimpl.cpp
-		structural.cpp
-		temporarynet.cpp
+		port.cpp
+		connection.cpp
+		structure.cpp
 )
 
+add_subdirectory(builder)

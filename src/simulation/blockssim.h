@@ -10,7 +10,7 @@
 #include <array>
 #include <iostream>
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 class BSRedstone;
 class BSDelay;

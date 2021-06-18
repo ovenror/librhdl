@@ -6,24 +6,17 @@
  */
 
 #include <rhdl/construction/component.h>
-#include "construction/parthandle.h"
+#include "construction/library.h"
+
+#include "representation/structural/builder/partialstructurebuilder.h"
 
 namespace rhdl {
 
+namespace sb = structural::builder;
+
 Component::Component(const std::string &name) :
-		handle_(std::make_unique<PartHandle>(name)) {}
+	Connector(sb::makeComponent(name))
+{}
 
-Component::~Component() {
-}
-
-PartInterface Component::operator [](const std::string& iname) const
-{
-	return (*handle_)[iname];
-}
-
-const Interfacible& Component::interfacible() const
-{
-	return *handle_;
-}
 
 }

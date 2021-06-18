@@ -3,22 +3,23 @@
 
 #include "transformation/typedtransformation.h"
 #include "representation/netlist/netlist.h"
+#include "representation/blocks/blocks.h"
 #include "treemodel.h"
 #include <vector>
 
 namespace rhdl {
 
-class BGTree : public TypedTransformation<Netlist, Blocks>
+class BGTree : public TypedTransformation<netlist::Netlist, blocks::Blocks>
 {
 public:
 	BGTree();
 
-	virtual Blocks execute(const Netlist &source) const override;
+	virtual blocks::Blocks execute(const netlist::Netlist &source) const override;
 
-	static boost::multi_array<char, 2> project(Blocks::Cuboid blocks);
+	static boost::multi_array<char, 2> project(blocks::Blocks::Cuboid blocks);
 
 private:
-	static char project(Blocks::Line line, bool shortCut);
+	static char project(blocks::Blocks::Line line, bool shortCut);
 };
 
 std::ostream &operator<<(std::ostream &os, const boost::multi_array<char, 2> &ascii_img);

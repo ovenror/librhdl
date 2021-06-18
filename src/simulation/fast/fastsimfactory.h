@@ -10,6 +10,9 @@
 namespace rhdl {
 
 class Entity;
+class NO_STATE {};
+
+namespace behavioral {
 
 template <class SIFACE, class INTERNAL_STATE>
 class FastSimFactory : public SimFactory
@@ -22,16 +25,16 @@ public:
 	using Fused = std::vector<std::vector<const char *>>;
 	using Initial = std::initializer_list<InitMap::value_type>;
 
-	FastSimFactory(const Entity &e, StepFunc f, StepFunc p = [](Sim &){}, Initial initial={}) :
-		SimFactory(e), stepfunc_(f), procfunc_(p), initmap_(initial)
+	FastSimFactory(StepFunc f, StepFunc p = [](Sim &){}, Initial initial={}) :
+		stepfunc_(f), procfunc_(p), initmap_(initial)
 	{}
 
-	std::unique_ptr<Simulator> make() override
+	std::unique_ptr<Simulator> make(const Interface &iface) override
 	{
 		if (!initmap_.size())
-			return std::make_unique<Sim>(iface_, stepfunc_, procfunc_);
+			return std::make_unique<Sim>(&iface, stepfunc_, procfunc_);
 
-		auto sim = std::make_unique<HSim>(iface_, stepfunc_, procfunc_);
+		auto sim = std::make_unique<HSim>(&iface, stepfunc_, procfunc_);
 
 		for (auto kv : initmap_)
 		{
@@ -46,7 +49,8 @@ public:
 	InitMap initmap_;
 };
 
-}
+} /* namespace behavioral */
+} /* namespace rhdl */
 
 
 #endif // FASTSIMFACTORY_H

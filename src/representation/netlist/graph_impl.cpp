@@ -1,6 +1,6 @@
 #include "graph_impl.h"
 
-namespace rhdl {
+namespace rhdl::netlist {
 
 Graph_Impl::Graph_Impl() {}
 

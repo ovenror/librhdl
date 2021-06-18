@@ -11,14 +11,13 @@ namespace rhdl {
 class Flattener : public InterfaceVisitor<true>
 {
 public:
-	Flattener(std::vector<const ISingle *> &flat_interface);
+	Flattener(std::vector<const ISingle *> &flat);
 
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;
-	void visit(const IPlaceholder &i) override {std::ignore=i;assert(0);}
 
 private:
-	std::vector<const ISingle *> &flat_interface_;
+	std::vector<const ISingle *> &flat_;
 };
 
 }

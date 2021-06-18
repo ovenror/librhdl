@@ -3,14 +3,14 @@
 
 namespace rhdl {
 
-Flattener::Flattener(std::vector<const ISingle *> &flat_interface) :
-	flat_interface_(flat_interface)
+Flattener::Flattener(std::vector<const ISingle *> &flat) :
+	flat_(flat)
 {
 }
 
 void Flattener::visit(const ISingle &i)
 {
-	flat_interface_.push_back(&i);
+	flat_.push_back(&i);
 }
 
 void Flattener::visit(const IComposite &i)

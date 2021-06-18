@@ -6,28 +6,33 @@
  */
 
 #include "structurehandle.h"
+#include "representation/structural/builder/structure.h"
+#include <cassert>
 
 namespace rhdl {
 
-StructureHandle::StructureHandle(const std::string name, int mode) : c_(*this)
+namespace sb = structural::builder;
+
+StructureHandle::StructureHandle(const std::string name, int mode)
+	: structure_(sb::makeStructure(name, static_cast<Structure::Mode>(mode))), c_(*this)
 {
-	connector_ = &context_.make<Structure>(name, static_cast<Structure::Mode>(mode));
-	c_.content().connector = c_ptr(*static_cast<Handle *>(connector_));
+	auto &port = structure_ -> topPort();
+	c_.content().connector = c_ptr(context_.make(port));
 }
 
 Handle &StructureHandle::makeComponent(const Entity &entity)
 {
-	return context_.make<PartHandle>(&entity);
+	return context_.make(structure_ -> add(entity));
 }
 
-void StructureHandle::finalize() {
-	try {
-		connector_ -> finalize();
-	}
-	catch (ConstructionException &e) {
-		assert (e.errorcode() == Errorcode::E_NETLIST_CONTAINS_CYCLES);
-		throw;
-	}
+void StructureHandle::abort()
+{
+	structure_ -> abort();
+}
+
+void StructureHandle::finalize()
+{
+	structure_ -> finalize();
 }
 
 } /* namespace rhdl */

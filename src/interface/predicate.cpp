@@ -1,7 +1,6 @@
 #include "predicate.h"
 #include "isingle.h"
 #include "icomposite.h"
-#include "iplaceholder.h"
 
 namespace rhdl {
 
@@ -15,7 +14,6 @@ public:
 	bool operator()(const Interface &i) const override {return !p_(i);}
 	bool operator()(const ISingle &i) const override {return !p_(i);}
 	bool operator()(const IComposite &i) const override {return !p_(i);}
-	bool operator()(const IPlaceholder &i) const override {return !p_(i);}
 
 private:
 	const Predicate_1st p_;
@@ -30,7 +28,6 @@ public:
 	bool operator()(const Interface &i) const override {return FUNC::eval(p1_(i), p2_(i));}
 	bool operator()(const ISingle &i) const override {return FUNC::eval(p1_(i), p2_(i));}
 	bool operator()(const IComposite &i) const override {return FUNC::eval(p1_(i), p2_(i));}
-	bool operator()(const IPlaceholder &i) const override {return FUNC::eval(p1_(i), p2_(i));}
 
 private:
 	const Predicate_1st p1_;
@@ -86,12 +83,6 @@ bool Predicate_2nd::operator()(const IComposite &i)
 	return work(i);
 }
 
-bool Predicate_2nd::operator()(const IPlaceholder &i)
-{
-	return work(i);
-}
-
-
 Predicate_1st Not(Predicate_1st &&p)
 {
 	return Predicate_1st::make<P1st_Not>(std::forward<Predicate_1st>(p));
@@ -138,8 +129,6 @@ Predicate_1st Predicate (const std::function<bool(const T &)> &f)
 template Predicate_1st Predicate(const std::function<bool(const Interface &)> &f);
 template Predicate_1st Predicate(const std::function<bool(const ISingle &)> &f);
 template Predicate_1st Predicate(const std::function<bool(const IComposite &)> &f);
-template Predicate_1st Predicate(const std::function<bool(const IPlaceholder &)> &f);
-
 
 Predicate_2nd Exists(Predicate_1st &&p)
 {
@@ -180,11 +169,6 @@ bool Predicate_1st::operator()(const ISingle &i) const
 }
 
 bool Predicate_1st::operator()(const IComposite &i) const
-{
-	return (*impl_)(i);
-}
-
-bool Predicate_1st::operator()(const IPlaceholder &i) const
 {
 	return (*impl_)(i);
 }

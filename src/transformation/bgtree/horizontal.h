@@ -11,8 +11,8 @@ class Horizontal : public Container
 public:
 	Horizontal(unsigned int index);
 
-	Blocks::index_t xpos() const override;
-	Blocks::index_t ypos() const override;
+	blocks::Blocks::index_t xpos() const override;
+	blocks::Blocks::index_t ypos() const override;
 };
 
 }

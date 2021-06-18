@@ -1,13 +1,19 @@
+#include <representation/structural/structure.h>
 #include "transformations.h"
+#include "transformation/defaulttransformation.h"
 
 /*
  * Include available transformations and register them in the constructor
- * at the bottom.
+ * at the bottom. For default transformations, the concerned types (source
+ * and destination) have to be known (included).
  */
 
+// transformations
 #include "bgtree/bgtree.h"
 #include "transformation/structure2netlist.h"
-#include "transformation/defaulttransformation.h"
+// destination types
+#include "representation/txt/commands.h"
+
 /*
  * ---
  */
@@ -37,7 +43,7 @@ Transformations::Transformations()
 	Init<
 		StructureToNetlist,
 		BGTree,
-		DefaultTransformation<Blocks, Commands>
+		DefaultTransformation<blocks::Blocks, txt::Commands>
 	>::init(*this);
 }
 

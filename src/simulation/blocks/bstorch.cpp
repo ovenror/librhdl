@@ -1,6 +1,6 @@
 #include "bstorch.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 BSTorch::BSTorch(Queue &q) : BSDelay(q)
 {

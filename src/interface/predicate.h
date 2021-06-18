@@ -19,7 +19,6 @@ public:
 	virtual bool operator()(const Interface &) const {return false;}
 	virtual bool operator()(const ISingle &i) const {return (*this)((Interface &) i);}
 	virtual bool operator()(const IComposite &i) const {return (*this)((Interface &) i);}
-	virtual bool operator()(const IPlaceholder &i) const {return (*this)((Interface &) i);}
 
 protected:
 	Predicate_1st_Impl();
@@ -44,7 +43,6 @@ public:
 	bool operator()(const Interface &i) const;
 	bool operator()(const ISingle &i) const;
 	bool operator()(const IComposite &i) const;
-	bool operator()(const IPlaceholder &i) const;
 
 	template <class T, class... Args>
 	static Predicate_1st make(Args&&... args)
@@ -75,7 +73,6 @@ public:
 	bool operator()(const Interface &i);
 	bool operator()(const ISingle &i);
 	bool operator()(const IComposite &i);
-	bool operator()(const IPlaceholder &i);
 
 	template <class IFACE>
 	bool work(const IFACE &i);

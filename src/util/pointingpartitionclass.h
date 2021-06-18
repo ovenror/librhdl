@@ -20,18 +20,22 @@ class PointingPartitionClass : public PartitionClassBase<Element> {
 	using Owner = typename Super::Owner;
 
 public:
+	using Super::PartitionClassBase;
+
+#if 0
 	PointingPartitionClass(Element &element, Owner &This);
 	PointingPartitionClass(Element *element, Owner &This);
 	PointingPartitionClass(PointingPartitionClass &&victim, Owner &This);
-	virtual ~PointingPartitionClass() {}
+#endif
+	virtual ~PointingPartitionClass();
 
-	void accept(Element &element);
-	void accept(Element *element);
+	void release(Super &) {delete this;}
 
 private:
 	template <class, class, class> friend class Partitionable;
 };
 
+#if 0
 template<class Element>
 inline PointingPartitionClass<Element>::PointingPartitionClass(
 		Element& element, Owner &This)
@@ -49,22 +53,14 @@ inline PointingPartitionClass<Element>::PointingPartitionClass(
 		PointingPartitionClass &&victim, Owner &This)
 	: Super(std::move(victim), This)
 {}
-
-template<class Element>
-inline void PointingPartitionClass<Element>::accept(Element& element)
-{
-	if (element.pcOwner_)
-		Super::accept(element);
-	else
-		Super::acceptStray(element);
-}
-
-template<class Element>
-inline void PointingPartitionClass<Element>::accept(Element* element)
-{
-	Super::accept(*element);
-}
+#endif
 
 } /* namespace rhdl */
+
+template<class Element>
+inline rhdl::PointingPartitionClass<Element>::~PointingPartitionClass()
+{
+	Super::clear_norelease();
+}
 
 #endif /* SRC_UTIL_POINTINGPARTITIONCLASS_H_ */

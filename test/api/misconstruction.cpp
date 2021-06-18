@@ -59,38 +59,12 @@ TEST(ApiMisconstruction, wrongOp)
     inv0["out"] = inv1["in"];
 }
 
-TEST(ApiMisconstruction, open2open)
-{
-    Component c0("RS_Latch");
-    Component c1("RS_Latch");
-
-    test(Errorcode::E_OPEN_TO_OPEN, [&](){
-        c0["Q"] >> c1["S"];
-    });
-}
-
 TEST(ApiMisconstruction, ambiguousConnection)
 {
     Component nand("NAND");
 
     test(Errorcode::E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES, [&](){
         nand >> nand;
-    });
-}
-
-TEST(ApiMisconstruction, alreadyConnectedToOpen)
-{
-    Structure foo("MCTest", Structure::CREATE_STATEFUL);
-    Component nor("NOR");
-
-    nor >> nor["in0"];
-
-    test(Errorcode::E_ALREADY_CONNECTED_TO_OPEN, [&](){
-        nor >> foo;
-    });
-
-    test(Errorcode::E_ALREADY_CONNECTED_TO_OPEN, [&](){
-        nor >> nor["in1"];
     });
 }
 

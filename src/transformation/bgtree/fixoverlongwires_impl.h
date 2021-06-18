@@ -29,7 +29,7 @@ using SegmentToPositionIndex = boost::bimap<const Segment *, unsigned int>;
 using Path = std::vector<Current>;
 using Paths = std::vector<std::unique_ptr<Path>>;
 
-bool fixBrokenConnection(const TM::Connection &n, const WorkingAndBrokenLinks &brokenLinks, Blocks &b);
+bool fixBrokenConnection(const TM::Connection &n, const WorkingAndBrokenLinks &brokenLinks, blocks::Blocks &b);
 
 void createSuperSegments(const Connection &connection);
 
@@ -38,9 +38,9 @@ Paths findPaths(const Link &link);
 
 void eraseWorkingLinks(std::map<Link, Paths> &paths, Links working);
 
-using RepeaterPlacement = std::pair<Current, Blocks::index_t>;
+using RepeaterPlacement = std::pair<Current, blocks::Blocks::index_t>;
 
-void placeRepeater(const RepeaterPlacement &position, Blocks &b);
+void placeRepeater(const RepeaterPlacement &position, blocks::Blocks &b);
 
 bool linkIsBroken(const Link &link, const std::map<Link, Paths> paths);
 bool pathIsBroken(const Path &path);
@@ -77,7 +77,7 @@ RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
 void evaluatePositions(const std::map<Link, Paths> &paths, const SegmentToPositionIndex &map,
 		std::vector<TotalPositionRating> &result);
 
-using SplitPathRating = std::pair<unsigned int, Blocks::index_t>;
+using SplitPathRating = std::pair<unsigned int, blocks::Blocks::index_t>;
 using PositionRating = std::array<SplitPathRating, 2>;
 
 struct PositionResult {
@@ -92,14 +92,14 @@ void evaluatePositions(
 		const Path &path, const SegmentToPositionIndex &map,
 		std::vector<PositionRating> &result);
 
-Blocks::index_t length(const Path &path);
-Blocks::index_t freeLength(
-		const Path &path, Blocks::index_t start);
+blocks::Blocks::index_t length(const Path &path);
+blocks::Blocks::index_t freeLength(
+		const Path &path, blocks::Blocks::index_t start);
 
 bool fixed(const Path &path);
 
-PositionRating rate(Blocks::index_t length, Blocks::index_t repeaterPosition);
-SplitPathRating rate(Blocks::index_t length);
+PositionRating rate(blocks::Blocks::index_t length, blocks::Blocks::index_t repeaterPosition);
+SplitPathRating rate(blocks::Blocks::index_t length);
 
 std::ostream &operator<<(std::ostream &os, const Path &path);
 

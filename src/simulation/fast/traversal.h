@@ -5,7 +5,7 @@
 #include "sicomposite.h"
 #include "util/static_strings.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 class NoSuchInterface;
 

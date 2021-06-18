@@ -1,6 +1,5 @@
 #include <interface/visitors/predicateevaluator.h>
 #include "../icomposite.h"
-#include "../iplaceholder.h"
 
 namespace rhdl {
 
@@ -25,12 +24,6 @@ void PredicateEvaluator::visit(const IComposite &i)
 
 		c -> accept(*this);
 	}
-}
-
-void PredicateEvaluator::visit(const IPlaceholder &i)
-{
-	predicate_(i);
-	i.realization() -> accept(*this);
 }
 
 bool PredicateEvaluator::eval(const Interface &i)

@@ -23,9 +23,6 @@ const char *ConstructionException::whatcode() const noexcept
 	switch (code_) {
 	case Errorcode::E_NO_ERROR: return "(no error)";
 
-	case Errorcode::E_ALREADY_CONNECTED_TO_OPEN: return "Already connected to an open interface. No other connections are possible.";
-	case Errorcode::E_UNKNOWN_CONNECTION_FAILURE: return "Unknown connection failure.";
-
 	case Errorcode::E_CANNOT_GET_ANONYMOUS_INTERFACE: return "Cannot look a possibly existing anonymous interface up by name";
 	case Errorcode::E_NO_SUCH_INTERFACE: return "Interface does not exist.";
 
@@ -37,6 +34,7 @@ const char *ConstructionException::whatcode() const noexcept
 	case Errorcode::E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY: return "Cannot add stateful component to structural representation of functional entity.";
 
 	case Errorcode::E_NETLIST_CONTAINS_CYCLES: return "The netlist (that was generated from the representation) you tried to add contains cycles, although the entity should be stateless";
+	case Errorcode::E_EMPTY_INTERFACE: return "The entities top interface or another composite interface is empty.";
 
 	case Errorcode::E_NO_SUCH_ENTITY: return "No entity with that name exists.";
 	case Errorcode::E_ENTITY_EXISTS: return "An entity with that name already exists.";

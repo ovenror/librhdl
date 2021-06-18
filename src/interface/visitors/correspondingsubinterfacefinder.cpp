@@ -1,7 +1,6 @@
 #include <interface/visitors/correspondingsubinterfacefinder.h>
 #include "../isingle.h"
 #include "../icomposite.h"
-#include "../iplaceholder.h"
 
 namespace rhdl {
 
@@ -24,27 +23,12 @@ void CorrespondingSubInterfaceFinder::visit(const IComposite &i1, const IComposi
 	visit_components(i1, i2, [this]() -> bool {return this->result_ != nullptr;});
 }
 
-void CorrespondingSubInterfaceFinder::visit(const IPlaceholder &i1, const IPlaceholder &i2)
-{
-	go_visit(i1.realization(), i2.realization());
-}
-
-void CorrespondingSubInterfaceFinder::visit(const Interface &i1, const IPlaceholder &i2)
-{
-	go_visit(&i1, i2.realization());
-}
-
-void CorrespondingSubInterfaceFinder::visit(const IPlaceholder &i1, const Interface &i2)
-{
-	go_visit(i1.realization(), &i2);
-}
-
 bool CorrespondingSubInterfaceFinder::check(const Interface &i1, const Interface &i2)
 {
 	if (&i2 != &sub_)
 		return false;
 
-	if (!i1.eq_struct(i2, predicate_))
+	if (!i1.compatTo(i2, predicate_))
 		return false;
 
 	result_ = &i1;

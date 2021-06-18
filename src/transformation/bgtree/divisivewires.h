@@ -22,11 +22,11 @@ public:
 
 	void tryInsertCrosser(Wire &crosser) override;
 	void replaceCrosser(Wire &newCrosser) override;
-	bool mayBeCrossed(const Wire &wire, Blocks::index_t at) const override;
-	bool mayBeCrossed(const CollectedWire &liaison, const Wire &newCrossingWire, Blocks::index_t at) const;
+	bool mayBeCrossed(const Wire &wire, blocks::Blocks::index_t at) const override;
+	bool mayBeCrossed(const CollectedWire &liaison, const Wire &newCrossingWire, blocks::Blocks::index_t at) const;
 
 	void computePositions() override;
-	bool dropCollision(const CollectedWire &dropped, Blocks::index_t at, const CollectedWire &other) const override;
+	bool dropCollision(const CollectedWire &dropped, blocks::Blocks::index_t at, const CollectedWire &other) const override;
 
 private:
 	struct PrimaryComparator;
@@ -42,19 +42,19 @@ private:
 	void extendRelation(CollectedWire &liaison, const Wire &crosser);
 	void makeLess(CollectedWire &lesser, CollectedWire &greater);
 
-	bool connectedBelow(const CollectedWire &wire, Blocks::index_t pos) const;
-	bool connectedAbove(const CollectedWire &wire, Blocks::index_t pos) const;
+	bool connectedBelow(const CollectedWire &wire, blocks::Blocks::index_t pos) const;
+	bool connectedAbove(const CollectedWire &wire, blocks::Blocks::index_t pos) const;
 	bool connected(const Wire &crosser, bool below) const;
-	bool connected(const CollectedWire &wire, Blocks::index_t pos, bool below) const;
+	bool connected(const CollectedWire &wire, blocks::Blocks::index_t pos, bool below) const;
 
-	CollectedWire *connected(Blocks::index_t pos, bool below) const;
+	CollectedWire *connected(blocks::Blocks::index_t pos, bool below) const;
 
 	SortedCrossers &crossers(const Wire &wire);
 	const SortedCrossers &crossers(const Wire &wire) const;
 	SortedCrossers &crossers(bool below);
 	const SortedCrossers &crossers(bool below) const;
 
-	const Wire *crosser(Blocks::index_t pos, bool below) const;
+	const Wire *crosser(blocks::Blocks::index_t pos, bool below) const;
 
 	bool fromBelow(const Wire &wire) const;
 	bool fromAbove(const Wire &wire) const {return !fromBelow(wire);}

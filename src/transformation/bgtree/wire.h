@@ -27,7 +27,7 @@ class Wire : public Element
 {
 public:
 	struct Less;
-	using Range = std::pair<Blocks::index_t, Blocks::index_t>;
+	using Range = std::pair<blocks::Blocks::index_t, blocks::Blocks::index_t>;
 
 	Wire(Container &owner, bool anchor = false, unsigned int index = 0);
 	Wire(Wire &&dying, Container &newOwner);
@@ -65,7 +65,7 @@ public:
 
 	virtual const std::set<Crosser *> &getCrossers() const = 0;
 
-	bool mayCross(const Crosser &crosser, Blocks::index_t at) const;
+	bool mayCross(const Crosser &crosser, blocks::Blocks::index_t at) const;
 
 	bool isCrosser(const Wire &w) const;
 
@@ -74,29 +74,29 @@ public:
 
 	bool isImmediatelyConnected(const Wire &w) const;
 	bool occupiesSameXY(const Wire &w) const;
-	std::vector<Wire *> wiresConnectedAt(Blocks::index_t cpos) const;
+	std::vector<Wire *> wiresConnectedAt(blocks::Blocks::index_t cpos) const;
 
 	bool isCrossedBy(const Wire &w) const;
 	bool crosses(const Wire &w) const;
 	bool isInCrossingRangeOf(const Wire &w) const;
 
 	void computeAbsolutePosition();
-	void computeAbsolutePosition(Blocks::index_t offset);
-	void setPosition(Blocks::index_t position);
+	void computeAbsolutePosition(blocks::Blocks::index_t offset);
+	void setPosition(blocks::Blocks::index_t position);
 
 	void tryInsertCrosser_internal(Wire &crosser);
 	void replaceCrosser_internal(Wire &newCrosser);
-	virtual bool mayBeCrossed_internal(const Wire &by, Blocks::index_t at) const;
+	virtual bool mayBeCrossed_internal(const Wire &by, blocks::Blocks::index_t at) const;
 
 	virtual void dropHorizontalCollected() {}
 	bool hasDisjunctExtentsWith(const Wire &other) const;
 	bool hasOverlappingExtentsWith(const Wire &other) const;
 
-	std::vector<Range> freeRanges(Blocks::index_t minSize) const;
+	std::vector<Range> freeRanges(blocks::Blocks::index_t minSize) const;
 
 	void computeExtents();
 	void tryBecomeAnchor();
-	void toBlocks(Blocks::Cuboid b) const;
+	void toBlocks(blocks::Blocks::Cuboid b) const;
 
 	void createSegments();
 
@@ -110,22 +110,22 @@ public:
 	bool anchor_;
 	std::shared_ptr<Connection> connection_;
 	bool has_extents_;
-	Blocks::index_t relativePosition_, start_, end_;
+	blocks::Blocks::index_t relativePosition_, start_, end_;
 
 	struct Less {
 		using is_transparent = void;
 
-		bool operator()( const Wire* const & lhs, const Wire* const & rhs) const
+		bool operator()(const Wire* const & lhs, const Wire* const & rhs) const
 		{
 			return lhs -> position() < rhs -> position();
 		}
 
-		bool operator()( const Wire* const & lhs, Blocks::index_t rhs) const
+		bool operator()(const Wire* const & lhs, blocks::Blocks::index_t rhs) const
 		{
 			return lhs -> position() < rhs;
 		}
 
-		bool operator()( Blocks::index_t lhs, const Wire* const & rhs) const
+		bool operator()(blocks::Blocks::index_t lhs, const Wire* const & rhs) const
 		{
 			return lhs < rhs -> position();
 		}
@@ -135,18 +135,18 @@ public:
 
 	const SortedCrossers &getSortedCrossers() const {return sorted_crossers_;}
 
-	static void blocks(int height_offset, Blocks::Wall line_segment, Blocks::index_t position, Blocks::index_t length);
-	Blocks::Wall segment(Blocks::Cuboid &blocks) const;
+	static void blocks(int height_offset, blocks::Blocks::Wall line_segment, blocks::Blocks::index_t position, blocks::Blocks::index_t length);
+	blocks::Blocks::Wall segment(blocks::Blocks::Cuboid &blocks) const;
 
-	void placeRepeater(Blocks::index_t position, bool reverse, Blocks &b) const;
+	void placeRepeater(blocks::Blocks::index_t position, bool reverse, blocks::Blocks &b) const;
 
 protected:
-	std::vector<Wire *> wiresCrossConnectedAt(Blocks::index_t pos) const;
+	std::vector<Wire *> wiresCrossConnectedAt(blocks::Blocks::index_t pos) const;
 
-	static Blocks::Line line(Blocks::Wall segment, Blocks::index_t height, Blocks::index_t position, Blocks::index_t length);
+	static blocks::Blocks::Line line(blocks::Blocks::Wall segment, blocks::Blocks::index_t height, blocks::Blocks::index_t position, blocks::Blocks::index_t length);
 
-	void blocks_isolated(Blocks::Wall line_segment, Blocks::index_t position, Blocks::index_t length) const;
-	void blocks_connected(Blocks::Wall line_segment, Blocks::index_t position, Blocks::index_t length) const;
+	void blocks_isolated(blocks::Blocks::Wall line_segment, blocks::Blocks::index_t position, blocks::Blocks::index_t length) const;
+	void blocks_connected(blocks::Blocks::Wall line_segment, blocks::Blocks::index_t position, blocks::Blocks::index_t length) const;
 
 	SortedCrossers sorted_crossers_;
 
@@ -170,11 +170,11 @@ private:
 
 		bool operator()(
 				const std::shared_ptr<Connector> &lhs,
-				Blocks::index_t rhs
+				blocks::Blocks::index_t rhs
 				) const;
 
 		bool operator()(
-				Blocks::index_t lhs,
+				blocks::Blocks::index_t lhs,
 				const std::shared_ptr<Connector> &rhs
 				) const;
 
@@ -182,12 +182,12 @@ private:
 		const Wire &this_;
 	};
 
-	UniqueSegment &addSegment(Blocks::index_t start, Blocks::index_t end,
+	UniqueSegment &addSegment(blocks::Blocks::index_t start, blocks::Blocks::index_t end,
 			Connector *startSeg, Connector *endSeg);
 
-	Connector *addConnector(Blocks::index_t pos);
+	Connector *addConnector(blocks::Blocks::index_t pos);
 
-	Connector &getConnectorAt(Blocks::index_t pos) const;
+	Connector &getConnectorAt(blocks::Blocks::index_t pos) const;
 	const Connector &onlyConnector() const;
 
 	std::vector<std::unique_ptr<UniqueSegment>> uniqueSegments_;

@@ -29,7 +29,7 @@ public:
 	Node &makePassThrough();
 	Node &insertPassThrough(unsigned int index = 0);
 
-	Blocks::index_t placeNode(Node &node, Blocks::index_t startPos);
+	blocks::Blocks::index_t placeNode(Node &node, blocks::Blocks::index_t startPos);
 
 	void computeHorizontal();
 	void computeVertical();
@@ -43,7 +43,7 @@ public:
 
 private:   
 	Node &makeNode_internal(bool invert);
-	Blocks::index_t placeNode_internal(Node &node);
+	blocks::Blocks::index_t placeNode_internal(Node &node);
 
 	Node *parent_;
 };

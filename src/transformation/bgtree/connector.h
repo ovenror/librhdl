@@ -20,7 +20,7 @@ class Wire;
 class Connector
 {
 public:
-	Connector(Blocks::index_t xpos, Blocks::index_t ypos);
+	Connector(blocks::Blocks::index_t xpos, blocks::Blocks::index_t ypos);
 
 	bool terminal() {return terminal_;}
 
@@ -31,7 +31,7 @@ public:
 	const std::vector<UniqueCurrent> &connected() const {return connected_;}
 	SuperCurrentIterable superConnected() const;
 
-	Blocks::index_t getPositionOn(const Wire &w) const;
+	blocks::Blocks::index_t getPositionOn(const Wire &w) const;
 
 	void addIncoming(UniqueSegment &segment);
 	void addOutgoing(UniqueSegment &segment);
@@ -39,7 +39,7 @@ public:
 	bool terminal() const;
 	const UniqueSegment *straightPartner(const UniqueSegment &segment) const;
 
-	std::pair<Blocks::index_t, Blocks::index_t> position() const {return {xpos_, ypos_};}
+	std::pair<blocks::Blocks::index_t, blocks::Blocks::index_t> position() const {return {xpos_, ypos_};}
 
 protected:
 	void add(UniqueCurrent &&c);
@@ -49,8 +49,8 @@ private:
 	bool breaksTerminality(const UniqueCurrent &c) const;
 
 	std::vector<UniqueCurrent> connected_;
-	Blocks::index_t xpos_;
-	Blocks::index_t ypos_;
+	blocks::Blocks::index_t xpos_;
+	blocks::Blocks::index_t ypos_;
 	bool terminal_;
 };
 

@@ -17,42 +17,42 @@ class IComposite : public Interface::VisitableChild<IComposite>
 public:
 	using Super = Interface;
 	using InterfaceContainer =  std::vector<const Interface *>;
+	using const_iterator = InterfaceContainer::const_iterator;
 
-	IComposite(const std::string &name = "");
+	IComposite(const std::string &name, std::vector<const Interface *> components);
 	IComposite(const IComposite &tmpl);
 
 	~IComposite();
 
-	IComposite *clone() const;
-
-	const char *const *ls() const override;
-
-	const Interface *find_connectible(const Interface *to, const Predicate2 &predicate) const override;
-	std::pair<const Interface *, const Interface *> find_connectibles(const Interface *to, const Predicate2 &predicate) const override;
-	void add_components_to_queue(std::queue<const Interface *> &bfs_backlog) const override;
+	CompositeDirection compositeDirection() const override {return direction_;}
+	SingleDirection preferredDirection() const override;
+	IComposite *clone(const std::string &newName) const;
 
 	void add (const Interface *comp);
 
 	bool eq_inner_names (const Interface &other) const;
 
-	InterfaceContainer::const_iterator begin() const {return components_.cbegin();}
-	InterfaceContainer::const_iterator end() const {return components_.cend();}
+	const_iterator begin() const {return components_.cbegin();}
+	const_iterator end() const {return components_.cend();}
+	size_t size() const {return components_.size();}
+	void assert_not_empty() const {assert(!components_.empty());}
 
-protected:
-	const Interface *find_connectible_components(const Interface *to, const Interface::Predicate2 &predicate) const;
+	static bool componentWise(
+			const std::vector<const IComposite *> &,
+			const std::function<bool(const std::vector<const Interface *> &)> &);
 
-	virtual CResult eq_struct_int (const Interface &other, const Predicate2 &predicate) const;
-	virtual CResult eq_struct_int (const IComposite &other, const Predicate2 &predicate) const;
+	bool componentWise(
+			const IComposite &,
+			const std::function<bool(const Interface &, const Interface &)> &f) const;
 
 private:
 	const Interface *get(const std::string &name) const override;
 
-	friend class IPlaceholder;
-	friend class CComposite;
 	using CStrings = std::vector<const char *>;
 
 	InterfaceContainer components_;
-	CStrings c_strings_ = {nullptr};
+	CompositeDirection direction_;
+	CStrings c_strings_;
 };
 
 } // namespace rhdl

@@ -11,6 +11,13 @@
 
 namespace rhdl {
 
+using netlist::Netlist;
+using netlist::VertexRef;
+using netlist::EdgeRef;
+
+using blocks::Blocks;
+using blocks::Block;
+
 static std::vector<const ISingle *> ifilter(const Netlist::Interface &nli, Interface::Direction dir)
 {
 	std::vector<const ISingle *> result;
@@ -82,7 +89,9 @@ Blocks BGTree::execute(const Netlist &source) const
 }
 
 
-static bool maybeShortcut(const Blocks::Cuboid &blocks, Blocks::Vec invBlockPosStart) {
+static bool maybeShortcut(const Blocks::Cuboid &blocks, Blocks::Vec invBlockPosStart)
+{
+	using blocks::Direction;
 
 	std::array<Blocks::CVec, 2> lr;
 
@@ -145,6 +154,12 @@ boost::multi_array<char, 2> BGTree::project(Blocks::Cuboid blocks)
 
 char BGTree::project(Blocks::Line line, bool shortCut)
 {
+	using blocks::Direction;
+	using blocks::RIGHT;
+	using blocks::FORWARD;
+	using blocks::LEFT;
+	using blocks::BACKWARD;
+
 	if (line[1] == Block::REPEATER || line[3] == Block::REPEATER) {
 		Direction overt = FORWARD;
 		Direction ohoriz = LEFT;

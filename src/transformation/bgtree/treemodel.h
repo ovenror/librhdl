@@ -20,6 +20,15 @@
 
 namespace rhdl {
 
+class ISingle;
+
+namespace netlist { class Netlist; }
+
+namespace blocks {
+class Blocks;
+class BlocksSim;
+}
+
 namespace TM {
 class ConstructionData;
 class IFaceData;
@@ -37,34 +46,30 @@ using BottomIFaceData = IFaceData;
 using TopIFaceData = IFaceData;
 }
 
-class Netlist;
-class ISingle;
-class Blocks;
-class BlocksSim;
-
 class TreeModel : public TM::Container
 {
 public:
-	TreeModel(const Netlist &netlist, const std::vector<const ISingle *> &lower,
+	TreeModel(const netlist::Netlist &netlist, const std::vector<const ISingle *> &lower,
 			const std::vector<const ISingle *> &upper,
-			std::map<const TM::Connection *, VertexRef> &vertexMap);
+			std::map<const TM::Connection *, netlist::VertexRef> &vertexMap);
 
 	const TreeModel &getModel() const override {return *this;}
 	//TreeModel &getModel() override {return *this;}
 
-	void toBlocks(Blocks::Cuboid b);
-	void toInterface(Blocks::Interface &interface);
+	void toBlocks(blocks::Blocks::Cuboid b);
+	void toInterface(blocks::Blocks::Interface &interface);
 	void computeSpatial();
 
 	void createSegments();
-	TM::ConnectionLinks assessLinks(const Blocks &blocks) const;
+	TM::ConnectionLinks assessLinks(const blocks::Blocks &blocks) const;
 	bool hasBrokenLinks(const TM::ConnectionLinks &assessment);
-	std::forward_list<const TM::Connection *> fixBrokenLinks(const TM::ConnectionLinks &assessment, Blocks &b);
+	std::forward_list<const TM::Connection *> fixBrokenLinks(
+			const TM::ConnectionLinks &assessment, blocks::Blocks &b);
 
-	Netlist splitConnections(
+	netlist::Netlist splitConnections(
 			std::forward_list<const TM::Connection *> connections,
-			std::map<const TM::Connection *, VertexRef> vertexMap,
-			const Netlist &source);
+			std::map<const TM::Connection *, netlist::VertexRef> vertexMap,
+			const netlist::Netlist &source);
 
 	//bool hasBrokenLinks(const Blocks &b);
 
@@ -84,7 +89,7 @@ public:
 	bool isBottomInterfaceWire(const TM::SingleWire &wire) const;
 	bool isInterfaceWire(const TM::SingleWire &wire, const TM::Wires &anchors) const;
 	bool isInterfaceWire(const TM::SingleWire &wire) const;
-	TM::Node &makeInverter(TM::NodeGroup &ng, EdgeRef edge);
+	TM::Node &makeInverter(TM::NodeGroup &ng, netlist::EdgeRef edge);
 
 protected:
 	void createShortcuts();
@@ -105,7 +110,9 @@ protected:
 	void processEdge(const TM::EdgeData &data);
 	void processLeaf(const TM::LeafData &data);
 
-	static bool isUpperIFace(const TM::ConstructionData_AllReferences &data, VertexRef vertex);
+	static bool isUpperIFace(
+			const TM::ConstructionData_AllReferences &data,
+			netlist::VertexRef vertex);
 
 	TM::MutableLayer &makeLayer();
 
@@ -130,18 +137,18 @@ protected:
 
 	void assessLinks(
 			const TM::Connection &connection, TM::WorkingAndBrokenLinks &links,
-			const TM::Connector &startConnector, BlocksSim &sim) const;
+			const TM::Connector &startConnector, blocks::BlocksSim &sim) const;
 
 	void assessLinks(const TM::Connection &connection,
 			std::map<const TM::Connector *, bool> &wasReached,
-			BlocksSim &sim) const;
+			blocks::BlocksSim &sim) const;
 
 	void assessReached(TM::WorkingAndBrokenLinks &links,
 			const TM::Connector &startConnector,
 			const std::map<const TM::Connector *, bool> &wasReached) const;
 
-	Blocks::index_t xpos() const override {return 0;}
-	Blocks::index_t ypos() const override {return 0;}
+	blocks::Blocks::index_t xpos() const override {return 0;}
+	blocks::Blocks::index_t ypos() const override {return 0;}
 
 	using UnwrapType = std::function<TM::MutableLayer::NodesIterable (const LayerPtr &)>;
 
@@ -162,7 +169,7 @@ protected:
 	LayerContainer layers_;
 	TM::Wires top_anchors_;
 	std::map<const ISingle *, const TM::Wire *> interface_;
-	std::map<EdgeRef, const TM::Node *> nodeMap_;
+	std::map<netlist::EdgeRef, const TM::Node *> nodeMap_;
 };
 
 }

@@ -106,7 +106,7 @@ void lib_init()
 }
 
 {
-	Ent rslatch("RS_Latch", false);
+	Ent rslatch("RS_Latch", Ent::CREATE_STATEFUL);
 
 	Part invQ("Inverter");
 	Part invNQ("Inverter");
@@ -145,7 +145,7 @@ void lib_init()
 }
 
 {
-	Ent crslatch("GRS_Latch", false);
+	Ent crslatch("GRS_Latch", Ent::CREATE_STATEFUL);
 	Part rs("RS_Latch");
 	Part r_gate("AND");
 	Part s_gate("AND");
@@ -190,7 +190,7 @@ void lib_init()
 }
 
 {
-	Ent ff("D_Flipflop", false);
+	Ent ff("D_Flipflop", Ent::CREATE_STATEFUL);
 
 	Part master("GRS_Latch");
 	Part slave("GRS_Latch");
@@ -211,7 +211,7 @@ void lib_init()
 }
 
 {
-	Ent clock3("Clock3", false);
+	Ent clock3("Clock3", Ent::CREATE_STATEFUL);
 	Part inv0("Inverter");
 	Part inv1("Inverter");
 	Part inv2("Inverter");
@@ -314,7 +314,7 @@ void lib_init()
 }
 
 {
-	Ent cdiv("ClockDiv2", false);
+	Ent cdiv("ClockDiv2", Ent::CREATE_STATEFUL);
 
 	Part master("RS_Latch");
 	Part slave("GRS_Latch");

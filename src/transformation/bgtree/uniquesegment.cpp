@@ -5,6 +5,8 @@
 
 namespace rhdl::TM {
 
+using blocks::Blocks;
+
 UniqueSegment::UniqueSegment(
 		const Wire &wire, Blocks::index_t start, Blocks::index_t end,
 		Connector &front, Connector &back)

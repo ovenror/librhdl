@@ -1,6 +1,6 @@
 #include "bsrepeater.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 BSRepeater::BSRepeater(Queue &q) : BSDelay(q)
 {

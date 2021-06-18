@@ -3,7 +3,6 @@
 
 #include "interfacevisitor.h"
 #include "util/util.h"
-#include "../iplaceholder.h"
 #include <functional>
 #include <cassert>
 
@@ -24,7 +23,6 @@ public:
 
 	void visit(Visitee<ISingle> &i) override {v_.visit(iface_, i);}
 	void visit(Visitee<IComposite> &i) override {v_.visit(iface_, i);}
-	void visit(Visitee<IPlaceholder> &i) override {v_.visit(iface_, i);}
 
 
 private:
@@ -47,12 +45,7 @@ public:
 	InterfaceDoubleVisitor() : other_(nullptr) {}
 
 	virtual void visit(Visitee<ISingle> &i1, Visitee<ISingle> &i2) = 0;
-
 	virtual void visit(Visitee<IComposite> &i1, Visitee<IComposite> &i2) {visit_components(i1,i2);}
-
-	virtual void visit(Visitee<IPlaceholder> &i1, Visitee<IPlaceholder> &i2) {visit(static_cast<Visitee<Interface> &>(i1), static_cast<Visitee<Interface> &>(i2));}
-	virtual void visit(Visitee<Interface> &i1, Visitee<IPlaceholder> &i2) {visit(i1, static_cast<Visitee<Interface> &>(i2));}
-	virtual void visit(Visitee<IPlaceholder> &i1, Visitee<Interface> &i2) {visit(static_cast<Visitee<Interface> &>(i1), i2);}
 	virtual void visit(Visitee<Interface> &i1, Visitee<Interface> &i2) {std::ignore=i1;std::ignore=i2;assert(0);}
 
 	void go_visit(Visitee<Interface> *i1, Visitee<Interface> *i2) {
@@ -89,7 +82,6 @@ public:
 
 	void visit(Visitee<ISingle> &i) override {collect<ISingle>(i);}
 	void visit(Visitee<IComposite> &i) override {collect<IComposite>(i);}
-	void visit(Visitee<IPlaceholder> &i) override {collect<IPlaceholder>(i);}
 
 
 private:

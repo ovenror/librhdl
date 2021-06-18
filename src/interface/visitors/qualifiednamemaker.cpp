@@ -1,7 +1,6 @@
 #include <interface/visitors/qualifiednamemaker.h>
 #include "../isingle.h"
 #include "../icomposite.h"
-#include "../iplaceholder.h"
 
 #include <iostream>
 
@@ -49,23 +48,6 @@ void QualifiedNameMaker::visit(const ISingle &i)
 
 	result_ += i.is_open()?"-":"|";
 }
-
-void QualifiedNameMaker::visit(const IPlaceholder &i)
-{
-	//std::cerr << typeid(*this).name() << " visiting " << typeid(i).name() << std::endl;
-	if (generic(i)) {
-		result_ = std::string("P(") + result_ +")";
-		return;
-	}
-
-	i.realization() -> accept(*this);
-
-	if (result_.empty())
-		return;
-
-	result_ = std::string("P>") + result_;
-}
-
 
 }
 

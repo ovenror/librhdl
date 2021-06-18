@@ -23,6 +23,13 @@ namespace rhdl {
 
 class ISingle;
 
+using blocks::Blocks;
+using blocks::BlocksSim;
+
+using netlist::Netlist;
+using netlist::VertexRef;
+using netlist::EdgeRef;
+
 namespace TM {
 
 struct VertexInfo {
@@ -34,23 +41,23 @@ struct VertexInfo {
 
 struct ConstructionData_References {
 	ConstructionData_References(
-			const ::rhdl::Netlist::Graph &pgraph, const ::rhdl::Netlist::Interface &pnl_iface,
-			const std::vector<const ::rhdl::ISingle *> &pbottom_ifs,
-			const std::vector<const ::rhdl::ISingle *> &ptop_ifs)
+			const Netlist::Graph &pgraph, const Netlist::Interface &pnl_iface,
+			const std::vector<const ISingle *> &pbottom_ifs,
+			const std::vector<const ISingle *> &ptop_ifs)
 		:
 			graph(pgraph), nl_iface(pnl_iface), bottom_ifs(pbottom_ifs), top_ifs(ptop_ifs)
 	{}
 
-	const ::rhdl::Netlist::Graph &graph;
-	const ::rhdl::Netlist::Interface &nl_iface;
-	const std::vector<const ::rhdl::ISingle *> &bottom_ifs, &top_ifs;
+	const Netlist::Graph &graph;
+	const Netlist::Interface &nl_iface;
+	const std::vector<const ISingle *> &bottom_ifs, &top_ifs;
 };
 
 struct ConstructionData : public ConstructionData_References {
 	ConstructionData(
-			const ::rhdl::Netlist::Graph &graph, const ::rhdl::Netlist::Interface &nl_iface,
-			const std::vector<const ::rhdl::ISingle *> &bottom_ifs,
-			const std::vector<const ::rhdl::ISingle *> &top_ifs)
+			const Netlist::Graph &graph, const Netlist::Interface &nl_iface,
+			const std::vector<const ISingle *> &bottom_ifs,
+			const std::vector<const ISingle *> &top_ifs)
 		:
 			ConstructionData_References(graph, nl_iface, bottom_ifs, top_ifs)
 	{}
@@ -77,12 +84,12 @@ struct ConstructionData_AllReferences : public ConstructionData_References {
 
 struct IFaceData : public ConstructionData_AllReferences {
 	IFaceData(const ConstructionData_AllReferences &data,
-					const ::rhdl::ISingle *piface)
+					const ISingle *piface)
 		:
 		  ConstructionData_AllReferences(data), iface(piface)
 	{}
 
-	const ::rhdl::ISingle *iface;
+	const ISingle *iface;
 };
 
 struct VertexData : public LayerData {
@@ -99,14 +106,14 @@ struct EdgesData : public VertexData {
 
 	EdgesData(
 			const Super &data, NodeGroup &ng,
-			const ::rhdl::Netlist::Graph::OutEdgeIterator &ebegin,
-			const ::rhdl::Netlist::Graph::OutEdgeIterator &eend) :
+			const Netlist::Graph::OutEdgeIterator &ebegin,
+			const Netlist::Graph::OutEdgeIterator &eend) :
 		Super(data), nodegroup(ng), edges_begin(ebegin), edges_end(eend)
 	{}
 
 	NodeGroup &nodegroup;
-	::rhdl::Netlist::Graph::OutEdgeIterator edges_begin;
-	::rhdl::Netlist::Graph::OutEdgeIterator edges_end;
+	Netlist::Graph::OutEdgeIterator edges_begin;
+	Netlist::Graph::OutEdgeIterator edges_end;
 };
 
 struct EdgeData : public EdgesData {
@@ -133,9 +140,9 @@ struct LeafData : public EdgeData {
 using namespace TM;
 
 
-TreeModel::TreeModel(const ::rhdl::Netlist &netlist,
-		const std::vector<const ::rhdl::ISingle *> &lower,
-		const std::vector<const ::rhdl::ISingle *> &upper,
+TreeModel::TreeModel(const Netlist &netlist,
+		const std::vector<const ISingle *> &lower,
+		const std::vector<const ISingle *> &upper,
 					 std::map<const Connection *, VertexRef> &vertexMap) :
 	Container(0), bottom_anchors_(*this, false, true), bottom_(*this, true),
 	lower_cross_(*this, false), top_anchors_(*this, false, true)
@@ -576,7 +583,7 @@ void TreeModel::processBottomIFace(const BottomIFaceData &data)
 	auto edge_iters = data.graph.outEdges(v);
 	if (edge_iters.first == edge_iters.second) {
 		//bottom pure output
-		assert (iface -> direction() == ::rhdl::Interface::Direction::OUT);
+		assert (iface -> direction() == Interface::Direction::OUT);
 		return;
 	}
 

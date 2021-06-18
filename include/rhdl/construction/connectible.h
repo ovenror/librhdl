@@ -3,6 +3,8 @@
 
 #include <rhdl/construction/c/types.h>
 #include <rhdl/construction/error.h>
+
+#include <string>
 #include <utility>
 
 namespace rhdl {
@@ -11,24 +13,22 @@ class Interfacible;
 class Interface;
 class ConnectionPredicate;
 
+namespace structural { namespace builder {
+class Port;
+class StructureBuilder;
+}}
+
 class Connectible
 {
 public:
 	Connectible();
-	//virtual ~Connectible();
 
 	const Connectible &operator>>(const Connectible &to) const;
 	const Connectible &operator<<(const Connectible &from) const;
+	Connectible &operator=(const Connectible &);
 
-	virtual const Interface *interface() const = 0;
-	virtual const Interfacible &interfacible() const = 0;
-
-	rhdl::Errorcode try_connect(const Connectible &to, const ConnectionPredicate &predicate) const;
-
-	virtual std::pair<const Interface *, const Interface *> find_connectible_interfaces(const Connectible &to, const ConnectionPredicate &predicate) const = 0;
-	virtual std::pair<const Interface *, const Interface *> find_connectible_interfaces(const Interfacible &to, const ConnectionPredicate &predicate) const = 0;
-
-	virtual const Interface *find_connectible_interface(const Connectible &to, const ConnectionPredicate &predicate) const = 0;
+private:
+	virtual structural::builder::Port &port() const = 0;
 };
 
 }

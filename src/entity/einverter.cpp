@@ -1,18 +1,27 @@
 #include "einverter.h"
+
 #include "interface/isingle.h"
 #include "interface/icomposite.h"
+
+#include "representation/behavioral/timedbehavior.h"
+
 #include "simulation/invertersim.h"
+
 #include "construction/buildsim.h"
+
 #include <tuple>
 #include <memory>
 
 using namespace rhdl;
 
-EInverter::EInverter() : Entity("Inverter")
-{
-	interface_.add (new ISingle ("in", Interface::Direction::IN, false));
-	interface_.add (new ISingle ("out", Interface::Direction::OUT, false));
+using behavioral::TimedBehavior;
 
+EInverter::EInverter()
+	: Entity("Inverter", {
+			new ISingle ("in", Interface::Direction::IN, false),
+			new ISingle ("out", Interface::Direction::OUT, false)
+		})
+{
 	const Timing &timing = addTiming();
 
 	makeNetlist(timing);
@@ -21,6 +30,9 @@ EInverter::EInverter() : Entity("Inverter")
 
 void EInverter::makeNetlist(const Timing &timing)
 {
+	using netlist::Netlist;
+	using netlist::VertexRef;
+
 	auto pnetlist = std::make_unique<Netlist>(*this, nullptr, &timing);
 
 	Netlist::Graph &graph = pnetlist -> graph_;

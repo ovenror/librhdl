@@ -11,28 +11,24 @@
 #include "representation/representationbase.h"
 #include "representation/blocks/blocks.h"
 
-namespace rhdl {
+namespace rhdl::txt {
 
 class Commands : public RepresentationBase<Commands> {
 public:
-	Commands(const Blocks &blocks);
-	Commands(const Entity &entity, const Blocks &blocks,
-	         const Timing *timing);
+	Commands(const blocks::Blocks &blocks);
 
 	virtual ~Commands();
 
-	std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const override;
-
-	void moveTo(Blocks::Vec pos);
+	void moveTo(blocks::Blocks::Vec pos);
 	void out(std::ostream &os) const;
 
 private:
-	const Blocks &blocks_;
-	Blocks::Vec translation_;
+	const blocks::Blocks &blocks_;
+	blocks::Blocks::Vec translation_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Commands &commands);
 
-} /* namespace rhdl */
+} /* namespace rhdl::txt */
 
 #endif /* REPRESENTATION_TXT_COMMANDS_H_ */

@@ -15,21 +15,18 @@ public:
 	void setOpen() const;
 	bool is_open() const {return c_.content().single.open;}
 	Direction direction() const {return static_cast<Direction>(c_.content().single.dir);}
+	CompositeDirection compositeDirection() const override {return CompositeDirection(direction());}
+	SingleDirection preferredDirection() const override {return direction();}
 
-	ISingle *clone() const override
+	ISingle *clone(const std::string &newName) const override
 	{
-		return new ISingle (*this);
+		return new ISingle (newName, direction(), is_open());
 	}
 
 	const Interface *get(const std::string &name) const override {std::ignore = name; return nullptr;}
 	//const Interface *operator[] (const std::string &iname) const override {return nullptr;}
-	const char *const *ls() const override {return nullptr;}
 
 	bool eq_inner_names (const Interface &other) const override;
-
-protected:
-	CResult eq_struct_int (const Interface &other, const Predicate2 &predicate) const override;
-	CResult eq_struct_int (const ISingle &other, const Predicate2 &predicate) const override;
 
 private:
 	friend class CSingle;

@@ -8,21 +8,22 @@
 #ifndef SRC_UTIL_PARTITIONCLASSBASE_H_
 #define SRC_UTIL_PARTITIONCLASSBASE_H_
 
+#include "dereference_iterator.h"
+
 #include <algorithm>
 #include <cassert>
 #include <memory>
 #include <type_traits>
 #include <set>
 
-#include "util/dereference_iterator.h"
-
 namespace rhdl {
 
 template <class Element>
 class PartitionClassBase {
 public:
+	using Owner = typename Element::Owner;
 	using PartitionClassRoot = PartitionClassBase;
-	using Container = std::set<Element *, typename Element::Less>;
+	using Container = std::set<Element *, typename Element::LessComparator>;
 	using ptrIterator = typename Container::iterator;
 	using iterator = DereferencingIterator<ptrIterator>;
 	using const_iterator = ConstDereferencingIterator<ptrIterator>;
@@ -50,100 +51,179 @@ public:
 
 	bool empty() const {return elements_.empty();}
 
-	void accept(Element &element);
-	void acceptStray(Element &element);
+	Element &accept(Element &);
+	Element &accept(Element *e) {return accept(*e);}
+
+	Element &acceptClassed(Element &);
+	Element &acceptClassed(Element *e) {return acceptClassed(*e);}
+
+	Element &acceptStray(Element &);
+	Element &acceptStray(Element *e) {return acceptStray(*e);}
+
 	void ingest(PartitionClassBase &victim);
-	static void kill(Element &element) {reject(element);}
-	static Element &reject(Element &element);
 
-protected:
-	using Owner = typename Element::Owner;
+	void kill(Element &element) {reject(element);}
+	void kill(iterator element) {reject(element);}
 
-protected:
-	PartitionClassBase(Element &element, Owner &o);
+	Element &reject(Element &element);
+	Element &reject(iterator element);
+
+	void clear();
+
+	Owner &owner() {return owner_;}
+
+	PartitionClassBase(Owner &o);
+	PartitionClassBase(Element &first, Owner &o);
+	PartitionClassBase(Element *first, Owner &o) : PartitionClassBase(*first, o) {}
 	PartitionClassBase(PartitionClassBase &&victim, Owner &o);
+	PartitionClassBase(PartitionClassBase &&victim);
+	PartitionClassBase(const PartitionClassBase &victim) = delete;
+
+	PartitionClassBase &operator=(const PartitionClassBase &) = delete;
+	PartitionClassBase &operator=(PartitionClassBase &&);
+
+protected:
+	void clear_norelease();
 
 private:
+	void onAssign(Element &) {}
+	void onReassign(Element &) {}
+
 	void kill(ptrIterator element) {reject(element);}
 	Element &reject(ptrIterator element);
+	Element &reject_norelease(ptrIterator element);
 
 	void assign(Element &element);
 	void reassign(Element &element);
 	void assign_internal(Element &element);
 
-	Owner *&owner_ptr();
-	Owner &owner() {return *owner_ptr();}
+	void reassign_all(const PartitionClassBase &victim);
 
+	Owner &owner_;
 	Container elements_;
 };
+
+template<class Element>
+inline PartitionClassBase<Element>::PartitionClassBase(Owner &o)
+	: owner_(o)
+{}
 
 template <class Element>
 inline PartitionClassBase<Element>::PartitionClassBase(
 		Element &element, Owner &o)
+	: owner_(o)
 {
 	elements_.insert(&element);
-	element.pcOwner_ = &o;
+	assign(element);
+}
+
+template<class Element>
+inline void PartitionClassBase<Element>::reassign_all(
+		const PartitionClassBase &victim)
+{
+	for (Element &e : *this) {
+		assert (&e.pclass_ == &victim);
+		reassign(e);
+	}
+}
+
+template<class Element>
+inline PartitionClassBase<Element> &PartitionClassBase<Element>::operator =(
+		PartitionClassBase &&victim)
+{
+	elements_ = std::move(victim.elements_);
+	reassign_all(victim);
+	return *this;
 }
 
 template<class Element>
 inline PartitionClassBase<Element>::PartitionClassBase(
 		PartitionClassBase &&victim, Owner &o)
-	: elements_(std::move(victim.elements_))
+	: elements_(std::move(victim.elements_)), owner_(o)
 {
-	for (Element &e : *this) {
-		assert (e.pcOwner_ == &victim.owner());
-		e.pcOwner_ = &o;
-	}
+	reassign_all(victim);
 }
 
+template<class Element>
+inline PartitionClassBase<Element>::PartitionClassBase(
+		PartitionClassBase &&victim)
+	: PartitionClassBase<Element>(victim, victim.owner_)
+{}
 
 template<class Element>
 inline void PartitionClassBase<Element>::reassign(
 		Element& element)
 {
-	assert (element.pcOwner_);
+	assert (element.pclass_);
 	assign_internal(element);
-	owner().onReassign(element);
+	owner_.onReassign(element);
 }
 
 template<class Element>
 inline void PartitionClassBase<Element>::assign(
 		Element& element)
 {
-	assert (!element.pcOwner_);
+	assert (!element.pclass_);
 	assign_internal(element);
-	owner().onAssign(element);
+	owner_.onAssign(element);
+}
+
+template<class Element>
+inline Element& PartitionClassBase<Element>::accept(Element &e)
+{
+	if (e.pclass_)
+		return acceptClassed(e);
+	else
+		return acceptStray(e);
+}
+
+template<class Element>
+inline void PartitionClassBase<Element>::clear()
+{
+	if (elements_.empty())
+		return;
+
+	clear_norelease();
+	Owner::release(*this, owner_);
+}
+
+template<class Element>
+inline void PartitionClassBase<Element>::clear_norelease()
+{
+	while (!elements_.empty()) {
+		reject_norelease(elements_.begin());
+	}
 }
 
 template<class Element>
 inline void rhdl::PartitionClassBase<Element>::assign_internal(
 		Element &element)
 {
-	element.pcOwner_ = owner_ptr();
+	element.pclass_ = this;
 }
 
 
 template<class Element>
-inline void PartitionClassBase<Element>::acceptStray(
+inline Element &PartitionClassBase<Element>::acceptStray(
 		Element &element)
 {
 	assign(element);
 	elements_.insert(&element);
+	return element;
 }
 
 template<class Element>
-inline void PartitionClassBase<Element>::accept(
+inline Element &PartitionClassBase<Element>::acceptClassed(
 		Element &element)
 {
-	auto owner = element.pcOwner_;
-	assert (owner);
-	ingest(owner -> pclass());
+	assert(element.pclass_);
+	ingest(*element.pclass_);
+	return element;
 }
 
 template<class Element>
 inline void PartitionClassBase<Element>::ingest(PartitionClassBase<Element> &victim) {
-	auto &vOwner = victim.owner();
-	owner().onIngest(vOwner);
+	auto &vOwner = victim.owner_;
 
 	auto &migrating = victim.elements_;
 
@@ -152,36 +232,56 @@ inline void PartitionClassBase<Element>::ingest(PartitionClassBase<Element> &vic
 		elements_.emplace(migrant);
 	}
 
-	Owner::release(vOwner);
+	migrating.clear();
+	vOwner.release(victim);
 }
 
 template<class Element>
 inline Element &PartitionClassBase<Element>::reject(
 		Element& element)
 {
-	auto &owner = *element.pcOwner_;
-	auto &pc = owner.pclass();
-	auto iter = pc.elements_.find(pc.elements_.key_comp().key(element));
-	assert (iter != pc.elements_.end());
-	return pc.reject(iter);
+	assert (element.pclass_ == this);
+
+	auto iter = elements_.find(element);
+	assert (iter != elements_.end());
+	return reject(iter);
+}
+
+template <class Element>
+inline Element &PartitionClassBase<Element>::reject(
+		iterator element)
+{
+	return reject(element.base());
+}
+
+template<class Element>
+inline Element &PartitionClassBase<Element>::reject_norelease(
+		ptrIterator element)
+{
+	assert ((*element) -> pclass_ == this);
+
+	//Owner::onReject(**element);
+
+	auto eptr = std::move(*element);
+
+	//TODO: Not necessary for OwningPartitionClass
+	eptr -> pclass_ = nullptr;
+
+	elements_.erase(element);
+
+	return *eptr;
 }
 
 template<class Element>
 inline Element &PartitionClassBase<Element>::reject(
 		ptrIterator element)
 {
-	//Owner::onReject(**element);
-
-	auto eptr = std::move(*element);
-	auto &owner = *eptr -> pcOwner_;
-	eptr -> pcOwner_ = nullptr;
-
-	elements_.erase(element);
+	auto &rejected = reject_norelease(element);
 
 	if (empty())
-		Owner::release(owner);
+		owner_.release(*this);
 
-	return *eptr;
+	return rejected;
 }
 
 template <class Element>
@@ -189,15 +289,6 @@ template <class K>
 inline bool PartitionClassBase<Element>::contains(const K &k) const
 {
 	return elements_.find(k) != elements_.end();
-}
-
-template<class Element>
-inline typename rhdl::PartitionClassBase<Element>::Owner *&rhdl::PartitionClassBase<
-		Element>::owner_ptr()
-{
-	auto first = elements_.begin();
-	assert (first != elements_.end());
-	return (*first) -> pcOwner_;
 }
 
 } /* namespace rhdl */

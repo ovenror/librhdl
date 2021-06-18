@@ -17,9 +17,6 @@ public:
 
 	void visit(const ISingle &i1, const ISingle &i2)  override;
 	void visit(const IComposite &i1, const IComposite &i2) override;
-	void visit(const IPlaceholder &i1, const IPlaceholder &i2) override;
-	void visit(const Interface &i1, const IPlaceholder &i2) override;
-	void visit(const IPlaceholder &i1, const Interface &i2) override;
 
 	bool check(const Interface &i1, const Interface &i2);
 	const Interface *result() {return result_;}

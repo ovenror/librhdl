@@ -24,45 +24,45 @@ public:
 	using const_iterator = typename Super::const_iterator;
 	using Owner = typename Super::Owner;
 
-	OwningPartitionClass(Element &&element, Owner &This);
-	OwningPartitionClass(Element &element, Owner &This);
-	OwningPartitionClass(Element *element, Owner &This);
-	OwningPartitionClass(std::unique_ptr<Element> &&element, Owner &This);
-	OwningPartitionClass(OwningPartitionClass &&victim, Owner &This);
+	OwningPartitionClass(Owner &);
+	OwningPartitionClass(Element &&first, Owner &);
+	OwningPartitionClass(std::unique_ptr<Element> &&first, Owner &);
+	OwningPartitionClass(OwningPartitionClass &&victim, Owner &);
 	virtual ~OwningPartitionClass() {}
 
-	void accept(Element &&element);
-	void accept(Element &element);
-	void accept(Element *element);
-	void accept(std::unique_ptr<Element> &&element);
+	Element &accept(Element &);
+	Element &accept(Element *);
 
-	static void kill(Element &element);
+	Element &accept(Element &&);
+	Element &accept(std::unique_ptr<Element> &&);
+
+	void kill(Element &);
+
+	void release(Super &pclass) {}
+
+private:
+	Element &acceptStray(Element &) = delete;
+	Element &acceptStray(Element *) = delete;
+	Element &acceptClassed(Element &) = delete;
+	Element &acceptClassed(Element *) = delete;
 };
+
+template<class Element>
+inline OwningPartitionClass<Element>::OwningPartitionClass(Owner &This)
+	: Super(This)
+{}
 
 template<class Element>
 inline OwningPartitionClass<Element>::OwningPartitionClass(
 		Element &&element, Owner &This)
-	: Super(element, This)
-{}
-
-template<class Element>
-inline OwningPartitionClass<Element>::OwningPartitionClass(
-		Element& element, Owner &This)
-	: Super(element, This)
-{}
-
-template<class Element>
-inline OwningPartitionClass<Element>::OwningPartitionClass(
-		Element* element, Owner &This)
-	: Super(*element, This)
+	: Super(new Element(element), This)
 {}
 
 template<class Element>
 inline OwningPartitionClass<Element>::OwningPartitionClass(
 		std::unique_ptr<Element>&& element, Owner &This)
 	: Super(element.release(), This)
-{
-}
+{}
 
 template<class Element>
 inline OwningPartitionClass<Element>::OwningPartitionClass(
@@ -71,28 +71,31 @@ inline OwningPartitionClass<Element>::OwningPartitionClass(
 {}
 
 template<class Element>
-inline void OwningPartitionClass<Element>::accept(Element&& element)
+inline Element &OwningPartitionClass<Element>::accept(Element& element)
 {
-	Super::accept(element);
+	Super::acceptClassed(element);
+	return element;
 }
 
 template<class Element>
-inline void OwningPartitionClass<Element>::accept(Element& element)
+inline Element &OwningPartitionClass<Element>::accept(Element* element)
 {
-	Super::accept(element);
+	Super::acceptClassed(*element);
+	return *element;
+}
+
+
+template<class Element>
+inline Element &OwningPartitionClass<Element>::accept(Element&& element)
+{
+	return Super::acceptStray(new Element(std::move(element)));
 }
 
 template<class Element>
-inline void OwningPartitionClass<Element>::accept(Element* element)
-{
-	Super::accept(*element);
-}
-
-template<class Element>
-inline void OwningPartitionClass<Element>::accept(
+inline Element &OwningPartitionClass<Element>::accept(
 		std::unique_ptr<Element>&& element)
 {
-	Super::accept(*element.release());
+	return Super::acceptStray(element.release());
 }
 
 template<class Element>

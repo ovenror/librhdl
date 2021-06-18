@@ -1,8 +1,6 @@
 int incompatibleDirections();
 int wrongOp();
-int open2open();
 int ambiguousConnection();
-int alreadyConnectedToOpen();
 int statefulComponentInStatelessStructure();
 int introduceCycle();
 int noSuchInterface();

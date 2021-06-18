@@ -8,14 +8,6 @@
 namespace rhdl {
 
 class Representation;
-class Blocks;
-class Netlist;
-class Structural;
-class TimedBehavior;
-class FunctionalBehavior;
-
-class StructureToNetlist;
-class BGTree;
 
 class Transformation
 {

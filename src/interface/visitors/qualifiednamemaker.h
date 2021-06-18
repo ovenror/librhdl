@@ -17,7 +17,6 @@ public:
 	//void visit(const Interface &i) override;
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;
-	void visit(const IPlaceholder &i) override;
 
 	bool generic(const Interface &i);
 

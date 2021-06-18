@@ -3,7 +3,7 @@
 
 #include "blocksim.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 class BSRedstone : public BlockSim
 {

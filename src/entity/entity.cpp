@@ -1,18 +1,25 @@
-#include <rhdl/construction/constructionexception.h>
 #include "entity.h"
 #include "timing.h"
+
+#include <rhdl/construction/constructionexception.h>
+
 #include "interface/predicate.h"
+
 #include "transformation/transformer.h"
+
 #include "representation/representations.h"
+
 #include <iostream>
 
 using namespace rhdl;
 
-
-Entity::Entity(const std::string &name, bool stateless) : name_(name), stateless_(stateless), c_(*this)
+Entity::Entity(
+	const std::string &name, std::vector<const Interface *> components,
+	bool stateless)
+: name_(name), interface_("", components), stateless_(stateless), c_(*this)
 {
 	repIdx_timing_[nullptr];
-	c_.content().iface = c_ptr(static_cast<Interface &>(interface_));
+	c_.content().iface = c_ptr(static_cast<const Interface &>(interface_));
 }
 
 Entity::~Entity()
@@ -22,6 +29,10 @@ Entity::~Entity()
 
 const Representation &Entity::addRepresentation(std::unique_ptr<Representation> &&representation) const
 {
+	using blocks::Blocks;
+	using netlist::Netlist;
+	using structural::Structure;
+
 	const Representation &result = addRepresentation_internal(std::move(representation));
 
 	if (!isStateless())
@@ -32,7 +43,7 @@ const Representation &Entity::addRepresentation(std::unique_ptr<Representation> 
 	const Netlist *netlist = nullptr;
 
 	switch (type) {
-	case Representations::TypeToID<Structural>::value:
+	case Representations::TypeToID<Structure>::value:
 	case Representations::TypeToID<Blocks>::value:
 		netlist = getRepresentation<Netlist>(&result);
 		break;

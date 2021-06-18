@@ -7,7 +7,6 @@
 
 #include "context.h"
 #include "handle.h"
-#include "construction/entityhandle.h"
 
 #include <cassert>
 
@@ -25,6 +24,13 @@ bool Context::contains(const Handle* handle) const {
 void Context::checkContains(const Handle* handle) const {
 	if (!contains(handle))
 		throw Errorcode::E_UNKNOWN_STRUCT;
+}
+
+Handle &Context::make(structural::builder::Port &port)
+{
+	auto *h = new Handle(*this, port);
+	handles_.insert(h);
+	return *h;
 }
 
 } /* namespace rhdl */

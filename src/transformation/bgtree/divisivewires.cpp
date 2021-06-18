@@ -11,6 +11,8 @@
 namespace rhdl {
 namespace TM {
 
+using blocks::Blocks;
+
 DivisiveWires::DivisiveWires(Container &owner, bool vertical, bool anchors) :
 	Wires(owner, vertical, anchors)
 {}

@@ -3,7 +3,7 @@
 
 #include "representation/representation.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 class Behavior : public Representation
 {

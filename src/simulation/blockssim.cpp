@@ -8,7 +8,7 @@
 
 #include <set>
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 BlocksSim::BlocksSim(const Blocks &blocks)
 {

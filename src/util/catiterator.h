@@ -131,8 +131,8 @@ struct CatGenerator {
 	CatGenerator(std::pair<CONTAINER_ITERATOR, CONTAINER_ITERATOR> iterator_pair) : CatGenerator(iterator_pair.first, iterator_pair.second) {}
 	CatGenerator(CONTAINER_ITERATOR begin, CONTAINER_ITERATOR end) : begin_(begin), end_(end) {}
 
-	auto begin() {return iterator(begin_, end_);}
-	auto end() {return iterator(end_, end_);}
+	auto begin() const {return iterator(begin_, end_);}
+	auto end() const {return iterator(end_, end_);}
 
 private:
 	CONTAINER_ITERATOR begin_;

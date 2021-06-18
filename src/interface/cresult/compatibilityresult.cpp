@@ -3,8 +3,7 @@
 
 namespace rhdl {
 
-CompatibilityResult::CompatibilityResult() :
-	evald_(false), success_(false), ec_(Errorcode::E_INTERFACES_NOT_COMPATIBLE)
+CompatibilityResult::CompatibilityResult()
 {
 	//std::cerr << "  GET CONSTRUED! @" << this << std::endl;
 }
@@ -39,6 +38,22 @@ void CompatibilityResult::eval() const
 
 	eval_int();
 	evald_ = true;
+}
+
+std::stringstream& CompatibilityResult::incompatibility(Errorcode errorcode) const
+{
+	ec_ = errorcode;
+	success_ = false;
+	return msg_;
+}
+
+void CompatibilityResult::use(CompatibilityResult &&result) const
+{
+	result.eval();
+
+	success_ = result.success_;
+	ec_ = result.ec_;
+	msg_ = std::move(result.msg_);
 }
 
 }

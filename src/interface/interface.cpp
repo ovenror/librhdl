@@ -9,6 +9,7 @@
 #include "visitors/opener.h"
 #include "visitors/predicateevaluator.h"
 #include "visitors/qualifiednamemaker.h"
+#include "visitors/compatchecker.h"
 
 #include <iostream>
 #include <cassert>
@@ -24,56 +25,9 @@ Interface::~Interface()
 
 }
 
-const Interface *Interface::find_connectible(const Interface *to, const Predicate2 &predicate) const
-{
-	//std::cerr << "generic find connectible " << typeid(*this).name() << " to " << typeid(*to).name() << " comp struct" << std::endl;
-
-	if (eq_struct(*to, predicate) -> success())
-		return this;
-
-	return nullptr;
-}
-
-std::pair<const Interface *, const Interface *> Interface::find_connectibles(const Interface *to, const Predicate2 &predicate) const
-{
-	//std::cerr << "I~I: reverse & reduce" << std::endl;
-
-	const Interface *found = to -> find_connectible(this, predicate.reversed());
-
-	if (!found)
-		return {0,0};
-
-	return {this, found};
-}
-
-void Interface::add_components_to_queue(std::queue<const Interface *> &bfs_backlog) const
-{
-	std::ignore = bfs_backlog;
-}
-
 bool Interface::eq_name(const Interface &other) const
 {
 	return !(name_.compare (other.name_));
-}
-
-Interface::CResult Interface::eq_struct(const Interface &other, const Interface::Predicate2 &predicate) const
-{
-	CResult result(eq_struct_int(other, predicate));
-
-	//std::cerr << "Structural comparison of " << (std::string) *this << "@" << this << " and " << (std::string) other << " @" << &other << std::endl;
-	//std::cerr << result -> error_msg();
-
-	return result;
-}
-
-Interface::CResult Interface::eq_struct_int(const ISingle &other, const Predicate2 &predicate) const
-{
-	return CResult(new CDiffTypes(*this, other, predicate));
-}
-
-Interface::CResult Interface::eq_struct_int(const IComposite &other, const Predicate2 &predicate) const
-{
-	return CResult(new CDiffTypes(*this, other, predicate));
 }
 
 void Interface::setAllOpen() const {
@@ -90,6 +44,27 @@ std::string Interface::qualifiedName(const Interface &top) const {
 	QualifiedNameMaker qnmaker(*this);
 	top.accept(qnmaker);
 	return qnmaker.result();
+}
+
+
+template<class RESULT>
+inline RESULT Interface::checkCompatTo(
+		const Interface &i, const Predicate2 &p) const
+{
+	CompatChecker<RESULT> visitor(p);
+	visitor.go_visit(this, &i);
+	return visitor.result();
+}
+
+Interface::CResult Interface::compatTo(
+	const Interface &i, const Predicate2 &p) const
+{
+	return checkCompatTo<CResult>(i, p);
+}
+
+bool Interface::compatibleTo(const Interface &i, const Predicate2 &p) const
+{
+	return checkCompatTo<bool>(i, p);
 }
 
 Interface::operator std::string() const
@@ -140,6 +115,16 @@ const Interface &Interface::getCorrespondingSubInterface
 	const Interface *result = finder.result();
 	assert(result);
 	return *result;
+}
+
+Interface::Type Interface::type() const {
+	return static_cast<Type>(c_.content_.type);
+}
+
+void Interface::add_components_to_queue(
+		std::queue<const Interface*> &bfs_backlog) const
+{
+	std::ignore = bfs_backlog;
 }
 
 }

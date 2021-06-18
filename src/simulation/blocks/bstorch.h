@@ -3,7 +3,7 @@
 
 #include "bsdelay.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 class BSTorch : public BSDelay
 {

@@ -15,6 +15,9 @@
 namespace rhdl {
 namespace TM {
 
+using blocks::Blocks;
+using blocks::Block;
+
 Wire::Wire(Container &owner, bool anchor, unsigned int index)
 	:
 	  Element(index), owner_(owner), anchor_(anchor), has_extents_(false),
@@ -589,6 +592,10 @@ Blocks::Wall Wire::segment(Blocks::Cuboid &blocks) const
 
 void Wire::placeRepeater(Blocks::index_t position, bool reverse, Blocks &b) const
 {
+	using blocks::Direction;
+	using blocks::FORWARD;
+	using blocks::RIGHT;
+
 	Direction orientation = vertical() ? FORWARD : RIGHT;
 
 	if (reverse)

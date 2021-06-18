@@ -4,7 +4,11 @@
 #include "interfacevisitor.h"
 #include "interface/interface.h"
 
+#include <cassert>
+
 namespace rhdl {
+
+class Interface;
 
 template<bool CONST>
 class InterfaceCasterBase : public InterfaceVisitor<CONST>
@@ -17,23 +21,16 @@ public:
 
 	void visit(Visitee<ISingle> &i) override {assert(0);}
 	void visit(Visitee<IComposite> &i) override {assert(0);}
-	void visit(Visitee<IPlaceholder> &i) override {assert(0);}
 };
 
 template<class T, bool CONST=true>
 class InterfaceCaster : public InterfaceCasterBase<CONST>
 {
 public:
-	InterfaceCaster() /*: result_(nullptr)*/ {}
+	InterfaceCaster() : result_(nullptr) {}
 
 	using CastResult = typename InterfaceCasterBase<CONST>::template Visitee<T>;
 	using Castee = typename InterfaceCasterBase<CONST>::template Visitee<Interface>;
-
-	static CastResult *cast(Castee *i)
-	{
-		InterfaceCaster castf;
-		return castf(i);
-	}
 
 	CastResult * operator()(Castee *i)
 	{

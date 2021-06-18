@@ -21,6 +21,8 @@ using Axis = marray::Axis;
 class ISingle;
 class Timing;
 
+namespace blocks {
+
 class Blocks : public RepresentationBase<Blocks>
 {
 public:
@@ -183,6 +185,6 @@ boost::array<Blocks::index_t, DIM> operator+(
 }
 #endif
 
-}
+}}
 
 #endif // BLOCKS_H

@@ -3,7 +3,7 @@
 
 #include "fastsim.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 template <class SIFACE, class INTERNAL_STATE>
 class HistorySim : public FastSim<SIFACE, INTERNAL_STATE>

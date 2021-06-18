@@ -9,6 +9,8 @@ namespace rhdl {
 
 class Timing;
 
+namespace behavioral {
+
 class TimedBehavior : public RepresentationBase<TimedBehavior>
 {
 public:
@@ -25,22 +27,26 @@ public:
 				= [](FastSim<siface_class, internal_state_class> &){},
 			SimInit initial = {}
 			)
-		: RepresentationBase<TimedBehavior>(entity, nullptr, timing)
-	{
-		setBehaviorFactory(std::make_unique<FastSimFactory<siface_class, internal_state_class> >(this -> entity(), simfunc, procfunc, initial));
-	}
+		: TimedBehavior(
+				entity, timing,
+				std::make_unique<FastSimFactory<siface_class, internal_state_class> >(
+						simfunc, procfunc, initial))
+	{}
 
+	TimedBehavior(
+			const Entity &entity, const Timing *timing,
+			std::unique_ptr<SimFactory> &&);
 	TimedBehavior(const TimedBehavior &&) = delete;
 	TimedBehavior(TimedBehavior &&) = default;
+
+	virtual ~TimedBehavior();
 
 	virtual std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const override;
 
 private:
-	void setBehaviorFactory(std::unique_ptr<SimFactory> bhv);
-
 	std::unique_ptr<SimFactory> simFactory_;
 };
 
-}
+}}
 
 #endif // TIMEDBEHAVIOR_H

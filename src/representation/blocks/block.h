@@ -3,7 +3,7 @@
 
 #include "representation/blocks/direction.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 class Block
 {

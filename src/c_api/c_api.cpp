@@ -11,6 +11,8 @@
 #include "construction/library.h"
 #include "construction/interfacecompatexception.h"
 
+#include "entity/entity.h"
+
 #include "representation/txt/commands.h"
 
 #include "util/iterable.h"
@@ -62,7 +64,10 @@ static inline RTYPE cerror(std::function<RTYPE()> f, std::array<int, NEXPECTED> 
 	catch (ConstructionException &e) {
 		int ec = static_cast<int>(e.errorcode());
 
-		if (ec == E_UNKNOWN_STRUCT || ec == E_WRONG_STRUCT_TYPE) {
+		switch (ec) {
+		case E_UNKNOWN_STRUCT:
+		case E_WRONG_STRUCT_TYPE:
+		case E_INVALID_HANDLE:
 			except(e);
 			return cerror_return<RTYPE>(ec);
 		}
@@ -134,23 +139,47 @@ rhdl_structure_t *rhdl_begin_structure(rhdl_namespace_t *nspace, const char *ent
 	//namespaces are not implemented yet
 	assert (nspace == nullptr);
 
-	auto f = [=]() -> rhdl_structure_t *{
+	try {
 		return c_ptr(*new StructureHandle(entity_name, mode));
-	};
+	}
+	catch (const ConstructionException &e) {
+		switch (e.errorcode()) {
+		case rhdl::Errorcode::E_ENTITY_EXISTS:
+		case rhdl::Errorcode::E_NO_SUCH_ENTITY:
+			except(e);
+			return nullptr;
+		default:
+			assert (0);
+		}
+	}
 
-	return cerror<rhdl_structure_t *, 2>(f, {E_NO_SUCH_ENTITY, E_ENTITY_EXISTS});
+	return nullptr;
 }
 
 int rhdl_finish_structure(rhdl_structure_t *structure)
 {
 	auto f = [=](){
-		auto cpp = recover<StructureHandle>(structure);
+		auto &cpp = recover<StructureHandle>(structure);
 		cpp.finalize();
+		delete &cpp;
 		return 0;
 	};
 
-	return cerror<int, 1>(f, {E_NETLIST_CONTAINS_CYCLES});
+	return cerror<int, 2>(f, {E_NETLIST_CONTAINS_CYCLES, E_EMPTY_INTERFACE});
 }
+
+int rhdl_abort_structure(rhdl_structure_t *structure)
+{
+	auto f = [=](){
+		auto &cpp = recover<StructureHandle>(structure);
+		cpp.abort();
+		delete &cpp;
+		return 0;
+	};
+
+	return cerror<int, 0>(f, {});
+}
+
 
 rhdl_connector_t *rhdl_component(rhdl_structure_t *structure, rhdl_entity_t *entity)
 {
@@ -161,7 +190,7 @@ rhdl_connector_t *rhdl_component(rhdl_structure_t *structure, rhdl_entity_t *ent
 		return c_ptr(cpp_component);
 	};
 
-	return cerror<rhdl_connector_t *, 0>(f, std::array<int, 0>{});
+	return cerror<rhdl_connector_t *, 1>(f, {E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY});
 }
 
 rhdl_connector_t *rhdl_select(rhdl_connector_t *connector, const char *iface_name)
@@ -189,14 +218,13 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 	}
 	catch (const ConstructionException &e) {
 		switch (e.errorcode()) {
+		case rhdl::Errorcode::E_INVALID_HANDLE:
 		case rhdl::Errorcode::E_UNKNOWN_STRUCT:
 		case rhdl::Errorcode::E_COMPATIBLE_INTERFACES_NOT_FOUND:
 		case rhdl::Errorcode::E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES:
-		case rhdl::Errorcode::E_ALREADY_CONNECTED_TO_OPEN:
 		case rhdl::Errorcode::E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY:
 		case rhdl::Errorcode::E_ILLEGAL_RECONNECTION:
 		case rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH:
-		case rhdl::Errorcode::E_UNKNOWN_CONNECTION_FAILURE:
 			except(e);
 			return static_cast<int>(e.errorcode());
 		default:
@@ -210,7 +238,7 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 int rhdl_print_commands(const char *entity_name) {
 	auto f = [=]() {
 		auto &entity = rhdl::defaultLib.at(entity_name);
-		auto *commands = entity.getRepresentation<rhdl::Commands>();
+		auto *commands = entity.getRepresentation<rhdl::txt::Commands>();
 		std::cout << *commands;
 		return 0;
 	};

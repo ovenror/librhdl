@@ -48,7 +48,7 @@ public:
 
 	void applyToWires(std::function<void(Wire &)> f);
 
-	void toBlocks(Blocks::Cuboid b) const;
+	void toBlocks(blocks::Blocks::Cuboid b) const;
 
 	MutableLayer *mabove() const;
 	MutableLayer *mbelow() const;
@@ -68,8 +68,8 @@ public:
 	std::vector<const Wire *> inputs(const std::function<bool (const Wire &)> &predicate) const;
 	std::vector<const Wire *> upperLayerInputs(const std::function<bool(const Wire &)> &predicate) const;
 
-	Blocks::index_t xpos() const override;
-	Blocks::index_t ypos() const override;
+	blocks::Blocks::index_t xpos() const override;
+	blocks::Blocks::index_t ypos() const override;
 
 	using NodeGroupPtr = std::unique_ptr<NodeGroup>;
 	using NodeGroupContainer = std::vector<NodeGroupPtr>;
@@ -85,7 +85,11 @@ public:
 	NodesIterable nodes() const;
 
 private:
-	Blocks::index_t tryCreateShortcut(NodesIterator from, NodesIterator to, Blocks::index_t rangeFrom, Blocks::index_t lastNodeOutputPos, Blocks::index_t rangeEnd);
+	blocks::Blocks::index_t tryCreateShortcut(
+			NodesIterator from, NodesIterator to,
+			blocks::Blocks::index_t rangeFrom,
+			blocks::Blocks::index_t lastNodeOutputPos,
+			blocks::Blocks::index_t rangeEnd);
 	std::vector<const Wire *> getConnectedCrossers(const Connection &connection) const;
 
 	TreeModel &model_;

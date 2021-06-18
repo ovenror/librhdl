@@ -2,7 +2,7 @@
 #include "entity/entity.h"
 #include "representation/netlist/netlist.h"
 
-namespace rhdl {
+namespace rhdl::netlist {
 
 NetlistSim::NetlistSim(const Netlist &netlist) :
 	netlist_(netlist), internal_state_(netlist.graph_.initialStateMap())

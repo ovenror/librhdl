@@ -8,6 +8,8 @@
 
 namespace rhdl::TM {
 
+using blocks::Blocks;
+
 std::ostream &operator<<(std::ostream &os, const Segment &segment)
 {
 	os << segment.distance() << ": ";

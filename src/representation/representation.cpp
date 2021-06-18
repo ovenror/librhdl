@@ -4,6 +4,7 @@
 #include "entity/entity.h"
 #include "entity/timing.h"
 
+#include "simulation/simulator.h"
 
 #include <cassert>
 
@@ -46,5 +47,11 @@ Representation::Representation(
 Representation::Representation(const Entity &entity)
 	: Representation(entity, Representations::INVALID, nullptr)
 {}
+
+std::unique_ptr<Simulator> Representation::makeSimulator(
+		bool use_behavior) const
+{
+	return nullptr;
+}
 
 }

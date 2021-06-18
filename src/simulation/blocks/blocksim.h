@@ -10,9 +10,7 @@
 #include <memory>
 #include <queue>
 
-namespace rhdl {
-
-
+namespace rhdl::blocks {
 
 class BlockSim
 {

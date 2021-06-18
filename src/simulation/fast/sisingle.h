@@ -5,7 +5,7 @@
 #include "sisingle_base.h"
 #include "interface/isingle.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 template <class NAME>
 class SISingle : public SISingle_Base, public SimInterface<ISingle, NAME>

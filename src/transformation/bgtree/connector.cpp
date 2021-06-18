@@ -5,6 +5,8 @@
 
 namespace rhdl::TM {
 
+using blocks::Blocks;
+
 Connector::Connector(Blocks::index_t xpos, Blocks::index_t ypos)
 	: xpos_(xpos), ypos_(ypos), terminal_(true)
 {}

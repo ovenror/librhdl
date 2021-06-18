@@ -9,7 +9,6 @@ namespace rhdl {
 //class Interface;
 class ISingle;
 class IComposite;
-class IPlaceholder;
 
 template <bool CONST=true>
 class InterfaceVisitor
@@ -23,7 +22,6 @@ public:
 
 	virtual void visit(Visitee<ISingle> &) = 0;
 	virtual void visit(Visitee<IComposite> &) = 0;
-	virtual void visit(Visitee<IPlaceholder> &) = 0;
 };
 
 }

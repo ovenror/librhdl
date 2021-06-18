@@ -1,6 +1,6 @@
 #include "bsdelay.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 BSDelay::BSDelay(Queue &q) : BlockSim(q)
 {}

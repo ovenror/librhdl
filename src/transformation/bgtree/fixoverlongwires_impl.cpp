@@ -17,6 +17,8 @@
 
 namespace rhdl::TM {
 
+using blocks::Blocks;
+
 std::forward_list<const Connection *> fixBrokenConnections(const ConnectionLinks &connectionsLinks, Blocks &b)
 {
    std::forward_list<const Connection *> result;

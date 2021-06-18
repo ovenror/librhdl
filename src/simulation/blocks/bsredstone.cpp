@@ -1,6 +1,6 @@
 #include "bsredstone.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 BSRedstone::BSRedstone(Queue &q) : BlockSim(q)
 {

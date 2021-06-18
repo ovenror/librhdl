@@ -14,9 +14,6 @@
 
 namespace rhdl {
 
-class Context;
-class Handle;
-
 template <class C_Struct>
 struct Wropper {
 	C_Struct content_;

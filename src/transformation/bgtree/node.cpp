@@ -10,6 +10,8 @@
 namespace rhdl {
 namespace TM {
 
+using blocks::Blocks;
+
 Node::Node(NodeGroup &container, unsigned int index, Wire &input_manifold, bool invert)
 	: Horizontal(index), node_group_(container),
 	  invert_(invert), output_(*this, true),
@@ -240,6 +242,13 @@ void Node::toBlocks(Blocks::Cuboid b) const
 
 void Node::mkInverter(Blocks::Cuboid segment) const
 {
+	using blocks::Block;
+	using blocks::Direction;
+	using blocks::RIGHT;
+	using blocks::FORWARD;
+	using blocks::LEFT;
+	using blocks::BACKWARD;
+
 	Blocks::index_t x = xpos();
 	Blocks::index_t r = xpos() + 1;
 	Blocks::index_t l = xpos() - 1;

@@ -2,20 +2,21 @@
 #define HIERARCHICALSIM_H
 
 #include "simulator.h"
-#include "representation/structural/structural.h"
+
 #include <vector>
 #include <map>
 #include <memory>
 
-namespace rhdl {
+namespace rhdl::structural {
+
+class CompressedStructure;
+class Connection;
+class Port;
 
 class HierarchicalSim : public Simulator
 {
 public:
-	typedef Structural::FlatConnection FlatConnection;
-	typedef Structural::FlatPort FlatPort;
-
-	HierarchicalSim(const Structural &structure, bool use_behavior);
+	HierarchicalSim(const Structure &structure, bool use_behavior);
 
 	bool get(const ISingle *iface) const override;
 	void internalStep() override;
@@ -32,15 +33,15 @@ private:
 
 	bool propagateConnections();
 	bool propagateConnectionsOnce();
-	bool propagateConnection(const FlatConnection &c);
-	bool propagateConnection(const FlatPort &from, const FlatPort &to);
-	bool getPortOutput(const FlatPort &p) const;
-	bool getPortInput(const FlatPort &p) const;
-	void setPort(const FlatPort &p);
+	bool propagateConnection(const Connection &c);
+	bool propagateConnection(const Port &from, const Port &to);
+	bool getPortOutput(const Port &p) const;
+	bool getPortInput(const Port &p) const;
+	void setPort(const Port &p);
 
 	std::vector<const ISingle *> getIFaces(const Entity &entity) const;
 
-	const Structural &structure_;
+	const Structure &structure_;
 	std::vector <std::unique_ptr <Simulator> > sub_sims_;
 	std::vector <Simulator *> part_sims_;
 	StateMap stateCache_;

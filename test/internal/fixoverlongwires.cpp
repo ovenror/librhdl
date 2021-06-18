@@ -21,6 +21,9 @@ using namespace rhdl::TM;
 using rhdl::Interface;
 using rhdl::ISingle;
 using rhdl::IComposite;
+using rhdl::blocks::Blocks;
+using rhdl::netlist::Netlist;
+using rhdl::netlist::VertexRef;
 
 class TestModel : public rhdl::TreeModel {
 public:
@@ -31,19 +34,20 @@ public:
 	Wire *c0_0;
 
 	rhdl::Entity dummy_;
-	std::map<const Connection *, rhdl::VertexRef> dummyMap_;
+	std::map<const Connection *, VertexRef> dummyMap_;
 };
 
 TestModel::TestModel()
 	:
-	  TreeModel(rhdl::Netlist(dummy_, nullptr, nullptr), {}, {}, dummyMap_),
-	  dummy_("DUMMY")
+	  TreeModel(Netlist(dummy_, nullptr, nullptr), {}, {}, dummyMap_),
+	  dummy_("DUMMY", {
+			  new ISingle("in", Interface::Direction::IN, false),
+			  new ISingle("out", Interface::Direction::OUT, false)
+	  })
 {
-	IComposite &iface = const_cast<IComposite &>(dummy_.interface());
-	iface.add(new ISingle("in", Interface::Direction::IN, false));
-	iface.add(new ISingle("out", Interface::Direction::OUT, false));
+	const IComposite &iface = dummy_.interface();
 
-	in = &mkBottomInterfaceWire((rhdl::ISingle *) dummy_.interface()["in"]);
+	in = &mkBottomInterfaceWire((rhdl::ISingle *) iface["in"]);
 
 	auto &l0 = makeLayer();
 
@@ -74,7 +78,7 @@ TestModel::TestModel()
 	n1_1_0.output_.connect(n1_0_0.output_);
 
 	out = &n1_0_0.output_;
-	useAsTopInterfaceWire(n1_0_0.output_, (rhdl::ISingle *) dummy_.interface()["out"]);
+	useAsTopInterfaceWire(n1_0_0.output_, (rhdl::ISingle *) iface["out"]);
 
 	computeSpatial();
 	//assert(n0_0_0.input_anchor_.getPosition() == 1);
@@ -90,7 +94,7 @@ TEST(WireTest, wiresConnectedAt)
 	ASSERT_EQ(m.out -> wiresConnectedAt(m.height() - 1).size(), 3UL);
 }
 
-void testFindPaths_oneway(const Connector &from, const Connector &to, std::vector<std::vector<rhdl::Blocks::index_t>> &distances, Paths *paths = nullptr)
+void testFindPaths_oneway(const Connector &from, const Connector &to, std::vector<std::vector<Blocks::index_t>> &distances, Paths *paths = nullptr)
 {
 	Paths dummy;
 	if (!paths)
@@ -110,7 +114,7 @@ void testFindPaths_oneway(const Connector &from, const Connector &to, std::vecto
 			unsigned int i = 0;
 
 			for (; i < path.size(); ++i) {
-				rhdl::Blocks::index_t pathDist = path[i].first -> distance();
+				Blocks::index_t pathDist = path[i].first -> distance();
 
 				if (path[i].second)
 					pathDist = -pathDist;
@@ -130,9 +134,9 @@ void testFindPaths_oneway(const Connector &from, const Connector &to, std::vecto
 	}
 }
 
-void testFindPaths(const Connector &from, const Connector &to, std::vector<std::vector<rhdl::Blocks::index_t>> &distances, Paths *paths = nullptr)
+void testFindPaths(const Connector &from, const Connector &to, std::vector<std::vector<Blocks::index_t>> &distances, Paths *paths = nullptr)
 {
-	std::vector<std::vector<rhdl::Blocks::index_t>> rdistances;
+	std::vector<std::vector<Blocks::index_t>> rdistances;
 
 	for (const auto &path : distances)
 	{
@@ -153,7 +157,7 @@ TEST(FindPaths, iIn_iOut)
 {
 	TestModel m;
 
-	std::vector<std::vector<rhdl::Blocks::index_t>> pdists =
+	std::vector<std::vector<Blocks::index_t>> pdists =
 	{
 		{
 		#if 0
@@ -191,7 +195,7 @@ TEST(FindPaths, iIn_Inv)
 {
 	TestModel m;
 
-	std::vector<std::vector<rhdl::Blocks::index_t>> pdists =
+	std::vector<std::vector<Blocks::index_t>> pdists =
 	{
 		{
 		#if 0
@@ -284,7 +288,7 @@ TEST(PathEvaluation, freeLength)
 	EXPECT_EQ(freeLength(rsecond, 4), 8);
 
 
-	rhdl::Blocks dummyTarget(m.dummy_, nullptr, nullptr);
+	Blocks dummyTarget(m.dummy_, nullptr, nullptr);
 	dummyTarget.resize({4, m.width(), m.height()});
 
 	const Segment &seg1 = *second[1].first;

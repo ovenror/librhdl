@@ -9,6 +9,8 @@ namespace rhdl {
 
 class Entity;
 
+namespace netlist {
+
 class NetlistSim : public ExposableInternalStateSim
 {
 public:
@@ -27,6 +29,6 @@ private:
 	std::map<VertexRef, bool> internal_state_;
 };
 
-}
+}}
 
 #endif // NETLISTSIM_H

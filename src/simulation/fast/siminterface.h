@@ -10,6 +10,8 @@ namespace rhdl {
 
 class Entity;
 
+namespace behavioral {
+
 template <class WHAT, class NAME>
 class SimInterface
 {
@@ -31,6 +33,6 @@ public:
 	const WHAT *iface_;
 };
 
-}
+}}
 
 #endif // SIMINTERFACE_H

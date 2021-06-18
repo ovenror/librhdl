@@ -1,7 +1,7 @@
 #include "blocksim.h"
 #include <iostream>
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 BlockSim::BlockSim(Queue &q)
 	: value_(0), queue_(q)

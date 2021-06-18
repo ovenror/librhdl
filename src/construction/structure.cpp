@@ -6,32 +6,45 @@
  */
 
 #include <rhdl/construction/structure.h>
-#include "construction/newentityhandle.h"
-#include "construction/existingentityhandle.h"
-#include "construction/library.h"
+#include "library.h"
+
+#include "representation/structural/structure.h"
+
+#include "entity/entity.h"
+
+#include "representation/structural/builder/existingentitystructure.h"
+#include "representation/structural/builder/newentitystructure.h"
 
 namespace rhdl {
 
-Structure::Structure(std::string name, Mode mode)
+namespace s = structural;
+namespace sb = s::builder;
+
+Structure::Structure(const std::string &name, Mode mode)
 {
-	if (mode == EXISTS)
-		handle_ = std::make_unique<ExistingEntityHandle>(name);
-	else
-		handle_ = std::make_unique<NewEntityHandle>(name, mode == CREATE_STATELESS ? true : false);
+	impl_ = sb::makeStructure(name, mode);
 }
 
 Structure::~Structure() {}
 
-EntityInterface Structure::operator [](const std::string& iname) const {
-	return (*handle_)[iname];
+StructureConnector Structure::operator [](const std::string &iname) const
+{
+	return StructureConnector(port()[iname]);
 }
 
-void Structure::finalize() {
-	handle_ -> finalize();
+void Structure::finalize()
+{
+	impl_ -> finalize();
 }
 
-const Interfacible& Structure::interfacible() const {
-	return *handle_;
+void Structure::abort()
+{
+	impl_ -> abort();
+}
+
+structural::builder::Port &Structure::port() const
+{
+	return impl_ -> topPort();
 }
 
 }

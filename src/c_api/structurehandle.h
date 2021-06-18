@@ -9,14 +9,18 @@
 #define C_API_STRUCTUREHANDLE_H_
 
 #include <rhdl/construction/c/types.h>
-#include <rhdl/construction/structure.h>
+
 #include "context.h"
 #include "handle.h"
 #include "wrapper.h"
 
-
+#include <memory>
 
 namespace rhdl {
+
+class Entity;
+
+namespace structural { namespace builder { class Structure; }}
 
 class StructureHandle {
 public:
@@ -24,10 +28,11 @@ public:
 
 	Handle &makeComponent(const Entity &entity);
 	void finalize();
+	void abort();
 
 private:
 	Context context_;
-	TypedHandle<Structure> *connector_;
+	std::unique_ptr<structural::builder::Structure> structure_;
 
 public:
 	using C_Struct = rhdl_structure;

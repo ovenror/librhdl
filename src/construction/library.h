@@ -2,12 +2,13 @@
 #define LIBRARY_H
 
 #include <rhdl/construction/c/types.h>
-#include "newentityhandle.h"
-#include "parthandle.h"
+#include <rhdl/construction/component.h>
+#include "construction/internalstructure.h"
 
 #include "lib/lib.h"
 
 #include "util/dictionary.h"
+#include "c_api/wrapper.h"
 
 #include <utility>
 #include <map>
@@ -16,7 +17,7 @@
 
 namespace rhdl {
 
-class Graph;
+class Entity;
 
 class Library {
 public:
@@ -28,8 +29,6 @@ public:
 	Entity &at(const std::string &name);
 
 	const Dictionary<std::unique_ptr<Entity>> &entities() const {return entities_;}
-
-	PartHandle New(const std::string &name);
 
 private:
 	Entity &regist_internal(std::unique_ptr<Entity> &&entity);
@@ -45,8 +44,8 @@ private:
 	Wrapper<Library> c_;
 };
 
-using Part = PartHandle;
-using Ent = NewEntityHandle;
+using Part = Component;
+using Ent = InternalStructure;
 
 extern Library defaultLib;
 

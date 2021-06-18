@@ -1,6 +1,6 @@
 #include "bsopaque.h"
 
-namespace rhdl {
+namespace rhdl::blocks {
 
 BSOpaque::BSOpaque(Queue &q) : BlockSim(q)
 {

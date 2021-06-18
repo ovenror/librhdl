@@ -1,17 +1,22 @@
 #include "timedbehavior.h"
+#include "entity/entity.h"
 
-namespace rhdl {
+namespace rhdl::behavioral {
 
 std::unique_ptr<Simulator> TimedBehavior::makeSimulator(bool use_behavior) const
 {
 	std::ignore = use_behavior;
-	return simFactory_ -> make();
+	return simFactory_ -> make(entity().interface());
 }
 
-void TimedBehavior::setBehaviorFactory(std::unique_ptr<SimFactory> bhv)
-{
-	simFactory_ = std::move(bhv);
-}
+TimedBehavior::TimedBehavior(
+		const Entity &entity, const Timing *timing,
+		std::unique_ptr<SimFactory> &&simFactory)
+	: RepresentationBase<TimedBehavior>(entity, nullptr, timing),
+	  simFactory_(std::move(simFactory))
+{}
+
+TimedBehavior::~TimedBehavior() {}
 
 }
 

@@ -24,7 +24,7 @@ public:
 	const Timing *timing() const {return timing_;}
 
 	virtual bool typeCheck() const = 0;
-	virtual std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const = 0;   
+	virtual std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const;
 
 	bool isChild(const Representation *r) const;
 	bool isDescendant(const Representation *r) const;

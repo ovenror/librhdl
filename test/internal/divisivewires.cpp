@@ -17,9 +17,8 @@ public:
 
 	const Container &asContainer() const override {return *this;}
 
-	virtual Blocks::index_t xpos() const {return 0;}
-	virtual Blocks::index_t ypos() const {return 0;}
-
+	virtual blocks::Blocks::index_t xpos() const {return 0;}
+	virtual blocks::Blocks::index_t ypos() const {return 0;}
 
 	virtual const Layer *above() const override {assert (0);}
 	virtual const Layer *below() const override {assert (0);}
@@ -29,8 +28,6 @@ public:
 
 	virtual const Wires &crossBelow() const override {assert (0);}
 	virtual Wires &crossBelow() override {assert (0);}
-
-
 
 	virtual std::vector<const Wire *> inputs(const std::function<bool (const Wire &)> &predicate) const override {
 		std::ignore = predicate;

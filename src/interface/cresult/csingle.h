@@ -2,22 +2,24 @@
 #define CSINGLE_H
 
 #include "cbase.h"
-#include "interface/interface.h"
-#include <string>
 
 namespace rhdl {
 
 class ISingle;
 
-class CSingle : public CBase<ISingle>
+struct CSingleOps : public CSametypeOpsBase<ISingle&, CSingleOps> {
+	using Super::Super;
+
+	bool compatible() const;
+	bool check_open() const;
+};
+
+class CSingle : public CBase<CSingleOps>
 {
 public:
-	using BASE = CBase<ISingle>;
-	using Predicate = Interface::Predicate2;
-	using Direction = Interface::Direction;
+	using Super::Super;
 
-	CSingle(const ISingle &from, const ISingle &to, const Predicate &predicate);
-	~CSingle();
+	virtual ~CSingle();
 
 	void eval_int() const override;
 };

@@ -3,6 +3,9 @@
 #include "nodegroup.h"
 
 namespace rhdl {
+
+using blocks::Blocks;
+
 namespace TM {
 
 Blocks::index_t Element::position() const

@@ -14,8 +14,12 @@
 #include <cassert>
 #include <array>
 
-
 namespace rhdl {
+
+using blocks::Block;
+using blocks::Blocks;
+
+namespace txt {
 
 Commands::Commands(const Blocks &blocks)
 	: RepresentationBase(blocks.entity(), &blocks, blocks.timing()),
@@ -26,10 +30,6 @@ Commands::~Commands() {}
 
 void Commands::moveTo(Blocks::Vec pos) {
 	translation_ = pos;
-}
-
-std::unique_ptr<Simulator> Commands::makeSimulator(bool use_behavior) const {
-	return nullptr;
 }
 
 static std::array<std::string, 4> facings{"west", "north", "east", "south"};
@@ -86,4 +86,5 @@ std::ostream& operator <<(std::ostream& os, const Commands& commands) {
 	return os;
 }
 
+} /* namespace txt */
 } /* namespace rhdl */

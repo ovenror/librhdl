@@ -8,19 +8,19 @@
 #ifndef INCLUDE_STRUCTURE_H_
 #define INCLUDE_STRUCTURE_H_
 
-#include <rhdl/construction/connectibleentity.h>
-#include <rhdl/construction/entityinterface.h>
-#include <rhdl/construction/exported.h>
-#include <rhdl/construction/interfacible.h>
+#include <rhdl/construction/connectible.h>
+#include <rhdl/construction/structureconnector.h>
+
 #include <memory>
 #include <string>
 
 namespace rhdl {
 
-class EntityHandle;
-class Interface;
+class Entity;
 
-class Structure : public Exported {
+namespace structural { namespace builder { class Structure; }}
+
+class Structure : public Connectible {
 private:
 	struct Hidden {
 		#include <rhdl/construction/c/flags.h>
@@ -32,25 +32,30 @@ public:
 		EXISTS = static_cast<int>(Hidden::F_EXISTS)
 	};
 
-	Structure(std::string name, Mode mode = CREATE_STATELESS);
+	Structure(const std::string &name, Mode mode = CREATE_STATELESS);
 	~Structure();
 
-	const Connectible &operator>>(const Connectible &to) const {return Exported::operator>>(to);}
-	const Connectible &operator<<(const Connectible &from) const {return Exported::operator<<(from);}
+	StructureConnector operator[] (const std::string &iname) const;
 
-	EntityInterface operator[] (const std::string &iname) const;
+	const Connectible &operator>>(const Connectible & c) const {return Connectible::operator>>(c);}
+	const Connectible &operator<<(const Connectible &c) const {return Connectible::operator<<(c);}
+	Connectible &operator=(const Connectible &c) {return Connectible::operator=(c);}
+
 	void finalize();
+	void abort();
 
 protected:
-	const Interfacible &interfacible() const override;
+	std::unique_ptr<structural::builder::Structure> impl_;
 
 private:
-	EntityInterface &operator>>(const EntityHandle &);
-	EntityInterface &operator<<(const EntityHandle &);
-	EntityInterface &operator>>(const EntityInterface &);
-	EntityInterface &operator<<(const EntityInterface &);
+	const Structure &operator>>(const Structure &) const;
+	const Structure &operator<<(const Structure &) const;
+	Structure &operator=(const Structure &);
+	const StructureConnector &operator>>(const StructureConnector &) const;
+	const StructureConnector &operator<<(const StructureConnector &) const;
+	StructureConnector &operator=(const StructureConnector &);
 
-	std::unique_ptr<EntityHandle> handle_;
+	structural::builder::Port &port() const final override;
 };
 
 }

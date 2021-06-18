@@ -10,7 +10,7 @@
 namespace rhdl {
 
 ConnectionPredicate::ConnectionPredicate(bool samedir,
-	bool check_first_dir, InterfaceDirection first_dir)
+	bool check_first_dir, SingleDirection first_dir)
 :
 	samedir_(samedir), check_first_dir_(check_first_dir), first_dir_(first_dir)
 {
@@ -18,11 +18,12 @@ ConnectionPredicate::ConnectionPredicate(bool samedir,
 }
 
 ConnectionPredicate ConnectionPredicate::reversed() const {
-	ConnectionPredicate result(*this);
-	if (!samedir_)
-		result.first_dir_ = (first_dir_ == Direction::OUT ? Direction::IN : Direction::OUT);
-
-	return result;
+	if (samedir_)
+		return *this;
+	else
+		return ConnectionPredicate(
+				this -> samedir_, this -> check_first_dir_,
+				rhdl::reversed(this -> first_dir_));
 }
 
 ConnectionPredicate ConnectionPredicate::entity_corrected() const {
@@ -32,7 +33,7 @@ ConnectionPredicate ConnectionPredicate::entity_corrected() const {
 		return result;
 
 	if (check_first_dir_)
-		result.first_dir_ = (first_dir_ == Direction::OUT ? Direction::IN : Direction::OUT);
+		result.first_dir_ = rhdl::reversed(first_dir_);
 
 	result.samedir_ = true;
 	return result;
