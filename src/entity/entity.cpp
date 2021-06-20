@@ -20,30 +20,6 @@ Entity::~Entity()
 	//delete interface_;
 }
 
-bool Entity::connectible(const Entity *from_entity, const Interface *from,
-						 const Entity *to_entity, const Interface *to)
-{
-
-	std::ignore = from_entity;
-	std::ignore = to_entity;
-
-
-	if (!from -> eq_struct (*to, Interface::Predicate2::ptp()) -> success())
-	{
-		//std::cerr << "ERROR: incompatible interfaces" << std::endl;
-		return false;
-	}
-
-#if 0
-	if (!from -> eq_inner_names (*to))
-	{
-		std::cerr << "WARNING: incompatible interface names" << std::endl;
-	}
-#endif
-	return true;
-}
-
-
 const Representation &Entity::addRepresentation(std::unique_ptr<Representation> &&representation) const
 {
 	const Representation &result = addRepresentation_internal(std::move(representation));

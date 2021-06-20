@@ -38,19 +38,6 @@ public:
 	const IComposite& interface() const;
 	bool isStateless() const {return stateless_;}
 
-	/*!
-	  \fn static bool connectible (
-			const Entity *from_entity, const Interface *from_interface,
-			const Entity *to_entity, const Interface *to_interface);
-
-	  Returns true iff entity \a from_entity is connectible to entity
-	  \a to_entity via interfaces \a from_interface and \a to_interface
-	  respectively.
-	*/
-	static bool connectible (
-			const Entity *from_entity, const Interface *from_interface,
-			const Entity *to_entity, const Interface *to_interface);
-
 	//virtual operator std::string() const =0;
 
 	std::string fqn(const Interface *sub) const;
