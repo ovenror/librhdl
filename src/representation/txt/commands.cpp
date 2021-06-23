@@ -17,9 +17,9 @@
 
 namespace rhdl {
 
-Commands::Commands(const Entity& entity,
-		const Blocks &blocks, const Timing* timing)
-	: RepresentationBase(entity, &blocks, timing), blocks_(blocks), translation_{0,0,0}
+Commands::Commands(const Blocks &blocks)
+	: RepresentationBase(blocks.entity(), &blocks, blocks.timing()),
+	  blocks_(blocks), translation_{0,0,0}
 {}
 
 Commands::~Commands() {}

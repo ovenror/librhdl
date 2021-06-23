@@ -7,7 +7,7 @@
 
 #include "bgtree/bgtree.h"
 #include "transformation/structure2netlist.h"
-#include "transformation/blocks2commands.h"
+#include "transformation/defaulttransformation.h"
 /*
  * ---
  */
@@ -34,7 +34,11 @@ struct Transformations::Init<type, types...> {
  */
 Transformations::Transformations()
 {
-	Init<BGTree, StructureToNetlist, BlocksToCommands>::init(*this);
+	Init<
+		StructureToNetlist,
+		BGTree,
+		DefaultTransformation<Blocks, Commands>
+	>::init(*this);
 }
 
 }

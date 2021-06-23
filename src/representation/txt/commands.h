@@ -15,6 +15,7 @@ namespace rhdl {
 
 class Commands : public RepresentationBase<Commands> {
 public:
+	Commands(const Blocks &blocks);
 	Commands(const Entity &entity, const Blocks &blocks,
 	         const Timing *timing);
 
