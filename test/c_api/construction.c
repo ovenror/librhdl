@@ -19,7 +19,7 @@ int instantiateStructure()
 	REQUIRE(list);
 	REQUIRE( ! *list);
 
-	return REJECT_ERR(rhdl_finish_structure(s));
+	return REJECT_ERR(rhdl_abort_structure(s));
 }
 
 int getEntityInterface()
@@ -85,10 +85,12 @@ int exposeInverter()
 	REQUIRE(inv);
 
 	REQUIRE_NOERR(rhdl_connect(s_in, inv));
+	i_in = s_in -> iface;
 	REQUIRE(i_in -> type == RHDL_SINGLE);
 	REQUIRE(i_in -> single.dir == RHDL_IN);
 
 	REQUIRE_NOERR(rhdl_connect(inv, s_out));
+	i_out = s_out -> iface;
 	REQUIRE(i_out -> type == RHDL_SINGLE);
 	REQUIRE(i_out -> single.dir == RHDL_OUT);
 
@@ -119,7 +121,7 @@ int unnamedExposure()
 
 	const char *const *list = si -> composite.interfaces;
 	REQUIRE(list);
-	CHECK(&list, "<anonymous>");
+	CHECK(&list, "out");
 	END(list);
 
 	return SUCCESS;

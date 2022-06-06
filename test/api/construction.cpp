@@ -6,11 +6,13 @@ using rhdl::Component;
 
 TEST(ApiConstructionTest,InstantiateStructure) {
 	Structure test("Test");
+	test.abort();
 }
 
 TEST(ApiConstructionTest,GetEntityInterface) {
 	Structure test("Test2");
 	auto iface = test["foo"];
+	test.abort();
 }
 
 TEST(ApiConstructionTest,InstantiateInverter) {
@@ -32,6 +34,7 @@ TEST(ApiConstructionTest,ConnectInverters) {
 TEST(ApiConstructionTest,UnnamedExposure) {
 	Structure test("Test4");
 	Component inv("Inverter");
+
 	inv >> test;
 	test >> inv;
 }

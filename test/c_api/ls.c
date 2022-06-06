@@ -44,6 +44,15 @@ int libPlusNew()
 	const char *new = "AA-Ron";
 	rhdl_structure_t *s = rhdl_begin_structure(0, new, F_CREATE_STATELESS);
 	REQUIRE(s);
+	REQUIRE(s -> connector);
+
+	rhdl_entity_t *i = rhdl_entity(0, "Inverter");
+	REQUIRE(i);
+
+	rhdl_connector_t *ic = rhdl_component(s, i);
+	REQUIRE(ic);
+
+	REQUIRE_NOERR(rhdl_connect(s -> connector, ic));
 	REQUIRE_NOERR(rhdl_finish_structure(s));
 
 	rhdl_namespace_t *root = rhdl_namespace(0, 0);

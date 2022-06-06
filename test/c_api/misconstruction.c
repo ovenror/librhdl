@@ -68,15 +68,9 @@ int statefulComponentInStatelessStructure()
 	REQUIRE(s);
 
 	rhdl_entity_t *rsl = rhdl_entity(0, "RS_Latch");
-	rhdl_connector_t *r = rhdl_component(s, rsl);
-	REQUIRE(r);
+	REQUIRE(rhdl_component(s, rsl) == 0);
 
-	rhdl_connector_t *rS = rhdl_select(r, "S");
-	REQUIRE(rS);
-
-	return ACCEPT(rhdl_connect(s -> connector, rS) == E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY);
-
-	/* got bored, forwent remainder */	
+	return ACCEPT(rhdl_errno() == E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY);
 }
 
 int introduceCycle()
@@ -95,7 +89,9 @@ int introduceCycle()
 	REQUIRE_NOERR(rhdl_connect(i1out, i0in));
 	REQUIRE_NOERR(rhdl_connect(s -> connector, i0in));
 
-	return ACCEPT(rhdl_finish_structure(s) == E_NETLIST_CONTAINS_CYCLES);
+	REQUIRE_ERR(rhdl_finish_structure(s), E_NETLIST_CONTAINS_CYCLES);
+
+	return SUCCESS;
 }
 
 int noSuchInterface()

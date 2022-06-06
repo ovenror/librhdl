@@ -70,28 +70,31 @@ TEST(ApiMisconstruction, ambiguousConnection)
 
 TEST(ApiMisconstruction, statefulComponentInStatelessStructure)
 {
-    test(Errorcode::E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY, []()
-    {
-        Structure foo("MCTest2");
-        Component rs("RS_Latch");
+	Structure foo("MCTest2");
+	Component rs("RS_Latch");
 
-        foo >> rs["S"];
-    }
-    );
+	test(Errorcode::E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY, [&]()
+	{
+		foo >> rs["S"];
+	}
+	);
 
-    Structure foo("MCTest3");
+	foo.abort();
+
+    Structure foo2("MCTest3");
     Component inv("Inverter");
     Component inv2("Inverter");
-    Component rs("RS_Latch");
+    Component rs2("RS_Latch");
 
-    inv["out"] >> rs["S"]; //ok, common net becomes stateful
-    rs["Q"] >> inv2["in"]; //dto.
+    inv["out"] >> rs2["S"]; //ok, common net becomes stateful
+    rs2["Q"] >> inv2["in"]; //dto.
 
     test(Errorcode::E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY, [&]()
     {
-        foo["something"] >> inv["in"];
-    }
-    );
+        foo2["something"] >> inv["in"];
+    });
+
+    foo2.abort();
 }
 
 TEST(ApiMisconstruction, introduceCycle)
