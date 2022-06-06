@@ -1,3 +1,4 @@
+int emptyInterface();
 int incompatibleDirections();
 int wrongOp();
 int ambiguousConnection();

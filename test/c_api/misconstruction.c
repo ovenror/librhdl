@@ -2,6 +2,25 @@
 #include "rhdl/rhdl.h"
 #include "macros.h"
 
+int emptyInterface()
+{
+	rhdl_structure_t *s = rhdl_begin_structure(0, "Test", F_CREATE_STATELESS);
+	REQUIRE(s);
+
+	rhdl_connector_t *connector = s -> connector;
+	REQUIRE(connector);
+
+	rhdl_iface_t *iface = connector -> iface;
+	REQUIRE(iface);
+	REQUIRE(iface -> type == RHDL_COMPOSITE);
+
+	const char *const *list = iface -> composite.interfaces;
+	REQUIRE(list);
+	REQUIRE( ! *list);
+
+	return ACCEPT(rhdl_finish_structure(s) == E_EMPTY_INTERFACE);
+}
+
 static int inv2(char *sname, rhdl_structure_t **structure,
 		rhdl_connector_t **i0in, rhdl_connector_t **i0out,
 		rhdl_connector_t **i1in, rhdl_connector_t **i1out)

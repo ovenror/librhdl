@@ -4,6 +4,11 @@ extern "C" {
 #include "misconstruction.h"
 }
 
+TEST(CApi_misconstructionTest,emptyInterface)
+{
+	EXPECT_TRUE(::emptyInterface());
+}
+
 TEST(CApi_misconstructionTest,incompatibleDirections)
 {
 	EXPECT_TRUE(::incompatibleDirections());

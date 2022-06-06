@@ -22,6 +22,13 @@ static void test(Errorcode ec, std::function<void()> deed)
     }
 }
 
+TEST(ApiConstructionTest, emptyInterface) {
+	test(Errorcode::E_EMPTY_INTERFACE, [&](){
+		Structure test("Test");
+		test.finalize();
+    });
+}
+
 TEST(ApiMisconstruction, incompatibleDirections)
 {
     Component inv0("Inverter");
