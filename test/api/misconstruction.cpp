@@ -12,10 +12,13 @@ static void test(Errorcode ec, std::function<void()> deed)
 {
     try {
         deed();
-        ADD_FAILURE() << "Expected ConstructionException with code " << (int) ec << ".";
+		ADD_FAILURE() << "Expected ConstructionException with code "
+				<< (int) ec << ".";
     }
     catch (const ConstructionException &e) {
-        EXPECT_EQ(e.errorcode(), ec) << "Unexpected exception: " << e.what();
+        EXPECT_EQ(e.errorcode(), ec)
+				<< "Unexpected exception: " << e.what() << std::endl
+				<< "Expected ConstructionException with code " << (int) ec << ".";
     }
 }
 
