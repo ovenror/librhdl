@@ -18,7 +18,7 @@ namespace rhdl::structural::builder {
 
 ComplexPort::ComplexPort(
 		Element &element, const IComposite &iface, Enclosed &&enclosed)
-	: TypedExistingPort<ComplexPort>(element, iface), iface_(iface), enclosed_(std::move(enclosed))
+	: ExistingPortBase<ComplexPort>(element, iface), iface_(iface), enclosed_(std::move(enclosed))
 {
 	adoptEnclosed();
 
@@ -156,7 +156,7 @@ static bool componentConnect(ExistingPort &lhs, ExistingPort &rhs)
 
 void ComplexPort::connectCompat(ComplexPort &peer)
 {
-	TypedExistingPort<ComplexPort>::connectCompat(peer);
+	ExistingPortBase<ComplexPort>::connectCompat(peer);
 	componentWise<&componentConnect>(peer);
 }
 

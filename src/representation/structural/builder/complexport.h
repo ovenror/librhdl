@@ -8,9 +8,8 @@
 #ifndef SRC_REPRESENTATION_STRUCTURAL_BUILDER_COMPLEXPORT_H_
 #define SRC_REPRESENTATION_STRUCTURAL_BUILDER_COMPLEXPORT_H_
 
+#include <representation/structural/builder/existingportbase.h>
 #include "portcontainer.h"
-#include "typedexistingport.h"
-
 #include "util/polycontainer/poly.h"
 
 #include <set>
@@ -24,7 +23,7 @@ namespace structural::builder {
 
 class ComplexConnection;
 
-class ComplexPort : public TypedExistingPort<ComplexPort>, public PortContainer {
+class ComplexPort : public ExistingPortBase<ComplexPort>, public PortContainer {
 public:
 	using Enclosed = pc::Poly<std::set<std::unique_ptr<ExistingPort>, PortContainer::Less>, Port>;
 

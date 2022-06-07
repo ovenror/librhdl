@@ -5,8 +5,8 @@
  *      Author: ovenror
  */
 
-#ifndef SRC_REPRESENTATION_STRUCTURAL_BUILDER_TYPEDEXISTINGPORT_H_
-#define SRC_REPRESENTATION_STRUCTURAL_BUILDER_TYPEDEXISTINGPORT_H_
+#ifndef SRC_REPRESENTATION_STRUCTURAL_BUILDER_EXISTINGPORTBASE_H_
+#define SRC_REPRESENTATION_STRUCTURAL_BUILDER_EXISTINGPORTBASE_H_
 
 #include "existingport.h"
 #include "util/partitionable.h"
@@ -17,12 +17,12 @@ namespace builder {
 
 
 template <class DERIVED>
-class TypedExistingPort : public Partitionable<DERIVED, TypedConnection<DERIVED>>, public ExistingPort {
+class ExistingPortBase : public Partitionable<DERIVED, TypedConnection<DERIVED>>, public ExistingPort {
 	using PartitionableBase = Partitionable<DERIVED, TypedConnection<DERIVED>>;
 
 public:
 	using ExistingPort::ExistingPort;
-	virtual ~TypedExistingPort() {}
+	virtual ~ExistingPortBase() {}
 
 	void connectCompat(DERIVED &peer);
 
@@ -30,14 +30,14 @@ public:
 };
 
 template<class DERIVED>
-inline void TypedExistingPort<DERIVED>::connectCompat(DERIVED &peer)
+inline void ExistingPortBase<DERIVED>::connectCompat(DERIVED &peer)
 {
 	assert(PartitionableBase::pcOwner());
 	PartitionableBase::pcOwner() -> connect(peer);
 }
 
 template<class DERIVED>
-inline Connection &TypedExistingPort<DERIVED>::connection() const
+inline Connection &ExistingPortBase<DERIVED>::connection() const
 {
 	assert(PartitionableBase::pcOwner());
 	return *PartitionableBase::pcOwner();
@@ -47,4 +47,4 @@ inline Connection &TypedExistingPort<DERIVED>::connection() const
 } /* namespace structural */
 } /* namespace rhdl */
 
-#endif /* SRC_REPRESENTATION_STRUCTURAL_BUILDER_TYPEDEXISTINGPORT_H_ */
+#endif /* SRC_REPRESENTATION_STRUCTURAL_BUILDER_EXISTINGPORTBASE_H_ */

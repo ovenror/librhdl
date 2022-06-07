@@ -5,7 +5,7 @@
  *      Author: ovenror
  */
 
-#include <representation/structural/builder/typedexistingport.h>
+#include <representation/structural/builder/existingportbase.h>
 
 namespace rhdl {
 namespace structural {

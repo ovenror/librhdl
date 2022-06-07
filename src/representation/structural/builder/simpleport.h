@@ -8,14 +8,14 @@
 #ifndef SRC_REPRESENTATION_STRUCTURAL_BUILDER_SIMPLEPORT_H_
 #define SRC_REPRESENTATION_STRUCTURAL_BUILDER_SIMPLEPORT_H_
 
-#include "typedexistingport.h"
+#include <representation/structural/builder/existingportbase.h>
 #include "interface/isingle.h"
 
 namespace rhdl {
 namespace structural {
 namespace builder {
 
-class SimplePort: public TypedExistingPort<SimplePort> {
+class SimplePort: public ExistingPortBase<SimplePort> {
 public:
 	SimplePort(Element &, const ISingle &);
 	virtual ~SimplePort();

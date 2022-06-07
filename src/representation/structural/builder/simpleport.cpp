@@ -13,7 +13,7 @@ namespace structural {
 namespace builder {
 
 SimplePort::SimplePort(Element &e, const ISingle &i)
-	: TypedExistingPort<SimplePort>(e, i), iface_(i)
+	: ExistingPortBase<SimplePort>(e, i), iface_(i)
 {
 	new SimpleConnection(*this);
 }
@@ -27,7 +27,7 @@ void SimplePort::connectCompat(ExistingPort &peer)
 
 void SimplePort::connectCompat(SimplePort &peer)
 {
-	TypedExistingPort<SimplePort>::connectCompat(peer);
+	ExistingPortBase<SimplePort>::connectCompat(peer);
 }
 
 } /* namespace builder */
