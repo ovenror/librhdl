@@ -7,6 +7,7 @@
 #include "divisivewires.h"
 #include "fixoverlongwires.h"
 
+#include "representation/representationbase.h"
 #include "representation/netlist/netlist.h"
 #include "representation/blocks/blocks.h"
 
@@ -49,9 +50,12 @@ using TopIFaceData = IFaceData;
 class TreeModel : public TM::Container
 {
 public:
-	TreeModel(const netlist::Netlist &netlist, const std::vector<const ISingle *> &lower,
-			const std::vector<const ISingle *> &upper,
-			std::map<const TM::Connection *, netlist::VertexRef> &vertexMap);
+	TreeModel(const netlist::Netlist &);
+
+	TreeModel(
+			const netlist::Netlist &netlist,
+			const std::vector<const ISingle *> &lower,
+			const std::vector<const ISingle *> &upper);
 
 	const TreeModel &getModel() const override {return *this;}
 	//TreeModel &getModel() override {return *this;}
@@ -68,7 +72,6 @@ public:
 
 	netlist::Netlist splitConnections(
 			std::forward_list<const TM::Connection *> connections,
-			std::map<const TM::Connection *, netlist::VertexRef> vertexMap,
 			const netlist::Netlist &source);
 
 	//bool hasBrokenLinks(const Blocks &b);
@@ -170,6 +173,7 @@ protected:
 	TM::Wires top_anchors_;
 	std::map<const ISingle *, const TM::Wire *> interface_;
 	std::map<netlist::EdgeRef, const TM::Node *> nodeMap_;
+	std::map<const TM::Connection *, netlist::VertexRef> vertexMap_;
 };
 
 }

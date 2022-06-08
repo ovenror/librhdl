@@ -50,11 +50,10 @@ Blocks BGTree::execute(const Netlist &source) const
 		//dotfile << netlist.graph_;
 		//dotfile.close();
 
-		std::map<const TM::Connection *, VertexRef> vertexMap;
 		auto bottomIFaces = ifilter(netlist.interface_, Interface::Direction::IN);
 		auto topIFaces = ifilter(netlist.interface_, Interface::Direction::OUT);
 
-		TreeModel model(netlist, bottomIFaces, topIFaces, vertexMap);
+		TreeModel model(netlist, bottomIFaces, topIFaces);
 		Blocks target(entity, &netlist, netlist.timing());
 
 		model.computeSpatial();
@@ -83,7 +82,7 @@ Blocks BGTree::execute(const Netlist &source) const
 
 		++count;
 
-		Netlist restricted = model.splitConnections(unfixedConnections, vertexMap, netlist);
+		Netlist restricted = model.splitConnections(unfixedConnections, netlist);
 		pnetlist = &entity.addRepresentation(std::move(restricted));
 	}
 }

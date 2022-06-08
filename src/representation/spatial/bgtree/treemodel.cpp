@@ -139,10 +139,10 @@ struct LeafData : public EdgeData {
 
 using namespace TM;
 
-TreeModel::TreeModel(const Netlist &netlist,
+TreeModel::TreeModel(
+		const Netlist &netlist,
 		const std::vector<const ISingle *> &lower,
-		const std::vector<const ISingle *> &upper,
-					 std::map<const Connection *, VertexRef> &vertexMap) :
+		const std::vector<const ISingle *> &upper) :
 	Container(0), bottom_anchors_(*this, false, true), bottom_(*this, true),
 	lower_cross_(*this, false), top_anchors_(*this, false, true)
 {
@@ -165,7 +165,7 @@ TreeModel::TreeModel(const Netlist &netlist,
 		VertexRef vertex = kv.first;
 		const VertexInfo &info = kv.second;
 		Connection *connection = info.input.connection_.get();
-		vertexMap[connection] = vertex;
+		vertexMap_[connection] = vertex;
 	}
 }
 
@@ -352,13 +352,12 @@ std::forward_list<const Connection *> TreeModel::fixBrokenLinks(const Connection
 
 Netlist TreeModel::splitConnections(
 		std::forward_list<const Connection *> connections,
-		std::map<const Connection *, VertexRef> vertexMap,
 		const Netlist &source)
 {
 	Netlist result = source;
 
 	for (const Connection *connection : connections) {
-		result.splitVertex(vertexMap.at(connection));
+		result.splitVertex(vertexMap_.at(connection));
 	}
 
 	return result;

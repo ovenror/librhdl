@@ -34,12 +34,11 @@ public:
 	Wire *c0_0;
 
 	rhdl::Entity dummy_;
-	std::map<const Connection *, VertexRef> dummyMap_;
 };
 
 TestModel::TestModel()
 	:
-	  TreeModel(Netlist(dummy_, nullptr, nullptr), {}, {}, dummyMap_),
+	  TreeModel(Netlist(dummy_, nullptr, nullptr), {}, {}),
 	  dummy_("DUMMY", {
 			  new ISingle("in", Interface::Direction::IN, false),
 			  new ISingle("out", Interface::Direction::OUT, false)
