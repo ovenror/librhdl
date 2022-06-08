@@ -1,7 +1,7 @@
-#include "transformation/bgtree/connection.h"
-#include "transformation/bgtree/singlewire.h"
-#include "transformation/bgtree/treemodel.h"
-#include "transformation/bgtree/mutablelayer.h"
+#include "representation/spatial/bgtree/connection.h"
+#include "representation/spatial/bgtree/singlewire.h"
+#include "representation/spatial/bgtree/treemodel.h"
+#include "representation/spatial/bgtree/mutablelayer.h"
 
 #include "entity/entity.h"
 #include "representation/netlist/netlist.h"

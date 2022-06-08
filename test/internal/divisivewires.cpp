@@ -1,8 +1,8 @@
-#include "transformation/bgtree/divisivewires.h"
-#include "transformation/bgtree/singlewire.h"
-#include "transformation/bgtree/layer.h"
-#include "transformation/bgtree/horizontal.h"
-#include "transformation/bgtree/wire.h"
+#include "representation/spatial/bgtree/divisivewires.h"
+#include "representation/spatial/bgtree/singlewire.h"
+#include "representation/spatial/bgtree/layer.h"
+#include "representation/spatial/bgtree/horizontal.h"
+#include "representation/spatial/bgtree/wire.h"
 
 #include <gtest/gtest.h>
 

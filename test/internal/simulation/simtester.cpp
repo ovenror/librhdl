@@ -10,7 +10,7 @@
 #include "entity/entity.h"
 #include "entity/timing.h"
 
-#include "transformation/bgtree/bgtree.h"
+#include "representation/spatial/bgtree/bgtree.h"
 
 #include "interface/isingle.h"
 

@@ -139,7 +139,6 @@ struct LeafData : public EdgeData {
 
 using namespace TM;
 
-
 TreeModel::TreeModel(const Netlist &netlist,
 		const std::vector<const ISingle *> &lower,
 		const std::vector<const ISingle *> &upper,

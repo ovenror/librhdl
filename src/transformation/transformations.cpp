@@ -9,7 +9,7 @@
  */
 
 // transformations
-#include "bgtree/bgtree.h"
+#include "representation/spatial/bgtree/bgtree.h"
 #include "transformation/structure2netlist.h"
 // destination types
 #include "representation/txt/commands.h"

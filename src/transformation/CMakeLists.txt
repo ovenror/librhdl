@@ -6,5 +6,3 @@ target_sources(rhdl_obj
 		transformer.cpp
 		typedtransformation.cpp
 )
-
-add_subdirectory(bgtree)

@@ -1,19 +1,19 @@
 #include <gtest/gtest.h>
 
-#include "transformation/bgtree/fixoverlongwires_impl.h"
+#include "representation/spatial/bgtree/fixoverlongwires_impl.h"
 
 #include "entity/entity.h"
 
 #include "interface/isingle.h"
 #include "interface/icomposite.h"
 
-#include "transformation/bgtree/treemodel.h"
-#include "transformation/bgtree/layer.h"
-#include "transformation/bgtree/nodegroup.h"
-#include "transformation/bgtree/node.h"
-#include "transformation/bgtree/wire.h"
-#include "transformation/bgtree/supersegment.h"
-#include "transformation/bgtree/uniquesegment.h"
+#include "representation/spatial/bgtree/treemodel.h"
+#include "representation/spatial/bgtree/layer.h"
+#include "representation/spatial/bgtree/nodegroup.h"
+#include "representation/spatial/bgtree/node.h"
+#include "representation/spatial/bgtree/wire.h"
+#include "representation/spatial/bgtree/supersegment.h"
+#include "representation/spatial/bgtree/uniquesegment.h"
 
 #include "construction/library.h"
 
