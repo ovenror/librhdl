@@ -22,10 +22,7 @@ Entity::Entity(
 	c_.content().iface = c_ptr(static_cast<const Interface &>(interface_));
 }
 
-Entity::~Entity()
-{
-	//delete interface_;
-}
+Entity::~Entity() {}
 
 const Representation &Entity::addRepresentation(std::unique_ptr<Representation> &&representation) const
 {
