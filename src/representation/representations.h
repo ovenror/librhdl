@@ -23,6 +23,8 @@ namespace netlist {
 class Netlist;
 }
 
+class TreeModel;
+
 namespace blocks {
 class Blocks;
 }
@@ -40,6 +42,7 @@ public:
 			behavioral::TimedBehavior, behavioral::FunctionalBehavior,
 			structural::CompressedStructure, structural::Structure,
 			netlist::Netlist,
+			TreeModel,
 			blocks::Blocks,
 			txt::Commands,
 			InvalidRepresentation>;

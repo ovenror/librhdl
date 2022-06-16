@@ -1,4 +1,5 @@
 #include "bgtree.h"
+#include "treemodel.h"
 #include "representation/netlist/netlist.h"
 #include "interface/isingle.h"
 #include "node.h"
@@ -18,20 +19,6 @@ using netlist::EdgeRef;
 using blocks::Blocks;
 using blocks::Block;
 
-static std::vector<const ISingle *> ifilter(const Netlist::Interface &nli, Interface::Direction dir)
-{
-	std::vector<const ISingle *> result;
-
-	for (auto &kv : nli) {
-		const ISingle *iface = kv.first;
-
-		if (iface -> direction() == dir)
-			result.push_back(iface);
-	}
-
-	return result;
-}
-
 BGTree::BGTree() {}
 
 Blocks BGTree::execute(const Netlist &source) const
@@ -50,10 +37,7 @@ Blocks BGTree::execute(const Netlist &source) const
 		//dotfile << netlist.graph_;
 		//dotfile.close();
 
-		auto bottomIFaces = ifilter(netlist.interface_, Interface::Direction::IN);
-		auto topIFaces = ifilter(netlist.interface_, Interface::Direction::OUT);
-
-		TreeModel model(netlist, bottomIFaces, topIFaces);
+		TreeModel model(netlist);
 		Blocks target(entity, &netlist, netlist.timing());
 
 		model.computeSpatial();

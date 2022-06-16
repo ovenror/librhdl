@@ -139,10 +139,31 @@ struct LeafData : public EdgeData {
 
 using namespace TM;
 
+static std::vector<const ISingle *> ifilter(const Netlist::Interface &nli, Interface::Direction dir)
+{
+	std::vector<const ISingle *> result;
+
+	for (auto &kv : nli) {
+		const ISingle *iface = kv.first;
+
+		if (iface -> direction() == dir)
+			result.push_back(iface);
+	}
+
+	return result;
+}
+
+TreeModel::TreeModel(const netlist::Netlist &source) :
+		TreeModel(source,
+				ifilter(source.interface_, SingleDirection::IN),
+				ifilter(source.interface_, SingleDirection::OUT))
+{}
+
 TreeModel::TreeModel(
 		const Netlist &netlist,
 		const std::vector<const ISingle *> &lower,
 		const std::vector<const ISingle *> &upper) :
+	RepresentationBase(netlist.entity(), &netlist, netlist.timing()),
 	Container(0), bottom_anchors_(*this, false, true), bottom_(*this, true),
 	lower_cross_(*this, false), top_anchors_(*this, false, true)
 {
@@ -168,6 +189,8 @@ TreeModel::TreeModel(
 		vertexMap_[connection] = vertex;
 	}
 }
+
+TreeModel::~TreeModel() {}
 
 void TreeModel::toBlocks(Blocks::Cuboid b)
 {

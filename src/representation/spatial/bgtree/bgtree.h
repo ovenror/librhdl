@@ -2,12 +2,14 @@
 #define BGTREE_H
 
 #include "transformation/typedtransformation.h"
-#include "representation/netlist/netlist.h"
 #include "representation/blocks/blocks.h"
-#include "treemodel.h"
 #include <vector>
 
 namespace rhdl {
+
+namespace netlist {
+class Netlist;
+}
 
 class BGTree : public TypedTransformation<netlist::Netlist, blocks::Blocks>
 {

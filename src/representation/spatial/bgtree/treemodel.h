@@ -47,7 +47,7 @@ using BottomIFaceData = IFaceData;
 using TopIFaceData = IFaceData;
 }
 
-class TreeModel : public TM::Container
+class TreeModel : public RepresentationBase<TreeModel>, public TM::Container
 {
 public:
 	TreeModel(const netlist::Netlist &);
@@ -58,6 +58,9 @@ public:
 			const std::vector<const ISingle *> &upper);
 
 	const TreeModel &getModel() const override {return *this;}
+
+	virtual ~TreeModel();
+
 	//TreeModel &getModel() override {return *this;}
 
 	void toBlocks(blocks::Blocks::Cuboid b);
