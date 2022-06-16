@@ -30,6 +30,8 @@ bool Representation::isDescendant(const Representation *r) const
 	return parent_->isDescendant(r);
 }
 
+// may not be called, if *this is already added to the entity
+// FIXME: Use lookup data structure and add assertion
 void Representation::breakTiming()
 {
 	timing_ = &entity_.addTiming();
