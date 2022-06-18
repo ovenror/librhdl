@@ -1,8 +1,8 @@
-#include "representation/spatial/bgtree/divisivewires.h"
-#include "representation/spatial/bgtree/singlewire.h"
-#include "representation/spatial/bgtree/layer.h"
-#include "representation/spatial/bgtree/horizontal.h"
-#include "representation/spatial/bgtree/wire.h"
+#include "representation/spatial/tree/divisivewires.h"
+#include "representation/spatial/tree/horizontal.h"
+#include "representation/spatial/tree/layer.h"
+#include "representation/spatial/tree/singlewire.h"
+#include "representation/spatial/tree/wire.h"
 
 #include <gtest/gtest.h>
 

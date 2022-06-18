@@ -1,6 +1,6 @@
 #include "bgtree.h"
 
-#include "representation/spatial/bgtree/treemodel.h"
+#include "representation/spatial/tree/treemodel.h"
 #include "interface/isingle.h"
 #include "simulation/blockssim.h"
 #include "entity/entity.h"

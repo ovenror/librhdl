@@ -1,1 +1,1 @@
-add_subdirectory(bgtree)
+add_subdirectory(tree)

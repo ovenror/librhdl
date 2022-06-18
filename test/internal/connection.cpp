@@ -1,10 +1,10 @@
-#include "representation/spatial/bgtree/connection.h"
-#include "representation/spatial/bgtree/singlewire.h"
-#include "representation/spatial/bgtree/treemodel.h"
-#include "representation/spatial/bgtree/mutablelayer.h"
-
 #include "entity/entity.h"
+
+#include "representation/spatial/tree/connection.h"
 #include "representation/netlist/netlist.h"
+#include "representation/spatial/tree/mutablelayer.h"
+#include "representation/spatial/tree/singlewire.h"
+#include "representation/spatial/tree/treemodel.h"
 
 #include <gtest/gtest.h>
 
