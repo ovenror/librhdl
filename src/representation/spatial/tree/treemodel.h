@@ -69,11 +69,12 @@ public:
 
 	void createSegments();
 
-	std::forward_list<std::reference_wrapper<const Connection>> fixBrokenLinks();
+	std::forward_list<netlist::VertexRef> fixBrokenLinks(
+			const std::map<const Connection *, netlist::VertexRef> &vertexMap);
 	Links getLinks(const Connection &);
 
-	netlist::Netlist splitConnections(
-			std::forward_list<std::reference_wrapper<const Connection>> connections,
+	netlist::Netlist splitVertices(
+			const std::forward_list<netlist::VertexRef> &vertices,
 			const netlist::Netlist &source);
 
 	ConnectionLinks assessLinks(const blocks::Blocks &blocks) const;
@@ -142,7 +143,7 @@ protected:
 	NodeGroup *inputToGroup(const Wire &output);
 	NodeGroup *bottomToGroup(const Wire &bottomWire);
 
-	void createModel(
+	std::map<const Connection *, netlist::VertexRef> createModel(
 			const netlist::Netlist &netlist,
 			const std::vector<const ISingle *> &lower,
 			const std::vector<const ISingle *> &upper);
@@ -191,7 +192,6 @@ protected:
 	Wires top_anchors_;
 	std::map<const ISingle *, const Wire *> interface_;
 	std::map<netlist::EdgeRef, const Node *> nodeMap_;
-	std::map<const Connection *, netlist::VertexRef> vertexMap_;
 };
 
 }} //rhdl::spatial

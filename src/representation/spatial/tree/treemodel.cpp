@@ -168,16 +168,16 @@ TreeModel::TreeModel(
 	auto source = std::cref(netlist);
 
 	while (true) {
-		createModel(source, lower, upper);
+		auto vertexMap = createModel(source, lower, upper);
 		computeSpatial();
 		createSegments();
 
-		auto brokenConnections = fixBrokenLinks();
+		auto unsynthesizableVertices = fixBrokenLinks(vertexMap);
 
-		if (brokenConnections.empty())
+		if (unsynthesizableVertices.empty())
 			break;
 
-		auto split = splitConnections(brokenConnections, source);
+		auto split = splitVertices(unsynthesizableVertices, source);
 		source = entity().addRepresentation(std::move(split));
 	}
 }
@@ -209,10 +209,12 @@ TreeModel::TreeModel(
 
 TreeModel::~TreeModel() {}
 
-void TreeModel::createModel(const netlist::Netlist &netlist,
+std::map<const Connection *, netlist::VertexRef> TreeModel::createModel(
+		const netlist::Netlist &netlist,
 		const std::vector<const ISingle*> &lower,
 		const std::vector<const ISingle*> &upper)
 {
+	std::map<const Connection *, netlist::VertexRef> vertexMap;
 	ConstructionData data(netlist.graph_, netlist.interface_, lower, upper);
 
 	processBottomIFaces(BottomIFacesData(data));
@@ -229,8 +231,10 @@ void TreeModel::createModel(const netlist::Netlist &netlist,
 		VertexRef vertex = kv.first;
 		const VertexInfo &info = kv.second;
 		Connection *connection = info.input.connection_.get();
-		vertexMap_[connection] = vertex;
+		vertexMap[connection] = vertex;
 	}
+
+	return vertexMap;
 }
 
 void TreeModel::toBlocks(Blocks::Cuboid b) const
@@ -409,16 +413,16 @@ void TreeModel::computeSpatial()
 	computeVertical();
 }
 
-Netlist TreeModel::splitConnections(
-		std::forward_list<std::reference_wrapper<const spatial::Connection>> connections,
+Netlist TreeModel::splitVertices(
+		const std::forward_list<VertexRef> &vertices,
 		const Netlist &source)
 {
 	Netlist result = source;
 
-	assert (!connections.empty());
+	assert (!vertices.empty());
 
-	for (const auto &connection : connections) {
-		result.splitVertex(vertexMap_.at(&connection.get()));
+	for (const auto &vertex : vertices) {
+		result.splitVertex(vertex);
 	}
 
 	result.breakTiming();
@@ -1087,14 +1091,17 @@ void TreeModel::createSegments()
 }
 
 
-std::forward_list<std::reference_wrapper<const Connection>> TreeModel::fixBrokenLinks()
+std::forward_list<VertexRef>
+TreeModel::fixBrokenLinks(
+		const std::map<const Connection *, netlist::VertexRef> &vertexMap)
 {
-	std::forward_list<std::reference_wrapper<const Connection>> result;
+	std::forward_list<VertexRef> result;
 
 	bool fixed = false;
 
-	for (auto &kv : vertexMap_) {
+	for (auto &kv : vertexMap) {
 		const auto &connection = *kv.first;
+		auto vertex = kv.second;
 
 		createSuperSegments(connection);
 
@@ -1105,7 +1112,7 @@ std::forward_list<std::reference_wrapper<const Connection>> TreeModel::fixBroken
 			fixed = true;
 			break;
 		case FixConnectionResult::BROKEN:
-			result.push_front(connection);
+			result.push_front(vertex);
 			break;
 		default:
 			assert (0);
