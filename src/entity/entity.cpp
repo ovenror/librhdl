@@ -53,7 +53,7 @@ const Representation &Entity::addRepresentation(std::unique_ptr<Representation> 
 
 	assert(netlist); //we do not have block -> netlist transformation (yet)
 
-	if (netlist -> graph_.hasCycles())
+	if (netlist -> hasCycles())
 		throw ConstructionException(Errorcode::E_NETLIST_CONTAINS_CYCLES);
 
 	return result;

@@ -5,9 +5,9 @@
 namespace rhdl::netlist {
 
 NetlistSim::NetlistSim(const Netlist &netlist) :
-	netlist_(netlist), internal_state_(netlist.graph_.initialStateMap())
+	netlist_(netlist), internal_state_(netlist.graph().initialStateMap())
 {
-	init(getIfaces(netlist.interface_));
+	init(getIfaces(netlist.ifaceMap()));
 }
 
 bool NetlistSim::get(const ISingle *iface) const
@@ -16,7 +16,7 @@ bool NetlistSim::get(const ISingle *iface) const
 	VertexRef v;
 
 	try {
-		v = netlist_.interface_.at(iface);
+		v = netlist_.ifaceMap().at(iface);
 	}
 	catch (...) {
 		assert  (0);
@@ -33,13 +33,13 @@ bool NetlistSim::get(const ISingle *iface) const
 void NetlistSim::setInternal(const ISingle *iface)
 {
 	//std::cerr << "setInternal" << std::endl;
-	internal_state_.at(netlist_.interface_.at(iface)) = true;
+	internal_state_.at(netlist_.ifaceMap().at(iface)) = true;
 }
 
 void NetlistSim::internalStep()
 {
 	//std::cerr << "internalStep" << std::endl;
-	netlist_.graph_.simStep(internal_state_);
+	netlist_.graph().simStep(internal_state_);
 }
 
 void NetlistSim::init(const std::vector<const ISingle *> &ifaces)
@@ -48,13 +48,13 @@ void NetlistSim::init(const std::vector<const ISingle *> &ifaces)
 
 	Simulator::init(ifaces);
 
-	auto viters = netlist_.graph_.vertices();
+	auto viters = netlist_.graph().vertices();
 
 	for (auto viter = viters.first; viter != viters.second; ++viter)
 		internal_state_[*viter] = false;
 }
 
-std::vector<const ISingle *> NetlistSim::getIfaces(const Netlist::Interface &nli)
+std::vector<const ISingle *> NetlistSim::getIfaces(const Netlist::InterfaceMap &nli)
 {
 	std::vector<const ISingle*> ifaces;
 

@@ -4,8 +4,6 @@
 #include "block.h"
 #include "direction.h"
 
-#include "representation/representationbase.h"
-
 #include "util/marray_slicing_3D.h"
 #include "util/marray_eiterator.h"
 
@@ -13,6 +11,7 @@
 #include <array>
 #include <iostream>
 #include <map>
+#include "../mappedrepresentation.h"
 
 namespace rhdl {
 
@@ -23,7 +22,7 @@ class Timing;
 
 namespace blocks {
 
-class Blocks : public RepresentationBase<Blocks>
+class Blocks : public MappedRepresentation<Blocks, boost::array<marray::index_t, 3>>
 {
 public:
 	using Container = boost::multi_array<Block, 3>;
@@ -36,7 +35,6 @@ public:
 	using Vec = FullIndex<Container>;
 	using Vec2 = FullIndex<Wall>;
 	using BlockRef = Vec;
-	using Interface = std::map<const ISingle *, BlockRef>;
 	using CVec = std::pair<bool, Vec>;
 
 	Blocks(
@@ -44,9 +42,6 @@ public:
 			const Timing *timing);
 
 	virtual ~Blocks();
-
-	const Interface &interface() const {return interface_;}
-	Interface &interface() {return interface_;}
 
 	virtual std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const override;
 
@@ -161,7 +156,6 @@ private:
 	static void fill_internal(MARRAY &&space, Block value);
 
 	Container the_blocks_;
-	Interface interface_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Blocks::Wall &blocks);

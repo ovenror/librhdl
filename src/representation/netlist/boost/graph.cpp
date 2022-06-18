@@ -164,4 +164,11 @@ std::ostream &operator<<(std::ostream &os, const Graph_Impl_Boost &graph)
 	return os;
 }
 
+void Graph_Impl_Boost::createOneway(VertexRef from, VertexRef to)
+{
+	auto middle = addVertex();
+	connect(from, middle);
+	connect(middle, to);
+}
+
 }

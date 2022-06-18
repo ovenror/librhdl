@@ -7,7 +7,7 @@ namespace rhdl::blocks {
 Blocks::Blocks(const Entity &entity, const Representation *parent,
 			   const Timing *timing)
 	:
-	  RepresentationBase<Blocks>(entity, parent, timing)
+	  MappedRepresentation<Blocks, BlockRef>(entity, parent, timing)
 {}
 
 Blocks::~Blocks() {

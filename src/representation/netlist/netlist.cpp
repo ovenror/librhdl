@@ -4,16 +4,41 @@
 
 #include "util/iterable.h"
 
+#include <array>
 #include <forward_list>
+#include <unordered_map>
 
 namespace rhdl::netlist {
+
+Netlist::Netlist(
+		const Entity &entity,
+		Graph graph, InterfaceMap ifaceMap,
+		const Representation *parent, const Timing *timing)
+	:
+		MappedRepresentation<Netlist, VertexRef>(
+				entity, parent, timing, std::move(ifaceMap)),
+		graph_(std::move(graph))
+{}
+
 
 Netlist::Netlist(
 		const Entity &entity, const Representation *parent,
 		const Timing *timing)
 	:
-	  RepresentationBase<Netlist>(entity, parent, timing), ready_(false)
+	  MappedRepresentation<Netlist, VertexRef>(entity, parent, timing)
 {}
+
+Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
+	: Netlist(source)
+{
+	assert (!toSplit.empty());
+
+	for (const auto &vertex : toSplit) {
+		splitVertex(vertex);
+	}
+
+	breakTiming();
+}
 
 std::unique_ptr<Simulator> Netlist::makeSimulator(bool use_behavior) const
 {
@@ -21,20 +46,20 @@ std::unique_ptr<Simulator> Netlist::makeSimulator(bool use_behavior) const
 	return std::make_unique<NetlistSim>(*this);
 }
 
-std::string Netlist::InterfaceToString(const Netlist::Interface &nli)
+std::string Netlist::InterfaceToString(const InterfaceMap &ifaceMap)
 {
 	std::string result;
-	for (auto kv : nli)
+	for (auto kv : ifaceMap)
 		result += std::string("    * ") + (std::string) *kv.first + "->" + std::to_string(kv.second) + "\n";
 	return result;
 }
 
-Netlist::Interface Netlist::copyInto(Netlist &target) const
+Netlist::InterfaceMap Netlist::copyInto(Graph &target) const
 {
-	Netlist::Interface result;
+	InterfaceMap result;
 
-	auto vmap = target.graph_.absorb(graph_);
-	for (auto kv : interface_) {
+	auto vmap = target.absorb(graph_);
+	for (auto kv : ifaceMap()) {
 		result[kv.first] = vmap.at(kv.second);
 	}
 
@@ -45,7 +70,6 @@ void Netlist::removeDisconnectedVertices()
 {
 	remapInterface(graph_.removeDisconnectedVertices());
 }
-
 
 void Netlist::splitVertex(VertexRef vertex)
 {
@@ -61,7 +85,7 @@ void Netlist::splitVertex(VertexRef vertex)
 		graph_.connect(collector, graph_.target(outEdge));
 	}
 
-	for (auto &kv : interface_) {
+	for (auto &kv : ifaceMap_) {
 		if (kv.second != vertex)
 			continue;
 
@@ -79,7 +103,7 @@ void Netlist::splitVertex(VertexRef vertex)
 				graph_.connect(collector, graph_.target(outEdge));
 		}
 
-		interface_[iface] = collector;
+		ifaceMap_[iface] = collector;
 	}
 
 	removeVertex(vertex);
@@ -90,30 +114,11 @@ void Netlist::removeVertex(VertexRef vertex)
 	remapInterface(graph_.removeVertex(vertex));
 }
 
-Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
-	: Netlist(source)
-{
-	assert (!toSplit.empty());
-
-	for (const auto &vertex : toSplit) {
-		splitVertex(vertex);
-	}
-
-	breakTiming();
-}
-
 void Netlist::remapInterface(const std::map<VertexRef, VertexRef> &vertexMap)
 {
-	for (auto &kv : interface_) {
+	for (auto &kv : ifaceMap_) {
 		kv.second = vertexMap.at(kv.second);
 	}
-}
-
-void Netlist::createOneway(VertexRef from, VertexRef to)
-{
-	auto middle = graph_.addVertex();
-	graph_.connect(from, middle);
-	graph_.connect(middle, to);
 }
 
 }

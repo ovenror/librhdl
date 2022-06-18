@@ -78,6 +78,7 @@ public:
 	bool isomorphic(Graph_Impl_Boost &g) const;
 	bool hasCycles() const;
 
+	void createOneway(VertexRef from, VertexRef to);
 	void clearOutEdges(VertexRef vertex);
 	void eat(VertexRef eater, VertexRef eaten);
 	std::map<VertexRef, VertexRef> removeVertex(VertexRef vertex);

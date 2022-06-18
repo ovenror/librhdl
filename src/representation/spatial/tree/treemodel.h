@@ -64,7 +64,7 @@ public:
 	//TreeModel &getModel() override {return *this;}
 
 	void toBlocks(blocks::Blocks::Cuboid b) const;
-	void toInterface(blocks::Blocks::Interface &interface) const;
+	void toInterface(blocks::Blocks::InterfaceMap &interface) const;
 	void computeSpatial();
 
 	void createSegments();

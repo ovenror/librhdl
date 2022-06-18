@@ -45,7 +45,7 @@ struct VertexInfo {
 
 struct ConstructionData_References {
 	ConstructionData_References(
-			const Netlist::Graph &pgraph, const Netlist::Interface &pnl_iface,
+			const Netlist::Graph &pgraph, const Netlist::InterfaceMap &pnl_iface,
 			const std::vector<const ISingle *> &pbottom_ifs,
 			const std::vector<const ISingle *> &ptop_ifs)
 		:
@@ -53,13 +53,13 @@ struct ConstructionData_References {
 	{}
 
 	const Netlist::Graph &graph;
-	const Netlist::Interface &nl_iface;
+	const Netlist::InterfaceMap &nl_iface;
 	const std::vector<const ISingle *> &bottom_ifs, &top_ifs;
 };
 
 struct ConstructionData : public ConstructionData_References {
 	ConstructionData(
-			const Netlist::Graph &graph, const Netlist::Interface &nl_iface,
+			const Netlist::Graph &graph, const Netlist::InterfaceMap &nl_iface,
 			const std::vector<const ISingle *> &bottom_ifs,
 			const std::vector<const ISingle *> &top_ifs)
 		:
@@ -139,7 +139,7 @@ struct LeafData : public EdgeData {
 	VertexInfo &known_vertex;
 };
 
-static std::vector<const ISingle *> ifilter(const Netlist::Interface &nli, Interface::Direction dir)
+static std::vector<const ISingle *> ifilter(const Netlist::InterfaceMap &nli, Interface::Direction dir)
 {
 	std::vector<const ISingle *> result;
 
@@ -155,8 +155,8 @@ static std::vector<const ISingle *> ifilter(const Netlist::Interface &nli, Inter
 
 TreeModel::TreeModel(const netlist::Netlist &source) :
 		TreeModel(source.entity(), &source, source.timing(),
-				ifilter(source.interface_, SingleDirection::IN),
-				ifilter(source.interface_, SingleDirection::OUT))
+				ifilter(source.ifaceMap(), SingleDirection::IN),
+				ifilter(source.ifaceMap(), SingleDirection::OUT))
 {}
 
 TreeModel::TreeModel(
@@ -214,7 +214,7 @@ std::map<const Connection *, netlist::VertexRef> TreeModel::createModel(
 		const std::vector<const ISingle*> &upper)
 {
 	std::map<const Connection *, netlist::VertexRef> vertexMap;
-	ConstructionData data(netlist.graph_, netlist.interface_, lower, upper);
+	ConstructionData data(netlist.graph(), netlist.ifaceMap(), lower, upper);
 
 	processBottomIFaces(BottomIFacesData(data));
 	processLooseVertices(LooseVerticesData(data));
@@ -245,7 +245,7 @@ void TreeModel::toBlocks(Blocks::Cuboid b) const
 	}
 }
 
-void TreeModel::toInterface(Blocks::Interface &interface) const
+void TreeModel::toInterface(Blocks::InterfaceMap &interface) const
 {
 	for (auto &kv : interface_) {
 		const ISingle *iface = kv.first;
@@ -1134,7 +1134,7 @@ ConnectionLinks TreeModel::assessLinks(const Blocks &blocks) const
 		const Wire &ifaceWire = *kv.second;
 
 		//std::cerr << "assess links from " << *iface << std::endl;
-		sim.test({blocks.interface().at(iface)});
+		sim.test({blocks.ifaceMap().at(iface)});
 		const Connection &connection = *ifaceWire.connection_;
 		assessLinks(connection, result[&connection], getIFaceConnector(ifaceWire), sim);
 	}

@@ -19,30 +19,35 @@ StructureToNetlist::~StructureToNetlist() {}
 
 Netlist StructureToNetlist::execute(const Structure &source) const
 {
-	Netlist netlist(source.entity(), &source, source.timing());
-	to_netlist_internal(source, netlist);
-	netlist.removeDisconnectedVertices();
-	return netlist;
+	Netlist::Graph graph;
+
+	auto ifaceMap = to_netlist_internal(source, graph);
+	Netlist::remap(ifaceMap, graph.removeDisconnectedVertices());
+
+	return Netlist(
+			source.entity(), std::move(graph), std::move(ifaceMap),
+			&source, source.timing());
 }
 
-void StructureToNetlist::to_netlist_internal(const Structure &structure, Netlist &target) const
+Netlist::InterfaceMap StructureToNetlist::to_netlist_internal(
+		const Structure &structure, Netlist::Graph &target) const
 {
-	std::vector <Netlist::Interface> parts_nl_interfaces;
+	std::vector <Netlist::InterfaceMap> parts_ifaceMaps;
 	auto &elements = structure.elements();
 
-	parts_nl_interfaces.reserve(elements.size());
+	parts_ifaceMaps.reserve(elements.size());
 
 	auto iter=elements.begin();
 
 	/*
 	 * generate structure vertices and interface
 	 */
-	parts_nl_interfaces.emplace_back();
-	auto &structure_nl_iface = parts_nl_interfaces.back();
+	parts_ifaceMaps.emplace_back();
+	auto &ifaceMap = parts_ifaceMaps.back();
 
 	for (auto *iface : (*iter) -> interface().flat()) {
-		auto v = target.graph_.addVertex();
-		structure_nl_iface[iface] = v;
+		auto v = target.addVertex();
+		ifaceMap[iface] = v;
 	}
 
 	/*
@@ -57,7 +62,7 @@ void StructureToNetlist::to_netlist_internal(const Structure &structure, Netlist
 		//std::cerr << "generate inner netlist for a " << typeid(*entity).name() << std::endl;
 		const Netlist *part_netlist = entity -> getRepresentation<Netlist>();
 		assert(part_netlist);
-		parts_nl_interfaces.push_back (part_netlist -> copyInto(target));
+		parts_ifaceMaps.push_back (part_netlist -> copyInto(target));
 	}
 
 	/*
@@ -71,25 +76,25 @@ void StructureToNetlist::to_netlist_internal(const Structure &structure, Netlist
 		assert (port != connection.end());
 		assert (!port -> needs_closing());
 
-		VertexRef persisting = parts_nl_interfaces
+		VertexRef persisting = parts_ifaceMaps
 				.at(port -> element())
 				.at(&port -> iface());
 		++port;
 
 		for (; port != connection.end(); ++port)
-			connect(*port, persisting, parts_nl_interfaces, target);
+			connect(*port, persisting, parts_ifaceMaps, target);
 	}
 
 	//std::cerr << "exported NLInterface looks like:" << std::endl;
 	//std::cerr << Netlist::InterfaceToString(parts_nl_interfaces[0]);
 
-	target.interface_ = std::move(structure_nl_iface);
+	return std::move(ifaceMap);
 }
 
 void StructureToNetlist::connect(
 		const Port &p, VertexRef persisting,
-		std::vector <Netlist::Interface> &parts_nlis,
-		Netlist &target) const
+		std::vector <Netlist::InterfaceMap> &parts_nlis,
+		Netlist::Graph &target) const
  {
 	auto victim = parts_nlis.at(p.element()).at(&p.iface());
 
@@ -103,8 +108,8 @@ void StructureToNetlist::connect(
 
 void StructureToNetlist::merge(netlist::VertexRef victim,
 	netlist::VertexRef persisting,
-	std::vector<netlist::Netlist::Interface> &parts_nlis,
-	netlist::Netlist &target) const
+	std::vector<netlist::Netlist::InterfaceMap> &parts_nlis,
+	netlist::Netlist::Graph &target) const
 {
 	for (auto &nli : parts_nlis) {
 		for (auto kv : nli) {
@@ -113,13 +118,13 @@ void StructureToNetlist::merge(netlist::VertexRef victim,
 		}
 	}
 
-	target.graph_.eat(persisting, victim);
+	target.eat(persisting, victim);
 
 }
 
 void StructureToNetlist::oneway(
 		netlist::VertexRef victim, netlist::VertexRef persisting,
-		SingleDirection dir, netlist::Netlist &target) const
+		SingleDirection dir, netlist::Netlist::Graph &target) const
 {
 	if (dir == SingleDirection::OUT)
 		target.createOneway(victim, persisting);

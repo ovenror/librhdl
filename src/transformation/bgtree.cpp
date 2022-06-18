@@ -27,7 +27,7 @@ Blocks BGTree::execute(const TreeModel &source) const
 
 	target.resize({4, source.width(), source.height()});
 	source.toBlocks(target.slice3({0,0,0}));
-	source.toInterface(target.interface());
+	source.toInterface(const_cast<Blocks::InterfaceMap &>(target.ifaceMap()));
 
 	auto assessment = source.assessLinks(target);
 	assert (!source.hasBrokenLinks(assessment));

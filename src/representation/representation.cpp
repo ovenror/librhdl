@@ -30,8 +30,10 @@ bool Representation::isDescendant(const Representation *r) const
 	return parent_->isDescendant(r);
 }
 
-// may not be called, if *this is already added to the entity
-// FIXME: Use lookup data structure and add assertion
+/* may not be called, if *this is already added to the entity
+ * FIXME: Use lookup data structure and add assertion
+ * ... However, the entity only holds const references to representations,
+ * so that should not happen. */
 void Representation::breakTiming()
 {
 	timing_ = &entity_.addTiming();

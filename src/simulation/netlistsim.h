@@ -24,7 +24,7 @@ protected:
 	void setInternal(const ISingle *iface) override;
 
 private:
-	std::vector<const ISingle*> getIfaces(const Netlist::Interface &nli);
+	std::vector<const ISingle*> getIfaces(const Netlist::InterfaceMap &nli);
 	const Netlist &netlist_;
 	std::map<VertexRef, bool> internal_state_;
 };

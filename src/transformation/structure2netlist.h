@@ -25,24 +25,24 @@ public:
 			const structural::Structure &source) const override;
 
 protected:
-	void to_netlist_internal(
+	netlist::Netlist::InterfaceMap to_netlist_internal(
 			const structural::Structure &structure,
-			netlist::Netlist &target) const;
+			netlist::Netlist::Graph &target) const;
 
 private:
 	void connect(
 			const structural::Port &p, netlist::VertexRef v,
-			std::vector <netlist::Netlist::Interface> &,
-			netlist::Netlist &target) const;
+			std::vector <netlist::Netlist::InterfaceMap> &,
+			netlist::Netlist::Graph &target) const;
 
 	void merge(
 			netlist::VertexRef victim, netlist::VertexRef persisting,
-			std::vector <netlist::Netlist::Interface> &,
-			netlist::Netlist &target) const;
+			std::vector <netlist::Netlist::InterfaceMap> &,
+			netlist::Netlist::Graph &target) const;
 
 	void oneway(
 			netlist::VertexRef, netlist::VertexRef, SingleDirection,
-			netlist::Netlist &target) const;
+			netlist::Netlist::Graph &target) const;
 
 };
 

@@ -33,20 +33,19 @@ void EInverter::makeNetlist(const Timing &timing)
 	using netlist::Netlist;
 	using netlist::VertexRef;
 
-	auto pnetlist = std::make_unique<Netlist>(*this, nullptr, &timing);
-
-	Netlist::Graph &graph = pnetlist -> graph_;
-	Netlist::Interface &interface = pnetlist -> interface_;
+	Netlist::Graph graph;
+	Netlist::InterfaceMap ifaceMap;
 
 	VertexRef vin = graph.addVertex();
 	VertexRef vout = graph.addVertex();
 
 	graph.connect(vin, vout);
 
-	interface[(ISingle *) interface_["in"]] = vin;
-	interface[(ISingle *) interface_["out"]] = vout;
+	ifaceMap[(ISingle *) interface_["in"]] = vin;
+	ifaceMap[(ISingle *) interface_["out"]] = vout;
 
-	addRepresentation(std::move(pnetlist));
+	addRepresentation(Netlist(
+			*this, std::move(graph), std::move(ifaceMap), nullptr, &timing));
 }
 
 void EInverter::makeTimedBehavior(const Timing &timing)

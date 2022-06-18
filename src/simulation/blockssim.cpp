@@ -59,7 +59,7 @@ BlocksSim::BlocksSim(const Blocks &blocks)
 	}
 
 	for (const ISingle *iface : getIfaces(blocks)) {
-		Vec pos = blocks.interface().at(iface);
+		Vec pos = blocks.ifaceMap().at(iface);
 		isims_[iface] = allSims_.at(pos).get();
 	}
 }
@@ -232,7 +232,7 @@ std::vector<const ISingle *> BlocksSim::getIfaces(const Blocks &blocks) const
 {
 	std::vector<const ISingle *> result;
 
-	for (auto &kv : blocks.interface()) {
+	for (auto &kv : blocks.ifaceMap()) {
 		result.push_back(kv.first);
 	}
 
