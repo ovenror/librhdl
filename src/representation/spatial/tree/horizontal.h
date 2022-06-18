@@ -4,7 +4,7 @@
 #include "../tree/container.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Horizontal : public Container
 {

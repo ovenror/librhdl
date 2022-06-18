@@ -8,11 +8,9 @@
 #include <memory>
 
 namespace rhdl {
+namespace spatial {
 
 class TreeModel;
-
-namespace TM {
-
 class Wires;
 class Wire;
 class Connection;

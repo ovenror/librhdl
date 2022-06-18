@@ -5,7 +5,7 @@
 #include "representation/blocks/blocks.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Wire;
 class Connector;

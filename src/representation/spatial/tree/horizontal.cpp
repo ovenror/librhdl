@@ -6,7 +6,7 @@ namespace rhdl {
 
 using blocks::Blocks;
 
-namespace TM {
+namespace spatial {
 
 Horizontal::Horizontal(unsigned int index)
 	: Container(index)

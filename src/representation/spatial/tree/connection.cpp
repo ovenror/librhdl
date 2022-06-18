@@ -7,7 +7,7 @@
 #include "../tree/wire.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 Connection::Connection(Wire &wire)
 	: presumeDying_(false)

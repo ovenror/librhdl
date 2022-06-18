@@ -7,7 +7,7 @@ namespace rhdl {
 
 using blocks::Blocks;
 
-namespace TM {
+namespace spatial {
 
 Blocks::index_t Element::position() const
 {

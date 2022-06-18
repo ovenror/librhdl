@@ -10,7 +10,7 @@ namespace rhdl {
 
 using blocks::Blocks;
 
-namespace TM {
+namespace spatial {
 
 Wires::Wires(Container &owner, bool vertical, bool anchors)
 	: Container(0), Crosser(vertical), owner_(owner), anchors_(anchors),

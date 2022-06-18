@@ -17,6 +17,7 @@ using netlist::EdgeRef;
 
 using blocks::Blocks;
 using blocks::Block;
+using spatial::TreeModel;
 
 BGTree::BGTree() {}
 

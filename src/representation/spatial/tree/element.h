@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Element
 {

@@ -9,11 +9,9 @@
 #include "../tree/wire.h"
 
 namespace rhdl {
+namespace spatial {
 
 class TreeModel;
-
-namespace TM {
-
 class Layer;
 class NodeGroup;
 class Node;

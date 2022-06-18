@@ -9,7 +9,7 @@
 #include "../tree/element.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Container;
 class Wires;

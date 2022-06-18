@@ -3,7 +3,7 @@
 #include "../tree/wires.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 CollectedWire::CollectedWire(Container &owner, const std::shared_ptr<Connection> &connection, bool anchor, Wires &collection, unsigned int index) :
 	CollectedWire(owner, anchor, collection, index)

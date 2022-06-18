@@ -5,7 +5,7 @@
 #include "../tree/wire.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class CollectedWire;
 

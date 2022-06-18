@@ -10,7 +10,7 @@
 #include "../tree/wire.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 Container::Container(unsigned int index) :
 	Element(index)

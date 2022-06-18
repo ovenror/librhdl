@@ -3,7 +3,7 @@
 #include "../tree/collectedwire.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 Crosser::Crosser(bool vertical) :
 	vertical_(vertical)

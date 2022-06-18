@@ -23,7 +23,9 @@ namespace netlist {
 class Netlist;
 }
 
+namespace spatial {
 class TreeModel;
+}
 
 namespace blocks {
 class Blocks;
@@ -42,7 +44,7 @@ public:
 			behavioral::TimedBehavior, behavioral::FunctionalBehavior,
 			structural::CompressedStructure, structural::Structure,
 			netlist::Netlist,
-			TreeModel,
+			spatial::TreeModel,
 			blocks::Blocks,
 			txt::Commands,
 			InvalidRepresentation>;

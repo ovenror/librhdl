@@ -9,7 +9,7 @@
 #include <set>
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class UniqueSegment;
 class Segment;

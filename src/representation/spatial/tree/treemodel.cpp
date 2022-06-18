@@ -34,7 +34,7 @@ using netlist::Netlist;
 using netlist::VertexRef;
 using netlist::EdgeRef;
 
-namespace TM {
+namespace spatial {
 
 struct VertexInfo {
 	VertexInfo(Wire &pinput) : input(pinput), parent_node(nullptr) {}
@@ -138,10 +138,6 @@ struct LeafData : public EdgeData {
 
 	VertexInfo &known_vertex;
 };
-
-}
-
-using namespace TM;
 
 static std::vector<const ISingle *> ifilter(const Netlist::Interface &nli, Interface::Direction dir)
 {
@@ -414,7 +410,7 @@ void TreeModel::computeSpatial()
 }
 
 Netlist TreeModel::splitConnections(
-		std::forward_list<std::reference_wrapper<const TM::Connection>> connections,
+		std::forward_list<std::reference_wrapper<const spatial::Connection>> connections,
 		const Netlist &source)
 {
 	Netlist result = source;
@@ -429,7 +425,7 @@ Netlist TreeModel::splitConnections(
 	return result;
 }
 
-bool TreeModel::hasBrokenLinks(const TM::ConnectionLinks &assessment) const
+bool TreeModel::hasBrokenLinks(const spatial::ConnectionLinks &assessment) const
 {
 	for (const auto &kv : assessment) {
 		if (!kv.second.second.empty())
@@ -485,7 +481,7 @@ bool TreeModel::isTopLayer(const ConstructionData &data)
 	return data.upper_vertices.empty();
 }
 
-void TreeModel::nextLayer(TM::ConstructionData &data)
+void TreeModel::nextLayer(spatial::ConstructionData &data)
 {
 	data.lower_vertices = std::move(data.upper_vertices);
 	data.upper_vertices = {};
@@ -1091,9 +1087,9 @@ void TreeModel::createSegments()
 }
 
 
-std::forward_list<std::reference_wrapper<const TM::Connection>> TreeModel::fixBrokenLinks()
+std::forward_list<std::reference_wrapper<const Connection>> TreeModel::fixBrokenLinks()
 {
-	std::forward_list<std::reference_wrapper<const TM::Connection>> result;
+	std::forward_list<std::reference_wrapper<const Connection>> result;
 
 	bool fixed = false;
 
@@ -1128,7 +1124,7 @@ ConnectionLinks TreeModel::assessLinks(const Blocks &blocks) const
 	BlocksSim sim(blocks);
 
 	for (const auto &pStartNode : nodes()) {
-		const TM::Node &startNode = *pStartNode;
+		const Node &startNode = *pStartNode;
 
 		if (!startNode.invert_)
 			continue;
@@ -1156,5 +1152,5 @@ ConnectionLinks TreeModel::assessLinks(const Blocks &blocks) const
 	return result;
 }
 
-}
+}} //rhdl::spatial
 

@@ -8,7 +8,7 @@
 #include <vector>
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Wire;
 class Layer;

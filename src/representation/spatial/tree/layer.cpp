@@ -2,7 +2,7 @@
 
 #include "../tree/wire.h"
 
-namespace rhdl::TM {
+namespace rhdl::spatial {
 
 std::vector<const Wire *> Layer::inputs() const
 {

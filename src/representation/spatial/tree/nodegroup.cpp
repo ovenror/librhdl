@@ -10,7 +10,7 @@ namespace rhdl {
 
 using blocks::Blocks;
 
-namespace TM {
+namespace spatial {
 
 NodeGroup::NodeGroup(Layer &container, unsigned int index,
 		Node *parent, Wire &manifold_cross)

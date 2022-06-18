@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 using namespace rhdl;
-using namespace rhdl::TM;
+using namespace rhdl::spatial;
 
 class TestLayer : public Container, Layer {
 public:

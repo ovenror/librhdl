@@ -8,12 +8,12 @@
 
 #include <gtest/gtest.h>
 
-using namespace rhdl::TM;
+using namespace rhdl::spatial;
 
 TEST(ConnectionTest, addNodeWire)
 {
 	rhdl::Entity dummy("DUMMY", {});
-	rhdl::TreeModel model(dummy);
+	TreeModel model(dummy);
 	SingleWire first(model, false);
 	MutableLayer layer(model, 0);
 	Wire &manifold(layer.cross().make());

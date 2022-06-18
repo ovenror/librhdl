@@ -10,7 +10,7 @@
 #include "../tree/wires.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class DivisiveWires : public Wires
 {

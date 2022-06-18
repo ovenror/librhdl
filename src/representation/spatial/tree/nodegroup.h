@@ -7,7 +7,7 @@
 #include "../tree/node.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Layer;
 

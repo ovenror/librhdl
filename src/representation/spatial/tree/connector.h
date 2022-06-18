@@ -12,7 +12,7 @@
 #include "../tree/segment.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Wire;
 

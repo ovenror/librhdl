@@ -4,7 +4,7 @@
 #include "../tree/supersegment.h"
 #include "../tree/wire.h"
 
-namespace rhdl::TM {
+namespace rhdl::spatial {
 
 using blocks::Blocks;
 

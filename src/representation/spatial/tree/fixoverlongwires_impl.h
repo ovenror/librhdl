@@ -17,7 +17,7 @@
 #include "../tree/fixoverlongwires.h"
 #include "../tree/segment.h"
 
-namespace rhdl::TM {
+namespace rhdl::spatial {
 
 class Connector;
 class SuperSegment;

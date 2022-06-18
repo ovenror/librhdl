@@ -4,7 +4,7 @@
 #include "../tree/wires.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 using blocks::Blocks;
 

@@ -7,7 +7,7 @@ namespace rhdl {
 
 using blocks::Blocks;
 
-namespace TM {
+namespace spatial {
 
 MutableLayer::MutableLayer(TreeModel &container, unsigned int index)
 	: Container(index), model_(container), cross_(*this, false)

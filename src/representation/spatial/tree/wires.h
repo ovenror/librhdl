@@ -12,7 +12,7 @@
 #include "representation/blocks/blocks.h"
 
 namespace rhdl {
-namespace TM {
+namespace spatial {
 
 class Container;
 class SingleWire;
@@ -58,8 +58,8 @@ public:
 	const Wire *getWireConnectedTo(const Wire &w) const override;
 	Wire *getWireConnectedTo(const Wire &w) override;
 
-	CollectedWire *findMax1(const TM::Connection &c) const;
-	std::vector<CollectedWire *> findConnected(const TM::Connection &c) const;
+	CollectedWire *findMax1(const spatial::Connection &c) const;
+	std::vector<CollectedWire *> findConnected(const spatial::Connection &c) const;
 
 	blocks::Blocks::index_t maxRelPos() const;
 	bool noNonAnchors() const;

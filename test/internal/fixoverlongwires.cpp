@@ -15,7 +15,7 @@
 
 #include "construction/library.h"
 
-using namespace rhdl::TM;
+using namespace rhdl::spatial;
 using rhdl::Interface;
 using rhdl::ISingle;
 using rhdl::IComposite;
@@ -23,7 +23,7 @@ using rhdl::blocks::Blocks;
 using rhdl::netlist::Netlist;
 using rhdl::netlist::VertexRef;
 
-class TestModel : public rhdl::TreeModel {
+class TestModel : public TreeModel {
 public:
 	TestModel();
 
