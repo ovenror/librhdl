@@ -1,5 +1,7 @@
 #include <representation/structural/structure.h>
 #include "transformations.h"
+
+#include "bgtree.h"
 #include "transformation/defaulttransformation.h"
 
 /*
@@ -9,7 +11,6 @@
  */
 
 // transformations
-#include "representation/spatial/bgtree/bgtree.h"
 #include "transformation/structure2netlist.h"
 // destination types
 #include "representation/txt/commands.h"

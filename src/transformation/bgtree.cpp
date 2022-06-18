@@ -1,11 +1,10 @@
 #include "bgtree.h"
-#include "treemodel.h"
-#include "representation/netlist/netlist.h"
+
+#include "representation/spatial/bgtree/treemodel.h"
 #include "interface/isingle.h"
-#include "node.h"
-#include "util/iterable.h"
 #include "simulation/blockssim.h"
 #include "entity/entity.h"
+#include "util/iterable.h"
 
 #include <fstream>
 #include <sstream>

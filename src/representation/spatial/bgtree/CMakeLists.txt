@@ -1,6 +1,5 @@
 target_sources(rhdl_obj
 	PRIVATE
-		bgtree.cpp
 		collectedwire.cpp
 		connection.cpp
 		connector.cpp

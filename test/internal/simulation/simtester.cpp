@@ -1,16 +1,13 @@
 #include "simtester.h"
-
-#include <representation/structural/structure.h>
-
 #include "simprinter.h"
+
+#include "representation/structural/structure.h"
 
 #include "simulation/netlistsim.h"
 #include "simulation/blockssim.h"
 
 #include "entity/entity.h"
 #include "entity/timing.h"
-
-#include "representation/spatial/bgtree/bgtree.h"
 
 #include "interface/isingle.h"
 
