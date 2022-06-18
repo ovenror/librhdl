@@ -12,8 +12,6 @@ using namespace rhdl::TM;
 
 TEST(ConnectionTest, addNodeWire)
 {
-	namespace nl = rhdl::netlist;
-
 	rhdl::Entity dummy("DUMMY", {});
 	rhdl::TreeModel model(dummy);
 	SingleWire first(model, false);

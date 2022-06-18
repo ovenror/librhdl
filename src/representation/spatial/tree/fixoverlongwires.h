@@ -10,7 +10,6 @@ namespace rhdl {
 
 class ISingle;
 
-namespace blocks { class Blocks; }
 class TreeModel;
 
 namespace TM {
