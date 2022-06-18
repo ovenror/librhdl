@@ -569,28 +569,6 @@ Blocks::index_t freeLength(const Path &path, Blocks::index_t start)
 	return curEnd - start + 1;
 }
 
-bool linkIsBroken(const Link &link, const std::map<Link, Paths> paths)
-{
-	for (const auto &ppath : paths.at(link)) {
-		if (!pathIsBroken(*ppath))
-			return false;
-	}
-
-	return true;
-}
-
-bool pathIsBroken(const Path &path)
-{
-	return length(path) > redstone::maxWireLength;
-}
-
-void eraseWorkingLinks(std::map<Link, Paths> &paths, Links working)
-{
-	for (const Link &link : working)
-		paths.erase(link);
-
-}
-
 void placeRepeater(const RepeaterPlacement &position)
 {
 	position.first.first -> placeRepeater(position.second, position.first.second);

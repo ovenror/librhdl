@@ -71,9 +71,6 @@ public:
 
 	std::forward_list<std::reference_wrapper<const Connection>> fixBrokenLinks();
 	Links getLinks(const Connection &);
-	bool linkIsBroken();
-
-	void placeRepeater();
 
 	netlist::Netlist splitConnections(
 			std::forward_list<std::reference_wrapper<const Connection>> connections,

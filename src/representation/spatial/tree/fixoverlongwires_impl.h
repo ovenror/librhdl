@@ -31,14 +31,11 @@ using Paths = std::vector<std::unique_ptr<Path>>;
 std::map<Link, Paths> findPaths(const Links &links);
 Paths findPaths(const Link &link);
 
-void eraseWorkingLinks(std::map<Link, Paths> &paths, Links working);
+void eraseWorkingLinks(std::map<Link, Paths> &paths);
 
 using RepeaterPlacement = std::pair<Current, blocks::Blocks::index_t>;
 
 void placeRepeater(const RepeaterPlacement &position);
-
-bool linkIsBroken(const Link &link, const std::map<Link, Paths> paths);
-bool pathIsBroken(const Path &path);
 
 const std::map<Segment *, bool> identifyEligibleCurrents(const std::map<Link, Paths> &paths);
 
