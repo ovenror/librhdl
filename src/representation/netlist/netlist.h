@@ -4,6 +4,8 @@
 #include "graph_impl.h"
 #include "representation/representationbase.h"
 
+#include <forward_list>
+
 namespace rhdl {
 
 class ISingle;
@@ -18,6 +20,8 @@ struct Netlist : public RepresentationBase<Netlist>
 
 	Netlist(const Entity &entity, const Representation *parent,
 			const Timing *timing);
+
+	Netlist(const Netlist &, std::forward_list<VertexRef> toSplit);
 
 	virtual std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const override;    
 	static std::string InterfaceToString(const Interface &nli);

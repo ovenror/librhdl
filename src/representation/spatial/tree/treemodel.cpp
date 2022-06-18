@@ -177,8 +177,7 @@ TreeModel::TreeModel(
 		if (unsynthesizableVertices.empty())
 			break;
 
-		auto split = splitVertices(unsynthesizableVertices, source);
-		source = entity().addRepresentation(std::move(split));
+		source = entity().addRepresentation(Netlist(source, unsynthesizableVertices));
 	}
 }
 
@@ -411,22 +410,6 @@ void TreeModel::computeSpatial()
 	applyToWires([](Wire &w){if (!w.vertical()) w.tryBecomeAnchor();});
 	computeHorizontalCollectedWiresPosition();
 	computeVertical();
-}
-
-Netlist TreeModel::splitVertices(
-		const std::forward_list<VertexRef> &vertices,
-		const Netlist &source)
-{
-	Netlist result = source;
-
-	assert (!vertices.empty());
-
-	for (const auto &vertex : vertices) {
-		result.splitVertex(vertex);
-	}
-
-	result.breakTiming();
-	return result;
 }
 
 bool TreeModel::hasBrokenLinks(const spatial::ConnectionLinks &assessment) const

@@ -90,6 +90,18 @@ void Netlist::removeVertex(VertexRef vertex)
 	remapInterface(graph_.removeVertex(vertex));
 }
 
+Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
+	: Netlist(source)
+{
+	assert (!toSplit.empty());
+
+	for (const auto &vertex : toSplit) {
+		splitVertex(vertex);
+	}
+
+	breakTiming();
+}
+
 void Netlist::remapInterface(const std::map<VertexRef, VertexRef> &vertexMap)
 {
 	for (auto &kv : interface_) {

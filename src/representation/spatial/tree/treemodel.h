@@ -73,10 +73,6 @@ public:
 			const std::map<const Connection *, netlist::VertexRef> &vertexMap);
 	Links getLinks(const Connection &);
 
-	netlist::Netlist splitVertices(
-			const std::forward_list<netlist::VertexRef> &vertices,
-			const netlist::Netlist &source);
-
 	ConnectionLinks assessLinks(const blocks::Blocks &blocks) const;
 	bool hasBrokenLinks(const ConnectionLinks &assessment) const;
 
