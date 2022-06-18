@@ -70,7 +70,7 @@ public:
 	void replaceCrosser(Wire &newCrosser) override;
 	bool mayBeCrossed(const Wire &wire, blocks::Blocks::index_t at) const override;
 
-	void applyToWires(std::function<void(Wire &)> f);
+	void applyToWires(std::function<void(Wire &)> f) const;
 
 	virtual void computePositions();
 

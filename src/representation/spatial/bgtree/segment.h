@@ -15,8 +15,15 @@ class UniqueSegment;
 class Segment;
 class Connector;
 
-using UniqueCurrent = std::pair<const UniqueSegment *, bool>;
-using Current = std::pair<const Segment *, bool>;
+using UniqueCurrent = std::pair<UniqueSegment *, bool>;
+
+/*
+ * Segment with flow direction.
+ * 		second = reverse
+ * 			false: from lower to higher position
+ * 			true: from higher to lower position
+ */
+using Current = std::pair<Segment *, bool>;
 
 class Segment
 {
@@ -38,7 +45,7 @@ public:
 	virtual const UniqueSegment &firstUnique() const = 0;
 	virtual const UniqueSegment &lastUnique() const = 0;
 
-	void placeRepeater(blocks::Blocks::index_t relPos, bool reverse, blocks::Blocks &b) const;
+	void placeRepeater(blocks::Blocks::index_t relPos, bool reverse);
 	blocks::Blocks::index_t nextRepeater(blocks::Blocks::index_t from, bool reverse) const;
 
 	blocks::Blocks::index_t firstRepeaterOffset() const;
@@ -51,7 +58,7 @@ protected:
 
 	virtual bool noFrontCrossConnections() const = 0;
 	virtual bool noBackCrossConnections() const = 0;
-	virtual void placeRepeaterAbs(blocks::Blocks::index_t absPos, bool reverse, blocks::Blocks &b) const = 0;
+	virtual void placeRepeaterAbs(blocks::Blocks::index_t absPos, bool reverse) = 0;
 	virtual void addToStream(std::ostream &os) const = 0;
 
 	const blocks::Blocks::index_t start_;

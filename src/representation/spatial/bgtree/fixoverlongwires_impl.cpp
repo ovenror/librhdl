@@ -19,22 +19,7 @@ namespace rhdl::TM {
 
 using blocks::Blocks;
 
-std::forward_list<const Connection *> fixBrokenConnections(const ConnectionLinks &connectionsLinks, Blocks &b)
-{
-   std::forward_list<const Connection *> result;
-
-	for (const auto &kv : connectionsLinks) {
-		if (kv.second.second.empty())
-			continue;
-
-		if (!fixBrokenConnection(*kv.first, kv.second, b))
-			result.push_front(kv.first);
-	}
-
-	return result;
-}
-
-void eraseFixedLinks(std::map<Link, Paths> &paths)
+void eraseWorkingLinks(std::map<Link, Paths> &paths)
 {
 	for (auto iter = paths.begin(); iter != paths.end();) {
 		const Paths &thePaths = iter -> second;
@@ -54,23 +39,23 @@ void eraseFixedLinks(std::map<Link, Paths> &paths)
 	}
 }
 
-bool fixBrokenConnection(const Connection &connection, const WorkingAndBrokenLinks &links, Blocks& b)
+FixConnectionResult fixConnection(const Links &links)
 {
-	createSuperSegments(connection);
 	std::map<Link, Paths> paths = findPaths(links);
 
 	for (const auto &kv : paths)
 		assert (kv.second.size() == 1);
 
-	std::map<const Segment *, bool> currents =
+	std::map<Segment *, bool> currents =
 			identifyEligibleCurrents(paths);
 
 	SegmentToPositionIndex segmentToPositionIdx;
 	unsigned int nPositions = makePositionMap(currents, segmentToPositionIdx);
 
-	assert (!links.second.empty());
-	eraseWorkingLinks(paths, links.first);
-	assert (!paths.empty());
+	eraseWorkingLinks(paths);
+
+	if (paths.empty())
+		return FixConnectionResult::UNCHANGED;
 
 	RepeaterPlacement bestPosition;
 
@@ -78,22 +63,21 @@ bool fixBrokenConnection(const Connection &connection, const WorkingAndBrokenLin
 		bestPosition = findBestPlacement(paths, currents, segmentToPositionIdx, nPositions);
 
 		if (bestPosition.first.first == nullptr)
-			return false;
+			return FixConnectionResult::BROKEN;
 
-		placeRepeater(bestPosition, b);
-		eraseFixedLinks(paths);
+		placeRepeater(bestPosition);
+		eraseWorkingLinks(paths);
 	}
 
-	return true;
+	return FixConnectionResult::FIXED;
 }
 
-std::map<Link, Paths> findPaths(const WorkingAndBrokenLinks &links)
+std::map<Link, Paths> findPaths(const Links &links)
 {
 	std::map<Link, Paths> result;
 
-	for (const auto &collection : {links.first, links.second})
-		for (const Link &link : collection)
-			result[link] = findPaths(link);
+	for (const Link &link : links)
+		result[link] = findPaths(link);
 
 	return result;
 }
@@ -170,18 +154,18 @@ Paths findPaths(const Link &link)
 	return allPaths;
 }
 
-const std::map<const Segment *, bool> identifyEligibleCurrents(
+const std::map<Segment *, bool> identifyEligibleCurrents(
 		const std::map<Link, Paths> &paths)
 {
-	std::set<const Segment *> bidirectionalSegments;
-	std::map<const Segment *, bool> result;
+	std::set<Segment *> bidirectionalSegments;
+	std::map<Segment *, bool> result;
 
 	for (const auto &kv : paths) {
 		for (const auto &ppath : kv.second) {
 			for (const Current &current : *ppath) {
-				const Segment *segment = current.first;
+				Segment *segment = current.first;
 				bool reverse = current.second;
-				std::map<const Segment *, bool>::iterator iter;
+				std::map<Segment *, bool>::iterator iter;
 
 				if (bidirectionalSegments.find(segment) != bidirectionalSegments.end())
 					continue;
@@ -236,14 +220,14 @@ const Connector &getIFaceConnector(const Wire &ifaceWire)
 }
 
 unsigned int makePositionMap(
-		const std::map<const Segment *, bool> &eligible,
+		const std::map<Segment *, bool> &eligible,
 		SegmentToPositionIndex &result)
 {
 	SegmentToPositionIndex::left_map &left = result.left;
 	unsigned int idx = 0;
 
 	for (const Current &current : eligible) {
-		const Segment *segment = current.first;
+		Segment *segment = current.first;
 		Blocks::index_t space = segment -> repeaterSpace();
 
 		if (space <= 0)
@@ -260,7 +244,7 @@ unsigned int makePositionMap(
 }
 
 RepeaterPlacement findBestPlacement(const std::map<Link, Paths> &paths,
-		const std::map<const Segment *, bool> &currents,
+		const std::map<Segment *, bool> &currents,
 		const SegmentToPositionIndex &map,
 		unsigned int nPositions)
 {    
@@ -270,7 +254,7 @@ RepeaterPlacement findBestPlacement(const std::map<Link, Paths> &paths,
 	return findBestPlacement(currents, map, evaluatedPositions);
 }
 
-RepeaterPlacement findBestPlacement(const std::map<const Segment *, bool> &currents,
+RepeaterPlacement findBestPlacement(const std::map<Segment *, bool> &currents,
 		const SegmentToPositionIndex &map,
 		const std::vector<TotalPositionRating> &evaluatedPositions)
 {
@@ -297,7 +281,7 @@ RepeaterPlacement findBestPlacement(const std::map<const Segment *, bool> &curre
 }
 
 RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
-		const std::map<const Segment *, bool> &currents,
+		const std::map<Segment *, bool> &currents,
 		const SegmentToPositionIndex &map)
 {
 	Blocks::index_t distance = 0;
@@ -308,7 +292,7 @@ RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
 		++distance;
 	}
 
-	const Segment *segment = iter -> second;
+	Segment *segment = iter -> second;
 	bool reverse = currents.at(segment);
 
 	distance += segment -> repeaterOffset(reverse);
@@ -422,7 +406,7 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 
 	//std::cerr << "Evaluating path " << path << std::endl;
 
-	const Segment *segment;
+	Segment *segment;
 	bool reverse;
 	Path::const_iterator curIter = path.begin();
 
@@ -608,9 +592,9 @@ void eraseWorkingLinks(std::map<Link, Paths> &paths, Links working)
 
 }
 
-void placeRepeater(const RepeaterPlacement &position, Blocks &b)
+void placeRepeater(const RepeaterPlacement &position)
 {
-	position.first.first -> placeRepeater(position.second, position.first.second, b);
+	position.first.first -> placeRepeater(position.second, position.first.second);
 }
 
 using SegmentContainer = std::vector<std::unique_ptr<UniqueSegment>>;
@@ -642,12 +626,12 @@ static SegmentIterable allSegments(const Connection &connection)
 void createSuperSegments(const Connection &connection)
 {
 	for (const auto &psegment : allSegments(connection)) {
-		const UniqueSegment *segment = psegment.get();
+		UniqueSegment *segment = psegment.get();
 
 		if (segment -> hasSuper())
 			continue;
 
-		const UniqueSegment *before;
+		UniqueSegment *before;
 
 		while (true) {
 			before = segment -> straightBefore();
@@ -658,12 +642,12 @@ void createSuperSegments(const Connection &connection)
 			segment = before;
 		}
 
-		const UniqueSegment *next = segment -> straightAfter();
+		UniqueSegment *next = segment -> straightAfter();
 
 		if (!next)
 			continue;
 
-		std::vector<const UniqueSegment *> segments = {segment, next};
+		std::vector<UniqueSegment *> segments = {segment, next};
 		segment = next -> straightAfter();
 
 		while (segment) {

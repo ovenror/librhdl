@@ -21,56 +21,19 @@ using blocks::Block;
 
 BGTree::BGTree() {}
 
-Blocks BGTree::execute(const Netlist &source) const
+Blocks BGTree::execute(const TreeModel &source) const
 {
-	const Netlist *pnetlist = &source;
-	const Entity &entity = source.entity();
-	unsigned int count = 0;
+	Blocks target(source.entity(), &source, source.timing());
 
-	while (true) {
-		const Netlist &netlist = *pnetlist;
+	target.resize({4, source.width(), source.height()});
+	source.toBlocks(target.slice3({0,0,0}));
+	source.toInterface(target.interface());
 
-		//std::ofstream dotfile;
-		//std::stringstream dotfilename;
-		//dotfilename << "netlist" << count << ".dot";
-		//dotfile.open(dotfilename.str().c_str());
-		//dotfile << netlist.graph_;
-		//dotfile.close();
+	auto assessment = source.assessLinks(target);
+	assert (!source.hasBrokenLinks(assessment));
 
-		TreeModel model(netlist);
-		Blocks target(entity, &netlist, netlist.timing());
-
-		model.computeSpatial();
-		target.resize({4, model.width(), model.height()});
-		model.toBlocks(target.slice3({0,0,0}));
-		model.toInterface(target.interface());
-
-		//std::cerr << project(target.slice3({0,0,0}));
-
-		model.createSegments();
-		auto assessment = model.assessLinks(target);
-
-		if (!model.hasBrokenLinks(assessment)) {
-			return target;
-		}
-
-		auto unfixedConnections = model.fixBrokenLinks(assessment, target);
-
-		if (unfixedConnections.empty()) {
-			target.breakTiming();
-			assert (!model.hasBrokenLinks(model.assessLinks(target)));
-			return target;
-		}
-		else
-			assert (model.hasBrokenLinks(model.assessLinks(target)));
-
-		++count;
-
-		Netlist restricted = model.splitConnections(unfixedConnections, netlist);
-		pnetlist = &entity.addRepresentation(std::move(restricted));
-	}
+	return target;
 }
-
 
 static bool maybeShortcut(const Blocks::Cuboid &blocks, Blocks::Vec invBlockPosStart)
 {

@@ -8,7 +8,7 @@ namespace rhdl::TM {
 using blocks::Blocks;
 
 UniqueSegment::UniqueSegment(
-		const Wire &wire, Blocks::index_t start, Blocks::index_t end,
+		Wire &wire, Blocks::index_t start, Blocks::index_t end,
 		Connector &front, Connector &back)
 
 	: Segment(start, end), wire_(wire), front_(front), back_(back)
@@ -17,7 +17,7 @@ UniqueSegment::UniqueSegment(
 	back.addIncoming(*this);
 }
 
-const Segment &UniqueSegment::super() const {
+Segment &UniqueSegment::super() {
 	if (super_) {
 		assert (&super_ -> firstUnique() != &super_ -> lastUnique());
 		return *super_;
@@ -27,12 +27,12 @@ const Segment &UniqueSegment::super() const {
 	}
 }
 
-void UniqueSegment::placeRepeaterAbs(Blocks::index_t absPos, bool reverse, Blocks &b) const
+void UniqueSegment::placeRepeaterAbs(Blocks::index_t absPos, bool reverse)
 {
-	wire_.placeRepeater(absPos, reverse, b);
+	wire_.addRepeater(absPos, reverse);
 }
 
-const UniqueSegment *UniqueSegment::straightAfter() const
+UniqueSegment *UniqueSegment::straightAfter() const
 {
 	return back_.straightPartner(*this);
 }
@@ -47,12 +47,12 @@ bool UniqueSegment::noBackCrossConnections() const
 	return backConnector().terminal() || straightAfter();
 }
 
-const UniqueSegment *UniqueSegment::straightBefore() const
+UniqueSegment *UniqueSegment::straightBefore() const
 {
 	return front_.straightPartner(*this);
 }
 
-void UniqueSegment::setSuper(const std::shared_ptr<const SuperSegment> &super) const
+void UniqueSegment::setSuper(const std::shared_ptr<SuperSegment> &super) const
 {
 	assert (!super_);
 	super_ = super;

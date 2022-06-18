@@ -15,7 +15,7 @@ class Connector;
 class SuperSegment : public Segment
 {
 public:
-	SuperSegment(const std::vector<const UniqueSegment *> &segments);
+	SuperSegment(const std::vector<UniqueSegment *> &segments);
 
 	const Connector &frontConnector() const override;
 	const Connector &backConnector() const override;
@@ -26,7 +26,7 @@ public:
 protected:
 	bool noFrontCrossConnections() const override;
 	bool noBackCrossConnections() const override;
-	void placeRepeaterAbs(blocks::Blocks::index_t absPos, bool reverse, blocks::Blocks &b) const override;
+	void placeRepeaterAbs(blocks::Blocks::index_t absPos, bool reverse) override;
 	virtual void addToStream(std::ostream &os) const override;
 
 private:
@@ -40,7 +40,7 @@ private:
 
 	const UniqueSegment &first_;
 	const UniqueSegment &last_;
-	std::set<const UniqueSegment *, PartLess> parts_;
+	std::set<UniqueSegment *, PartLess> parts_;
 };
 
 }

@@ -6,6 +6,8 @@
 #include "connection.h"
 #include "connector.h"
 
+#include "entity/entity.h"
+
 #include "simulation/blockssim.h"
 
 #include "interface/isingle.h"
@@ -15,9 +17,11 @@
 
 #include "util/iterable.h"
 
+#include <functional>
 #include <stack>
 #include <map>
 #include <set>
+#include <unordered_set>
 
 namespace rhdl {
 
@@ -154,23 +158,66 @@ static std::vector<const ISingle *> ifilter(const Netlist::Interface &nli, Inter
 }
 
 TreeModel::TreeModel(const netlist::Netlist &source) :
-		TreeModel(source,
+		TreeModel(source.entity(), &source, source.timing(),
 				ifilter(source.interface_, SingleDirection::IN),
 				ifilter(source.interface_, SingleDirection::OUT))
 {}
 
 TreeModel::TreeModel(
 		const Netlist &netlist,
+		const std::vector<const ISingle*> &lower,
+		const std::vector<const ISingle*> &upper)
+	: TreeModel(netlist.entity(), &netlist, netlist.timing(), lower, upper)
+{
+	auto source = std::cref(netlist);
+
+	while (true) {
+		createModel(source, lower, upper);
+		computeSpatial();
+		createSegments();
+
+		auto brokenConnections = fixBrokenLinks();
+
+		if (brokenConnections.empty())
+			break;
+
+		auto split = splitConnections(brokenConnections, source);
+		source = entity().addRepresentation(std::move(split));
+	}
+}
+
+
+TreeModel::TreeModel(
+		const Entity &entity, const Representation *parent,
+		const Timing *timing,
 		const std::vector<const ISingle *> &lower,
 		const std::vector<const ISingle *> &upper) :
-	RepresentationBase(netlist.entity(), &netlist, netlist.timing()),
+	RepresentationBase(entity, parent, timing),
 	Container(0), bottom_anchors_(*this, false, true), bottom_(*this, true),
 	lower_cross_(*this, false), top_anchors_(*this, false, true)
 {
-	ConstructionData data(netlist.graph_, netlist.interface_, lower, upper);
-
 	bottom_.addCrosser(lower_cross_);
 	bottom_.addCrosser(bottom_anchors_);
+}
+
+TreeModel::TreeModel(const Entity &e)
+	: TreeModel(e, nullptr, &e.addTiming())
+{}
+
+TreeModel::TreeModel(
+		const Entity &entity, const Representation *parent,
+		const Timing *timing)
+	: TreeModel(entity, parent, timing, {}, {})
+{}
+
+
+TreeModel::~TreeModel() {}
+
+void TreeModel::createModel(const netlist::Netlist &netlist,
+		const std::vector<const ISingle*> &lower,
+		const std::vector<const ISingle*> &upper)
+{
+	ConstructionData data(netlist.graph_, netlist.interface_, lower, upper);
 
 	processBottomIFaces(BottomIFacesData(data));
 	processLooseVertices(LooseVerticesData(data));
@@ -190,9 +237,7 @@ TreeModel::TreeModel(
 	}
 }
 
-TreeModel::~TreeModel() {}
-
-void TreeModel::toBlocks(Blocks::Cuboid b)
+void TreeModel::toBlocks(Blocks::Cuboid b) const
 {
 	applyToWires([&](Wire &w){w.toBlocks(b);});
 
@@ -201,7 +246,7 @@ void TreeModel::toBlocks(Blocks::Cuboid b)
 	}
 }
 
-void TreeModel::toInterface(Blocks::Interface &interface)
+void TreeModel::toInterface(Blocks::Interface &interface) const
 {
 	for (auto &kv : interface_) {
 		const ISingle *iface = kv.first;
@@ -368,25 +413,23 @@ void TreeModel::computeSpatial()
 	computeVertical();
 }
 
-std::forward_list<const Connection *> TreeModel::fixBrokenLinks(const ConnectionLinks &assessment, Blocks &b)
-{
-	return fixBrokenConnections(assessment, b);
-}
-
 Netlist TreeModel::splitConnections(
-		std::forward_list<const Connection *> connections,
+		std::forward_list<std::reference_wrapper<const TM::Connection>> connections,
 		const Netlist &source)
 {
 	Netlist result = source;
 
-	for (const Connection *connection : connections) {
-		result.splitVertex(vertexMap_.at(connection));
+	assert (!connections.empty());
+
+	for (const auto &connection : connections) {
+		result.splitVertex(vertexMap_.at(&connection.get()));
 	}
 
+	result.breakTiming();
 	return result;
 }
 
-bool TreeModel::hasBrokenLinks(const TM::ConnectionLinks &assessment)
+bool TreeModel::hasBrokenLinks(const TM::ConnectionLinks &assessment) const
 {
 	for (const auto &kv : assessment) {
 		if (!kv.second.second.empty())
@@ -408,7 +451,7 @@ bool TreeModel::hasBrokenLinks(const Blocks &b)
 }
 #endif
 
-void TreeModel::applyToWires(std::function<void (Wire &)> f)
+void TreeModel::applyToWires(std::function<void (Wire &)> f) const
 {
 	bottom_anchors_.applyToWires(f);
 	bottom_.applyToWires(f);
@@ -964,6 +1007,70 @@ void TreeModel::assessLinks(
 	}
 }
 
+static bool isForwardNodeWire(const Wire &w)
+{
+	const auto *node = w.getNode();
+
+	if (!node)
+		return false;
+
+	return !node -> backwards();
+}
+
+Links TreeModel::getLinks(const Connection &connection)
+{
+	Links result;
+	std::unordered_set<const Connector *> sources, destinations;
+
+	for (auto *source : connection.inverterOutputs()) {
+		assert (isForwardNodeWire(*source));
+		auto ir = sources.emplace(&source -> front());
+		assert (ir.second);
+	}
+
+	for (auto *destination : connection.inverterInputs()) {
+		assert (isForwardNodeWire(*destination));
+		auto ir = destinations.emplace(&destination -> back());
+		assert (ir.second);
+	}
+
+	/* TODO: Think about indexing interface wires in connection,
+	 * we might also need them elsewhere.
+	 */
+	for (const auto &kv : interface_) {
+		const auto &iface = *kv.first;
+		const auto &wire = *kv.second;
+
+		if (!wire.isConnected(connection))
+			continue;
+
+		switch (iface.direction()) {
+		case SingleDirection::OUT: {
+			auto ir = destinations.emplace(&wire.back());
+			assert (ir.second);
+			break;
+		}
+		case SingleDirection::IN: {
+			auto ir = sources.emplace(&wire.front());
+			assert (ir.second);
+			break;
+		}
+		default:
+			assert (0);
+		}
+	}
+
+	result.reserve(sources.size() * destinations.size());
+
+	for (const auto *src : sources) {
+		for (const auto *dst : destinations) {
+			result.emplace_back(src, dst);
+		}
+	}
+
+	return result;
+}
+
 void TreeModel::assessLinks(
 		const Connection &connection, WorkingAndBrokenLinks &links,
 		const Connector &startConnector, BlocksSim &sim) const
@@ -981,6 +1088,38 @@ void TreeModel::assessLinks(
 void TreeModel::createSegments()
 {
 	applyToWires([](Wire &w){w.createSegments();});
+}
+
+
+std::forward_list<std::reference_wrapper<const TM::Connection>> TreeModel::fixBrokenLinks()
+{
+	std::forward_list<std::reference_wrapper<const TM::Connection>> result;
+
+	bool fixed = false;
+
+	for (auto &kv : vertexMap_) {
+		const auto &connection = *kv.first;
+
+		createSuperSegments(connection);
+
+		switch (fixConnection(getLinks(connection))) {
+		case FixConnectionResult::UNCHANGED:
+			break;
+		case FixConnectionResult::FIXED:
+			fixed = true;
+			break;
+		case FixConnectionResult::BROKEN:
+			result.push_front(connection);
+			break;
+		default:
+			assert (0);
+		}
+	}
+
+	if (fixed && result.empty())
+		breakTiming();
+
+	return result;
 }
 
 ConnectionLinks TreeModel::assessLinks(const Blocks &blocks) const

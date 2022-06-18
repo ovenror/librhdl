@@ -53,9 +53,11 @@ public:
 	TreeModel(const netlist::Netlist &);
 
 	TreeModel(
-			const netlist::Netlist &netlist,
+			const netlist::Netlist &source,
 			const std::vector<const ISingle *> &lower,
 			const std::vector<const ISingle *> &upper);
+
+	TreeModel(const Entity &);
 
 	const TreeModel &getModel() const override {return *this;}
 
@@ -63,23 +65,26 @@ public:
 
 	//TreeModel &getModel() override {return *this;}
 
-	void toBlocks(blocks::Blocks::Cuboid b);
-	void toInterface(blocks::Blocks::Interface &interface);
+	void toBlocks(blocks::Blocks::Cuboid b) const;
+	void toInterface(blocks::Blocks::Interface &interface) const;
 	void computeSpatial();
 
 	void createSegments();
-	TM::ConnectionLinks assessLinks(const blocks::Blocks &blocks) const;
-	bool hasBrokenLinks(const TM::ConnectionLinks &assessment);
-	std::forward_list<const TM::Connection *> fixBrokenLinks(
-			const TM::ConnectionLinks &assessment, blocks::Blocks &b);
+
+	std::forward_list<std::reference_wrapper<const TM::Connection>> fixBrokenLinks();
+	TM::Links getLinks(const TM::Connection &);
+	bool linkIsBroken();
+
+	void placeRepeater();
 
 	netlist::Netlist splitConnections(
-			std::forward_list<const TM::Connection *> connections,
+			std::forward_list<std::reference_wrapper<const TM::Connection>> connections,
 			const netlist::Netlist &source);
 
-	//bool hasBrokenLinks(const Blocks &b);
+	TM::ConnectionLinks assessLinks(const blocks::Blocks &blocks) const;
+	bool hasBrokenLinks(const TM::ConnectionLinks &assessment) const;
 
-	void applyToWires(std::function<void(TM::Wire &)> f);
+	void applyToWires(std::function<void(TM::Wire &)> f) const;
 
 	TM::Wires &lowerCross() {return lower_cross_;}
 
@@ -98,6 +103,16 @@ public:
 	TM::Node &makeInverter(TM::NodeGroup &ng, netlist::EdgeRef edge);
 
 protected:
+	TreeModel(
+			const Entity &entity, const Representation *parent,
+			const Timing *timing);
+
+	TreeModel(
+			const Entity &entity, const Representation *parent,
+			const Timing *timing,
+			const std::vector<const ISingle *> &lower,
+			const std::vector<const ISingle *> &upper);
+
 	void createShortcuts();
 
 	bool isTopLayer(const TM::ConstructionData &data);
@@ -131,6 +146,11 @@ protected:
 	TM::Wire &findNearestOutput(const TM::Connection &connection);
 	TM::NodeGroup *inputToGroup(const TM::Wire &output);
 	TM::NodeGroup *bottomToGroup(const TM::Wire &bottomWire);
+
+	void createModel(
+			const netlist::Netlist &netlist,
+			const std::vector<const ISingle *> &lower,
+			const std::vector<const ISingle *> &upper);
 
 	void preComputeSpatial();
 	void placeBottomWires();

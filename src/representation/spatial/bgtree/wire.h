@@ -138,7 +138,8 @@ public:
 	static void blocks(int height_offset, blocks::Blocks::Wall line_segment, blocks::Blocks::index_t position, blocks::Blocks::index_t length);
 	blocks::Blocks::Wall segment(blocks::Blocks::Cuboid &blocks) const;
 
-	void placeRepeater(blocks::Blocks::index_t position, bool reverse, blocks::Blocks &b) const;
+	void addRepeater(blocks::Blocks::index_t position, bool backwards);
+	void placeRepeaters(blocks::Blocks::Cuboid) const;
 
 protected:
 	std::vector<Wire *> wiresCrossConnectedAt(blocks::Blocks::index_t pos) const;
@@ -158,6 +159,11 @@ public:
 	friend std::ostream &operator<<(std::ostream &os, const Wire &w);
 
 private:
+	struct Repeater {
+		blocks::Blocks::index_t position;
+		bool backwards;
+	};
+
 	struct ConnectorLess {
 		using is_transparent = void;
 
@@ -190,8 +196,11 @@ private:
 	Connector &getConnectorAt(blocks::Blocks::index_t pos) const;
 	const Connector &onlyConnector() const;
 
+	void placeRepeater(const Repeater &, blocks::Blocks::Cuboid) const;
+
 	std::vector<std::unique_ptr<UniqueSegment>> uniqueSegments_;
 	std::set<std::shared_ptr<Connector>, ConnectorLess> connectors_;
+	std::set<std::unique_ptr<Repeater>> repeaters_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Wire &w);

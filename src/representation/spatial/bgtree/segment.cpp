@@ -43,7 +43,7 @@ bool Segment::terminal(bool back) const
 	return connector(back).terminal();
 }
 
-void Segment::placeRepeater(Blocks::index_t relPos, bool reverse, Blocks &b) const
+void Segment::placeRepeater(Blocks::index_t relPos, bool reverse)
 {
 	assert (relPos >= 0 && relPos <= distance());
 
@@ -58,7 +58,7 @@ void Segment::placeRepeater(Blocks::index_t relPos, bool reverse, Blocks &b) con
 
 	//std::cerr << "placeRepeater r:" << relPos << ", a:" << absPos << ", " << reverse << "@" << *this << std::endl;
 
-	placeRepeaterAbs(absPos, reverse, b);
+	placeRepeaterAbs(absPos, reverse);
 }
 
 Blocks::index_t Segment::nextRepeater(Blocks::index_t from, bool reverse) const

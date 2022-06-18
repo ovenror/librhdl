@@ -400,6 +400,9 @@ void Wire::computeExtents()
 {
 	//std::cerr << "a.ext " << *this << std::endl;
 
+	if (sorted_crossers_.empty())
+		std::cerr << *this << " has no crossers!" << std::endl;
+
 	assert (!sorted_crossers_.empty());
 
 	auto front(sorted_crossers_.begin());
@@ -443,7 +446,10 @@ void Wire::toBlocks(Blocks::Cuboid b) const
 		return;
 	}
 
-	Blocks::Wall seg = segment(b);
+	/*
+	 * TODO: Use segments
+	 */
+	Blocks::Wall seg = segment(b); // not that one
 	Blocks::index_t lastConnection = start_;
 
 	for (auto *pcrosser : sorted_crossers_) {
@@ -473,6 +479,8 @@ void Wire::toBlocks(Blocks::Cuboid b) const
 	}
 
 	blocks_isolated(seg, lastConnection, end_ - lastConnection);
+
+	placeRepeaters(b);
 }
 
 void Wire::createSegments()
@@ -590,7 +598,7 @@ Blocks::Wall Wire::segment(Blocks::Cuboid &blocks) const
 				(Axis) (vertical() ? 1 : 2), {0, 0});
 }
 
-void Wire::placeRepeater(Blocks::index_t position, bool reverse, Blocks &b) const
+void Wire::placeRepeater(const Repeater &r, blocks::Blocks::Cuboid b) const
 {
 	using blocks::Direction;
 	using blocks::FORWARD;
@@ -598,11 +606,10 @@ void Wire::placeRepeater(Blocks::index_t position, bool reverse, Blocks &b) cons
 
 	Direction orientation = vertical() ? FORWARD : RIGHT;
 
-	if (reverse)
+	if (r.backwards)
 		orientation = (Direction) (orientation | 2);
 
-	Blocks::Cuboid cuboid = b.slice3({0,0,0});
-	segment(cuboid)[vertical() ? 1 : 3][position] = Block(Block::REPEATER, orientation);
+	segment(b)[vertical() ? 1 : 3][r.position] = Block(Block::REPEATER, orientation);
 }
 
 void Wire::blocks_isolated(Blocks::Wall line_segment, Blocks::index_t position, Blocks::index_t length) const
@@ -685,6 +692,19 @@ bool Wire::ConnectorLess::operator()(const std::shared_ptr<Connector> &lhs, Bloc
 bool Wire::ConnectorLess::operator()(Blocks::index_t lhs, const std::shared_ptr<Connector> &rhs) const
 {
 	return lhs < rhs -> getPositionOn(this_);
+}
+
+void Wire::addRepeater(Blocks::index_t position, bool backwards)
+{
+	Repeater r{position, backwards};
+	repeaters_.emplace(std::make_unique<Repeater>(std::move(r)));
+}
+
+void Wire::placeRepeaters(blocks::Blocks::Cuboid b) const
+{
+	for (const auto &repeater : repeaters_) {
+		placeRepeater(*repeater, b);
+	}
 }
 
 }

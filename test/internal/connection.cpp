@@ -15,7 +15,7 @@ TEST(ConnectionTest, addNodeWire)
 	namespace nl = rhdl::netlist;
 
 	rhdl::Entity dummy("DUMMY", {});
-	rhdl::TreeModel model(nl::Netlist(dummy, nullptr, nullptr), {}, {});
+	rhdl::TreeModel model(dummy);
 	SingleWire first(model, false);
 	MutableLayer layer(model, 0);
 	Wire &manifold(layer.cross().make());

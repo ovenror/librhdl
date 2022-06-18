@@ -37,7 +37,7 @@ public:
 	void addOutgoing(UniqueSegment &segment);
 
 	bool terminal() const;
-	const UniqueSegment *straightPartner(const UniqueSegment &segment) const;
+	UniqueSegment *straightPartner(const UniqueSegment &segment) const;
 
 	std::pair<blocks::Blocks::index_t, blocks::Blocks::index_t> position() const {return {xpos_, ypos_};}
 

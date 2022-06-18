@@ -26,14 +26,14 @@ Blocks::index_t Connector::getPositionOn(const Wire &w) const
 	return w.vertical() ? ypos_ : xpos_;
 }
 
-const UniqueSegment *Connector::straightPartner(const UniqueSegment &segment) const
+UniqueSegment *Connector::straightPartner(const UniqueSegment &segment) const
 {
 	assert (!segment.wire().anchor_);
-	const UniqueSegment *result = nullptr;
+	UniqueSegment *result = nullptr;
 	const Wire &wSegment = segment.wire();
 
 	for (const UniqueCurrent &c : connected()) {
-		const UniqueSegment *partner = c.first;
+		UniqueSegment *partner = c.first;
 		const Wire &wPartner = partner -> wire();
 
 		if (partner == &segment)

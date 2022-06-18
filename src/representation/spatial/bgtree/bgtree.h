@@ -11,12 +11,12 @@ namespace netlist {
 class Netlist;
 }
 
-class BGTree : public TypedTransformation<netlist::Netlist, blocks::Blocks>
+class BGTree : public TypedTransformation<TreeModel, blocks::Blocks>
 {
 public:
 	BGTree();
 
-	virtual blocks::Blocks execute(const netlist::Netlist &source) const override;
+	virtual blocks::Blocks execute(const TreeModel &source) const override;
 
 	static boost::multi_array<char, 2> project(blocks::Blocks::Cuboid blocks);
 

@@ -24,36 +24,32 @@ class Connector;
 class SuperSegment;
 
 using Segments = std::vector<const Segment *>;
-using SegmentToPositionIndex = boost::bimap<const Segment *, unsigned int>;
+using SegmentToPositionIndex = boost::bimap<Segment *, unsigned int>;
 
 using Path = std::vector<Current>;
 using Paths = std::vector<std::unique_ptr<Path>>;
 
-bool fixBrokenConnection(const TM::Connection &n, const WorkingAndBrokenLinks &brokenLinks, blocks::Blocks &b);
-
-void createSuperSegments(const Connection &connection);
-
-std::map<Link, Paths> findPaths(const WorkingAndBrokenLinks &links);
+std::map<Link, Paths> findPaths(const Links &links);
 Paths findPaths(const Link &link);
 
 void eraseWorkingLinks(std::map<Link, Paths> &paths, Links working);
 
 using RepeaterPlacement = std::pair<Current, blocks::Blocks::index_t>;
 
-void placeRepeater(const RepeaterPlacement &position, blocks::Blocks &b);
+void placeRepeater(const RepeaterPlacement &position);
 
 bool linkIsBroken(const Link &link, const std::map<Link, Paths> paths);
 bool pathIsBroken(const Path &path);
 
-const std::map<const Segment *, bool> identifyEligibleCurrents(const std::map<Link, Paths> &paths);
+const std::map<Segment *, bool> identifyEligibleCurrents(const std::map<Link, Paths> &paths);
 
-unsigned int makePositionMap(const std::map<const Segment *, bool> &eligible,
+unsigned int makePositionMap(const std::map<Segment *, bool> &eligible,
 		SegmentToPositionIndex &result);
 
 using BestPlacementResult = std::pair<RepeaterPlacement, Links>;
 
 RepeaterPlacement findBestPlacement(const std::map<Link, Paths> &paths,
-		const std::map<const Segment *, bool> &currents,
+		const std::map<Segment *, bool> &currents,
 		const SegmentToPositionIndex &map,
 		unsigned int nPositions);
 
@@ -66,12 +62,12 @@ struct TotalPositionResult {
 	std::vector<Link> linksFixed_;
 };
 
-RepeaterPlacement findBestPlacement(const std::map<const Segment *, bool> &currents,
+RepeaterPlacement findBestPlacement(const std::map<Segment *, bool> &currents,
 		const SegmentToPositionIndex &map,
 		const std::vector<TotalPositionRating> &evaluatedPositions);
 
 RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
-		const std::map<const Segment *, bool> &currents,
+		const std::map<Segment *, bool> &currents,
 		const SegmentToPositionIndex &map);
 
 void evaluatePositions(const std::map<Link, Paths> &paths, const SegmentToPositionIndex &map,

@@ -180,7 +180,7 @@ std::vector<CollectedWire *> Wires::wiresAt(Blocks::index_t position) const
 }
 
 
-void Wires::applyToWires(std::function<void(Wire &)> f) {
+void Wires::applyToWires(std::function<void(Wire &)> f) const {
 	for (auto &pwire : collection_) {
 		f(*pwire);
 	}

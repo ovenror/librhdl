@@ -33,20 +33,21 @@ public:
 	Node *inv;
 	Wire *c0_0;
 
+	const ISingle *in_;
+	const ISingle *out_;
 	rhdl::Entity dummy_;
 };
 
 TestModel::TestModel()
 	:
-	  TreeModel(Netlist(dummy_, nullptr, nullptr), {}, {}),
-	  dummy_("DUMMY", {
-			  new ISingle("in", Interface::Direction::IN, false),
-			  new ISingle("out", Interface::Direction::OUT, false)
-	  })
+	  TreeModel(dummy_, nullptr, nullptr),
+	  in_(new ISingle("in", Interface::Direction::IN, false)),
+	  out_(new ISingle("out", Interface::Direction::OUT, false)),
+	  dummy_("DUMMY", {in_, out_})
 {
 	const IComposite &iface = dummy_.interface();
 
-	in = &mkBottomInterfaceWire((rhdl::ISingle *) iface["in"]);
+	in = &mkBottomInterfaceWire(in_);
 
 	auto &l0 = makeLayer();
 
@@ -77,11 +78,9 @@ TestModel::TestModel()
 	n1_1_0.output_.connect(n1_0_0.output_);
 
 	out = &n1_0_0.output_;
-	useAsTopInterfaceWire(n1_0_0.output_, (rhdl::ISingle *) iface["out"]);
+	useAsTopInterfaceWire(n1_0_0.output_, out_);
 
 	computeSpatial();
-	//assert(n0_0_0.input_anchor_.getPosition() == 1);
-
 	createSegments();
 }
 
@@ -98,7 +97,7 @@ void testFindPaths_oneway(const Connector &from, const Connector &to, std::vecto
 	Paths dummy;
 	if (!paths)
 		paths = &dummy;
-	*paths = findPaths({&from, &to});
+	*paths = findPaths(Link(&from, &to));
 
 	EXPECT_EQ(paths -> size(), distances.size());
 
@@ -236,7 +235,7 @@ TEST(PathEvaluation, shortPaths)
 	};
 
 	createSuperSegments(*m.in -> connection_);
-	std::map<Link, Paths> paths = findPaths({{}, links});
+	std::map<Link, Paths> paths = findPaths(links);
 	const Path &first = *paths.at(links[0])[0];
 	const Path &second = *paths.at(links[0])[1];
 
@@ -264,7 +263,7 @@ TEST(PathEvaluation, freeLength)
 	};
 
 	createSuperSegments(*m.in -> connection_);
-	std::map<Link, Paths> paths = findPaths({{}, links});
+	std::map<Link, Paths> paths = findPaths(links);
 
 	const Path &first = *paths.at(links[0])[0];
 	const Path &second = *paths.at(links[0])[1];
@@ -286,12 +285,8 @@ TEST(PathEvaluation, freeLength)
 	EXPECT_EQ(freeLength(second, 4), 8);
 	EXPECT_EQ(freeLength(rsecond, 4), 8);
 
-
-	Blocks dummyTarget(m.dummy_, nullptr, nullptr);
-	dummyTarget.resize({4, m.width(), m.height()});
-
-	const Segment &seg1 = *second[1].first;
-	seg1.placeRepeater(1, false, dummyTarget);
+	Segment &seg1 = *second[1].first;
+	seg1.placeRepeater(1, false);
 
 	EXPECT_EQ(seg1.nextRepeater(0, false), 1);
 	EXPECT_EQ(seg1.nextRepeater(1, false), 1);
@@ -312,7 +307,7 @@ TEST(PathEvaluation, freeLength)
 
 	EXPECT_EQ(freeLength(rsecond, 0), 8);
 
-	seg1.placeRepeater(1, true, dummyTarget);
+	seg1.placeRepeater(1, true);
 
 	EXPECT_EQ(seg1.nextRepeater(0, false), 1);
 	EXPECT_EQ(seg1.nextRepeater(1, false), 1);
@@ -326,8 +321,8 @@ TEST(PathEvaluation, freeLength)
 	EXPECT_EQ(seg1.nextRepeater(3, true), 3);
 	EXPECT_EQ(seg1.nextRepeater(4, true), -1);
 
-	const Segment &seg3 = *second[3].first;
-	seg3.placeRepeater(1, false, dummyTarget);
+	Segment &seg3 = *second[3].first;
+	seg3.placeRepeater(1, false);
 
 	EXPECT_EQ(freeLength(second, 5), 0);
 	EXPECT_EQ(freeLength(second, 6), 3);

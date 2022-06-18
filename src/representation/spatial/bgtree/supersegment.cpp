@@ -7,14 +7,14 @@ namespace rhdl::TM {
 
 using blocks::Blocks;
 
-SuperSegment::SuperSegment(const std::vector<const UniqueSegment *> &segments)
+SuperSegment::SuperSegment(const std::vector<UniqueSegment *> &segments)
 	: Segment(segments.front()->start(), segments.back()->end()),
 	  first_(*segments.front()), last_(*segments.back())
 {
 	assert (segments.size() >= 2);
 
 	Blocks::index_t lastEnd = start_;
-	for (const UniqueSegment *segment : segments) {
+	for (UniqueSegment *segment : segments) {
 		assert (segment -> start() == lastEnd);
 		parts_.insert(segment);
 		lastEnd = segment -> end();
@@ -41,12 +41,12 @@ bool SuperSegment::noBackCrossConnections() const
 	return frontConnector().terminal();
 }
 
-void SuperSegment::placeRepeaterAbs(Blocks::index_t absPos, bool reverse, Blocks &b) const
+void SuperSegment::placeRepeaterAbs(Blocks::index_t absPos, bool reverse)
 {
 	auto iter = parts_.lower_bound(absPos);
 	assert (iter != parts_.end());
-	const UniqueSegment &containing = **iter;
-	containing.placeRepeaterAbs(absPos, reverse, b);
+	UniqueSegment &containing = **iter;
+	containing.placeRepeaterAbs(absPos, reverse);
 }
 
 void SuperSegment::addToStream(std::ostream &os) const

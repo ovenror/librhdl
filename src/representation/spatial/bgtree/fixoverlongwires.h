@@ -11,6 +11,7 @@ namespace rhdl {
 class ISingle;
 
 namespace blocks { class Blocks; }
+class TreeModel;
 
 namespace TM {
 
@@ -23,10 +24,11 @@ using Link = std::pair<const TM::Connector *, const TM::Connector *>;
 using Links = std::vector<Link>;
 using WorkingAndBrokenLinks = std::pair<Links, Links>;
 using ConnectionLinks = std::map<const TM::Connection *, WorkingAndBrokenLinks>;
+enum class FixConnectionResult {UNCHANGED, FIXED, BROKEN};
 
-std::forward_list<const Connection *> fixBrokenConnections(
-		const ConnectionLinks &connectionsLinks,
-		blocks::Blocks &b);
+void createSuperSegments(const Connection &connection);
+
+FixConnectionResult fixConnection(const Links &links);
 
 const Connector &getOutputConnector(const Node &node);
 const Connector &getInputConnector(const Node &node);
