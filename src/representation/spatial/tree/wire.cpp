@@ -486,6 +486,9 @@ void Wire::createSegments()
 {
 	assert (uniqueSegments_.empty());
 
+	if (anchor_)
+		return;
+
 	auto iw = sorted_crossers_.begin();
 	const Wire &w = **iw;
 	++iw;
