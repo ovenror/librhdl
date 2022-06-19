@@ -239,6 +239,7 @@ int rhdl_print_commands(const char *entity_name) {
 	auto f = [=]() {
 		auto &entity = rhdl::defaultLib.at(entity_name);
 		auto *commands = entity.getRepresentation<rhdl::txt::Commands>();
+		assert (commands);
 		std::cout << *commands;
 		return 0;
 	};
