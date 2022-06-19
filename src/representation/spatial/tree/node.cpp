@@ -236,8 +236,6 @@ void Node::toBlocks(Blocks::Cuboid b) const
 
 	if (invert_)
 		mkInverter(target);
-	else
-		passThrough_.toBlocks(b);
 }
 
 void Node::mkInverter(Blocks::Cuboid segment) const
