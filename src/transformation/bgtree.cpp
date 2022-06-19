@@ -21,9 +21,10 @@ using spatial::TreeModel;
 
 BGTree::BGTree() {}
 
-Blocks BGTree::execute(const TreeModel &source) const
+std::unique_ptr<Blocks> BGTree::execute(const TreeModel &source) const
 {
-	Blocks target(source.entity(), &source, source.timing());
+	auto result = std::make_unique<Blocks>(source.entity(), &source, source.timing());
+	auto &target = *result;
 
 	target.resize({4, source.width(), source.height()});
 	source.toBlocks(target.slice3({0,0,0}));
@@ -32,7 +33,7 @@ Blocks BGTree::execute(const TreeModel &source) const
 	auto assessment = source.assessLinks(target);
 	assert (!source.hasBrokenLinks(assessment));
 
-	return target;
+	return result;
 }
 
 static bool maybeShortcut(const Blocks::Cuboid &blocks, Blocks::Vec invBlockPosStart)

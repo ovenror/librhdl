@@ -18,9 +18,16 @@ public:
 	DefaultTransformation() {}
 	virtual ~DefaultTransformation() {}
 
-	ToRep execute(const FromRep &source) const override {return ToRep(source);}
+	std::unique_ptr<ToRep> execute(const FromRep &source) const override;
 };
 
 } /* namespace rhdl */
+
+template<class FromRep, class ToRep>
+inline std::unique_ptr<ToRep> rhdl::DefaultTransformation<FromRep, ToRep>::execute(
+		const FromRep &source) const
+{
+	return std::make_unique<ToRep>(source);
+}
 
 #endif /* SRC_TRANSFORMATION_DEFAULTTRANSFORMATION_H_ */

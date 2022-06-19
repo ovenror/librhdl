@@ -17,14 +17,14 @@ using structural::Port;
 StructureToNetlist::StructureToNetlist() {}
 StructureToNetlist::~StructureToNetlist() {}
 
-Netlist StructureToNetlist::execute(const Structure &source) const
+std::unique_ptr<Netlist> StructureToNetlist::execute(const Structure &source) const
 {
 	Netlist::Graph graph;
 
 	auto ifaceMap = to_netlist_internal(source, graph);
 	Netlist::remap(ifaceMap, graph.removeDisconnectedVertices());
 
-	return Netlist(
+	return std::make_unique<Netlist>(
 			source.entity(), std::move(graph), std::move(ifaceMap),
 			&source, source.timing());
 }

@@ -16,7 +16,7 @@ class BGTree : public TypedTransformation<spatial::TreeModel, blocks::Blocks>
 public:
 	BGTree();
 
-	virtual blocks::Blocks execute(const spatial::TreeModel &source) const override;
+	virtual std::unique_ptr<blocks::Blocks> execute(const spatial::TreeModel &source) const override;
 
 	static boost::multi_array<char, 2> project(blocks::Blocks::Cuboid blocks);
 

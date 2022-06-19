@@ -28,11 +28,11 @@ public:
 		auto *typed_source = dynamic_cast<const FromRep *>(&source);
 		assert (typed_source);
 		assert (typed_source -> typeID() == FromRep::ID);
-		return std::make_unique<ToRep>(execute(*typed_source));
+		return execute(*typed_source);
 	}
 
 protected:
-	virtual ToRep execute(const FromRep &source) const = 0;
+	virtual std::unique_ptr<ToRep> execute(const FromRep &source) const = 0;
 };
 
 }
