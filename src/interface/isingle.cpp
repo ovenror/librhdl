@@ -8,7 +8,7 @@
 
 using namespace rhdl;
 
-ISingle::ISingle(const std::string &name, Direction dir, bool open) :
+ISingle::ISingle(const std::string &name, Direction dir) :
 	VisitableBase(name)
 
 {
@@ -16,7 +16,6 @@ ISingle::ISingle(const std::string &name, Direction dir, bool open) :
 
 	c.type = RHDL_SINGLE;
 	c.single.dir = static_cast<enum rhdl_direction>(dir);
-	c.single.open = open;
 }
 
 bool ISingle::eq_inner_names(const Interface &other) const
@@ -25,9 +24,4 @@ bool ISingle::eq_inner_names(const Interface &other) const
 	bool result = wat -> success();
 
 	return result;
-}
-
-void rhdl::ISingle::setOpen() const {
-	auto &This = const_cast<ISingle &>(*this);
-	This.c_.content().single.open = true;
 }

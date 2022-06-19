@@ -13,7 +13,6 @@ enum rhdl_iface_type {RHDL_SINGLE, RHDL_COMPOSITE, RHDL_UNSPECIFIED};
 
 struct rhdl_isingle {
 	enum rhdl_direction dir;
-	int open;
 };
 
 struct rhdl_icomposite {

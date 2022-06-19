@@ -11,21 +11,18 @@ QualifiedNameMaker::QualifiedNameMaker(const Interface &target) :
 {
 }
 
-bool QualifiedNameMaker::generic(const Interface &i)
+void QualifiedNameMaker::generic(const Interface &i)
 {
-	if (&i != &target_)
-		return false;
-
-	result_ += i.name();
-	return true;
+	assert (result_.empty());
+	result_ = i.name();
 }
 
 void QualifiedNameMaker::visit(const IComposite &i)
 {
-	//std::cerr << typeid(*this).name() << " visiting " << typeid(i).name() << std::endl;
-
-	if (generic(i))
+	if (&i == &target_) {
+		generic(i);
 		return;
+	}
 
 	for (const Interface* component : i)
 	{
@@ -41,12 +38,7 @@ void QualifiedNameMaker::visit(const IComposite &i)
 
 void QualifiedNameMaker::visit(const ISingle &i)
 {
-	//std::cerr << typeid(*this).name() << " visiting " << typeid(i).name() << std::endl;
-
-	if (!generic(i))
-		return;
-
-	result_ += i.is_open()?"-":"|";
+	generic(i);
 }
 
 }

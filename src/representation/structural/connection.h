@@ -24,13 +24,6 @@ class Connection;
 class Connection : public ConnectionBase<std::vector<Port>> {
 public:
 	Connection(std::vector<Port> ports);
-
-	void setOpen() {open_ = true;}
-	bool open() const {return open_;}
-	void computeClosings();
-
-private:
-	bool open_ = false;
 };
 
 std::ostream &operator<<(std::ostream &os, Connection &c);

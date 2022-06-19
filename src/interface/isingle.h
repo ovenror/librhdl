@@ -10,17 +10,15 @@ namespace rhdl {
 class ISingle : public Interface::VisitableChild<ISingle>
 {
 public:
-	ISingle (const std::string &name, Direction dir, bool open = false);
+	ISingle (const std::string &name, Direction dir);
 
-	void setOpen() const;
-	bool is_open() const {return c_.content().single.open;}
 	Direction direction() const {return static_cast<Direction>(c_.content().single.dir);}
 	CompositeDirection compositeDirection() const override {return CompositeDirection(direction());}
 	SingleDirection preferredDirection() const override {return direction();}
 
 	ISingle *clone(const std::string &newName) const override
 	{
-		return new ISingle (newName, direction(), is_open());
+		return new ISingle (newName, direction());
 	}
 
 	const Interface *get(const std::string &name) const override {std::ignore = name; return nullptr;}

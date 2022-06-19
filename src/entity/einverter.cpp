@@ -18,8 +18,8 @@ using behavioral::TimedBehavior;
 
 EInverter::EInverter()
 	: Entity("Inverter", {
-			new ISingle ("in", Interface::Direction::IN, false),
-			new ISingle ("out", Interface::Direction::OUT, false)
+			new ISingle ("in", Interface::Direction::IN),
+			new ISingle ("out", Interface::Direction::OUT)
 		})
 {
 	const Timing &timing = addTiming();

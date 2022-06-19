@@ -6,7 +6,6 @@
 
 #include "visitors/correspondingsubinterfacefinder.h"
 #include "visitors/flattener.h"
-#include "visitors/opener.h"
 #include "visitors/predicateevaluator.h"
 #include "visitors/qualifiednamemaker.h"
 #include "visitors/compatchecker.h"
@@ -28,10 +27,6 @@ Interface::~Interface()
 bool Interface::eq_name(const Interface &other) const
 {
 	return !(name_.compare (other.name_));
-}
-
-void Interface::setAllOpen() const {
-	accept(Opener());
 }
 
 std::vector<const ISingle*> Interface::flat() const {
@@ -80,11 +75,6 @@ bool Interface::eq_names(const Interface &other) const
 
 bool Interface::evalPredicate(Predicate_2nd predicate) const {
 	return PredicateEvaluator(std::move(predicate)).eval(*this);
-}
-
-bool Interface::is_partially_open() const
-{
-	return evalPredicate(Exists(Predicate<ISingle>([](const ISingle &i){return i.is_open();})));
 }
 
 bool operator>=(const Interface &super, const Interface &sub)

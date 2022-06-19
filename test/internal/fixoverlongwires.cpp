@@ -39,8 +39,8 @@ public:
 TestModel::TestModel()
 	:
 	  TreeModel(dummy_, nullptr, nullptr),
-	  in_(new ISingle("in", Interface::Direction::IN, false)),
-	  out_(new ISingle("out", Interface::Direction::OUT, false)),
+	  in_(new ISingle("in", Interface::Direction::IN)),
+	  out_(new ISingle("out", Interface::Direction::OUT)),
 	  dummy_("DUMMY", {in_, out_})
 {
 	const IComposite &iface = dummy_.interface();

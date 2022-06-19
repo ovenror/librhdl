@@ -18,7 +18,7 @@ public:
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;
 
-	bool generic(const Interface &i);
+	void generic(const Interface &i);
 
 	std::string result() {return result_;}
 

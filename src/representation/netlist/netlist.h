@@ -35,6 +35,8 @@ public:
 	virtual std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const override;    
 	static std::string InterfaceToString(const InterfaceMap &);
 
+	bool isOpen(VertexRef vertex) const {return graph_.isInternal(vertex);}
+
 	void splitVertex(VertexRef vertex);
 	void removeVertex(VertexRef vertex);
 

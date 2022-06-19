@@ -33,7 +33,7 @@ private:
 	void connect(
 			const structural::Port &p, netlist::VertexRef v,
 			std::vector <netlist::Netlist::InterfaceMap> &,
-			netlist::Netlist::Graph &target) const;
+			netlist::Netlist::Graph &target, bool &open) const;
 
 	void merge(
 			netlist::VertexRef victim, netlist::VertexRef persisting,

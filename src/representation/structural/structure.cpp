@@ -14,20 +14,12 @@
 
 namespace rhdl::structural {
 
-static std::vector<Connection> closed(std::vector<Connection> connections)
-{
-	for (auto &connection : connections)
-		connection.computeClosings();
-
-	return connections;
-}
-
 Structure::Structure(
 		const Entity &entity,
 		std::vector<const Entity *> elements, std::vector<Connection> connections,
 		const Timing *timing, const Representation *parent)
 	: RepresentationBase<Structure>(entity, parent, timing),
-	  elements_(std::move(elements)), connections_(closed(connections))
+	  elements_(std::move(elements)), connections_(connections)
 {}
 
 Structure::~Structure() {}

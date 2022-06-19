@@ -55,7 +55,7 @@ public:
 		return boost::in_edges(v, rep_);
 	}
 
-	size_t countOut(VertexRef v)
+	size_t countOut(VertexRef v) const
 	{
 		//VertexIterator begin, end;
 		//std::tie(begin, end) = boost::out_edges(v, rep_);
@@ -65,7 +65,7 @@ public:
 		return std::distance(iters.first, iters.second);
 	}
 
-	size_t countIn(VertexRef v)
+	size_t countIn(VertexRef v) const
 	{
 		//VertexIterator begin, end;
 		//std::tie(begin, end) = boost::in_edges(v, rep_);
@@ -75,6 +75,7 @@ public:
 		return std::distance(iters.first, iters.second);
 	}
 
+	bool isInternal(VertexRef v) const;
 	bool isomorphic(Graph_Impl_Boost &g) const;
 	bool hasCycles() const;
 

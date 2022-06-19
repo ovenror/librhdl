@@ -11,7 +11,6 @@ struct CSingleOps : public CSametypeOpsBase<ISingle&, CSingleOps> {
 	using Super::Super;
 
 	bool compatible() const;
-	bool check_open() const;
 };
 
 class CSingle : public CBase<CSingleOps>

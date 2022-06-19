@@ -74,15 +74,17 @@ Netlist::InterfaceMap StructureToNetlist::to_netlist_internal(
 	{
 		auto port = connection.begin();
 		assert (port != connection.end());
-		assert (!port -> needs_closing());
 
 		VertexRef persisting = parts_ifaceMaps
 				.at(port -> element())
 				.at(&port -> iface());
+		bool open = (target.isInternal(persisting));
+
+
 		++port;
 
 		for (; port != connection.end(); ++port)
-			connect(*port, persisting, parts_ifaceMaps, target);
+			connect(*port, persisting, parts_ifaceMaps, target, open);
 	}
 
 	//std::cerr << "exported NLInterface looks like:" << std::endl;
@@ -94,16 +96,22 @@ Netlist::InterfaceMap StructureToNetlist::to_netlist_internal(
 void StructureToNetlist::connect(
 		const Port &p, VertexRef persisting,
 		std::vector <Netlist::InterfaceMap> &parts_nlis,
-		Netlist::Graph &target) const
+		Netlist::Graph &target, bool &open) const
  {
 	auto victim = parts_nlis.at(p.element()).at(&p.iface());
 
 	assert (victim != persisting);
 
-	if (p.needs_closing())
-		oneway(victim, persisting, p.iface().direction(), target);
-	else
-		merge(victim, persisting, parts_nlis, target);
+	if (target.isInternal(victim)) {
+		if (open) {
+			oneway(victim, persisting, p.iface().direction(), target);
+			return;
+		} else {
+			open = true;
+		}
+	}
+
+	merge(victim, persisting, parts_nlis, target);
 }
 
 void StructureToNetlist::merge(netlist::VertexRef victim,

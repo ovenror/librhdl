@@ -171,4 +171,9 @@ void Graph_Impl_Boost::createOneway(VertexRef from, VertexRef to)
 	connect(middle, to);
 }
 
+bool Graph_Impl_Boost::isInternal(VertexRef v) const
+{
+	return countOut(v) && countIn(v);
+}
+
 }

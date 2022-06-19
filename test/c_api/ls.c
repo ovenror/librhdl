@@ -91,5 +91,5 @@ int interface()
 	REQUIRE(out -> type == RHDL_SINGLE);
 
 	const struct rhdl_isingle *single = &out -> single;
-	return ACCEPT(single -> dir == RHDL_OUT && single -> open == 0);
+	return ACCEPT(single -> dir == RHDL_OUT);
 }

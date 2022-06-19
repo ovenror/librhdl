@@ -54,7 +54,6 @@ public:
 
 	const Interface *operator[] (const std::string &iname) const;
 
-	bool is_partially_open() const;
 	std::string qualifiedName(const Interface &top) const;
 	std::vector<const ISingle *> flat() const;
 	bool evalPredicate(Predicate_2nd predicate) const;
@@ -66,8 +65,6 @@ public:
 
 	template <class RESULT> RESULT checkCompatTo(
 			const Interface &, const Predicate2 &) const;
-
-	void setAllOpen() const;
 
 	bool eq_name (const Interface &other) const;
 	bool eq_names (const Interface &other) const;
