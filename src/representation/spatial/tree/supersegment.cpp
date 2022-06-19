@@ -48,6 +48,15 @@ void SuperSegment::placeRepeaterAbs(Blocks::index_t absPos, bool reverse)
 	assert (iter != parts_.end());
 	UniqueSegment &containing = **iter;
 	containing.placeRepeaterAbs(absPos, reverse);
+
+	if (++iter == parts_.end())
+		return;
+
+	UniqueSegment &next = **iter;
+	assert (next.start() >= absPos);
+
+	if (next.start() == absPos)
+		next.placeRepeaterAbs(absPos, reverse);
 }
 
 void SuperSegment::addToStream(std::ostream &os) const

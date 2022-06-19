@@ -695,6 +695,8 @@ bool Wire::ConnectorLess::operator()(Blocks::index_t lhs, const std::shared_ptr<
 
 void Wire::addRepeater(Blocks::index_t position, bool backwards)
 {
+	assert (position >= start_ && position < end_);
+
 	Repeater r{position, backwards};
 	repeaters_.emplace(std::make_unique<Repeater>(std::move(r)));
 }
