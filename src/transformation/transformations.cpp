@@ -1,4 +1,5 @@
-#include <representation/structural/structure.h>
+#include "representation/structural/structure.h"
+#include "representation/spatial/tree/treemodel.h"
 #include "transformations.h"
 
 #include "bgtree.h"
@@ -43,6 +44,7 @@ Transformations::Transformations()
 {
 	Init<
 		StructureToNetlist,
+		DefaultTransformation<netlist::Netlist, spatial::TreeModel>,
 		BGTree,
 		DefaultTransformation<blocks::Blocks, txt::Commands>
 	>::init(*this);
