@@ -154,7 +154,7 @@ static std::vector<const ISingle *> ifilter(const Netlist::InterfaceMap &nli, In
 }
 
 TreeModel::TreeModel(const netlist::Netlist &source) :
-		TreeModel(source.entity(), &source, source.timing(),
+		TreeModel(source,
 				ifilter(source.ifaceMap(), SingleDirection::IN),
 				ifilter(source.ifaceMap(), SingleDirection::OUT))
 {}
