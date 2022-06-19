@@ -76,14 +76,16 @@ trait Interfacible : fmt::Display {
 impl Interfacible for rhdl_connector_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_connector_t = self;
-        unsafe {rhdl_select(this, CString::new(name).unwrap().as_ptr())}  
+        let tname = CString::new(name).unwrap();
+        unsafe {rhdl_select(this, tname.as_ptr())}  
     }
 }
 
 impl Interfacible for rhdl_iface_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_iface_t = self;
-        unsafe {rhdl_iface(this, CString::new(name).unwrap().as_ptr())}  
+        let tname = CString::new(name).unwrap();
+        unsafe {rhdl_iface(this, tname.as_ptr())}  
     }
 }
 
@@ -155,7 +157,6 @@ impl fmt::Display for CStrings {
 impl fmt::Display for rhdl_isingle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let idir = self.dir;
-        let iopen = self.open;
 
         let dir = match idir {
             rhdl_direction_RHDL_IN => "IN",
@@ -163,13 +164,7 @@ impl fmt::Display for rhdl_isingle {
             _ => "(error)"
         };
 
-        let open = match iopen {
-            1 => "YES",
-            0 => "NO",
-            _ => "(error)"
-        };
-
-        write!(f, "Direction: {}, open: {}", dir, open)
+        write!(f, "Direction: {}", dir)
     }
 }
 
@@ -540,7 +535,8 @@ impl<'a> RHDC<'a> {
 
         let (basename, mut components) = split_qn(&name);
         
-        let entity = unsafe {rhdl_entity(ptr::null(), CString::new(basename).unwrap().as_ptr())};
+        let tname = CString::new(basename).unwrap();
+        let entity = unsafe {rhdl_entity(ptr::null(), tname.as_ptr())};
         if !(entity.is_null()) {
             let iface = unsafe{*entity}.iface;
             return self.ls_internal(basename, iface, &mut components);
@@ -571,7 +567,8 @@ impl<'a> RHDC<'a> {
             },
             Some(name) => {
                 let ec;
-                unsafe {ec = rhdl_print_commands(CString::new(name).unwrap().as_ptr());}
+                let tname = CString::new(name).unwrap();
+                unsafe {ec = rhdl_print_commands(tname.as_ptr());}
                 if ec != 0 {
                     write!(self.outputs.err, "{}", name).unwrap();
                     perror(&mut self.outputs.err);

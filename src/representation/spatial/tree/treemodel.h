@@ -48,18 +48,24 @@ using TopIFaceData = IFaceData;
 class TreeModel : public RepresentationBase<TreeModel>, public Container
 {
 public:
-	TreeModel(const netlist::Netlist &);
+	TreeModel(const Entity &);
 
 	TreeModel(
-			const netlist::Netlist &source,
+			const Entity &entity, const Representation *parent,
+			const Timing *timing,
 			const std::vector<const ISingle *> &lower,
 			const std::vector<const ISingle *> &upper);
-
-	TreeModel(const Entity &);
 
 	const TreeModel &getModel() const override {return *this;}
 
 	virtual ~TreeModel();
+
+	static std::unique_ptr<TreeModel> make(const netlist::Netlist &source);
+
+	static std::unique_ptr<TreeModel> make(
+			const netlist::Netlist &source,
+			const std::vector<const ISingle *> &lower,
+			const std::vector<const ISingle *> &upper);
 
 	//TreeModel &getModel() override {return *this;}
 
@@ -98,12 +104,6 @@ protected:
 	TreeModel(
 			const Entity &entity, const Representation *parent,
 			const Timing *timing);
-
-	TreeModel(
-			const Entity &entity, const Representation *parent,
-			const Timing *timing,
-			const std::vector<const ISingle *> &lower,
-			const std::vector<const ISingle *> &upper);
 
 	void createShortcuts();
 

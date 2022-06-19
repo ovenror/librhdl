@@ -24,7 +24,18 @@ struct RepresentationBase : public Representation {
 	}
 
 	virtual bool typeCheck() const override {return typeID() == ID;}
+
+	template <class SourceRep>
+	static std::unique_ptr<RepType> make(const SourceRep &);
 };
+
+template <class RepType>
+template <class SourceRep>
+inline std::unique_ptr<RepType> rhdl::RepresentationBase<RepType>::make(
+		const SourceRep &source)
+{
+	return std::make_unique<RepType>(source);
+}
 
 }
 

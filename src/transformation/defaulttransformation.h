@@ -27,7 +27,7 @@ template<class FromRep, class ToRep>
 inline std::unique_ptr<ToRep> rhdl::DefaultTransformation<FromRep, ToRep>::execute(
 		const FromRep &source) const
 {
-	return std::make_unique<ToRep>(source);
+	return ToRep::make(source);
 }
 
 #endif /* SRC_TRANSFORMATION_DEFAULTTRANSFORMATION_H_ */

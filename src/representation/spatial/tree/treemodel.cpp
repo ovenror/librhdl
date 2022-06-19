@@ -153,35 +153,6 @@ static std::vector<const ISingle *> ifilter(const Netlist::InterfaceMap &nli, In
 	return result;
 }
 
-TreeModel::TreeModel(const netlist::Netlist &source) :
-		TreeModel(source,
-				ifilter(source.ifaceMap(), SingleDirection::IN),
-				ifilter(source.ifaceMap(), SingleDirection::OUT))
-{}
-
-TreeModel::TreeModel(
-		const Netlist &netlist,
-		const std::vector<const ISingle*> &lower,
-		const std::vector<const ISingle*> &upper)
-	: TreeModel(netlist.entity(), &netlist, netlist.timing(), lower, upper)
-{
-	auto source = std::cref(netlist);
-
-	while (true) {
-		auto vertexMap = createModel(source, lower, upper);
-		computeSpatial();
-		createSegments();
-
-		auto unsynthesizableVertices = fixBrokenLinks(vertexMap);
-
-		if (unsynthesizableVertices.empty())
-			break;
-
-		source = entity().addRepresentation(Netlist(source, unsynthesizableVertices));
-	}
-}
-
-
 TreeModel::TreeModel(
 		const Entity &entity, const Representation *parent,
 		const Timing *timing,
@@ -205,8 +176,56 @@ TreeModel::TreeModel(
 	: TreeModel(entity, parent, timing, {}, {})
 {}
 
-
 TreeModel::~TreeModel() {}
+
+std::unique_ptr<TreeModel> TreeModel::make(const netlist::Netlist &source)
+{
+	return make(source,
+			ifilter(source.ifaceMap(), SingleDirection::IN),
+			ifilter(source.ifaceMap(), SingleDirection::OUT));
+}
+
+std::unique_ptr<TreeModel> TreeModel::make(
+		const netlist::Netlist &netlist,
+		const std::vector<const ISingle*> &lower,
+		const std::vector<const ISingle*> &upper)
+{
+	std::unique_ptr<TreeModel> result;
+	const auto &entity = netlist.entity();
+	auto source = std::cref(netlist);
+	size_t count = 0;
+
+	while (true) {
+		result = std::make_unique<TreeModel>(
+				entity, &source.get(), source.get().timing(), lower, upper);
+		auto &model = *result;
+
+#if 0
+		std::stringstream filename;
+		filename << entity.name() << count << ".dot";
+		std::ofstream dotfile(filename.str());
+		dotfile << source.get().graph();
+#endif
+
+		auto vertexMap = model.createModel(source, lower, upper);
+		model.computeSpatial();
+		model.createSegments();
+
+		auto unsynthesizableVertices = model.fixBrokenLinks(vertexMap);
+
+		if (unsynthesizableVertices.empty())
+			break;
+
+		//for (auto v : unsynthesizableVertices)
+		//	std::cerr << "split " << v << std::endl;
+
+		source = entity.addRepresentation(Netlist(source, unsynthesizableVertices));
+		++count;
+	}
+
+	return std::move(result);
+}
+
 
 std::map<const Connection *, netlist::VertexRef> TreeModel::createModel(
 		const netlist::Netlist &netlist,
