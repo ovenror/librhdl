@@ -43,7 +43,7 @@ void BSOpaque::init_internal(const BlockSim::SimMap &smap, const BlockSim::Vec &
 
 		Blocks::CVec belo = Blocks::cbelow(theSide);
 
-		if (block.orientation() == (Direction) dir && !(belo.first && blocks[belo.second] == Block::OPAQUE))
+		if (block.orientation() == (Direction) dir)
 			add(smap, theSide, Block::TORCH);
 	}
 }
