@@ -182,12 +182,22 @@ char BGTree::project(Blocks::Line line, bool shortCut)
 	switch (line[2]) {
 		case Block::REDSTONE: return '*';
 		case Block::OPAQUE: return 'X';
-		case Block::TORCH: return 'o';
-		case Block::UNSET: return ' ';
-		default: assert(0);
+		case Block::TORCH: return '0';
 	}
 
-	return 'E';
+	if (line[1] == Block::OPAQUE) {
+		return 'x';
+	}
+
+	if (line[1] == Block::TORCH) {
+		return 'o';
+	}
+
+	for (Blocks::index_t h=0; h<4; ++h)
+		if (line[h] != Block::UNSET)
+			return 'E';
+
+	return ' ';
 }
 
 std::ostream &operator<<(std::ostream &os, const boost::multi_array<char, 2> &ascii_img)
