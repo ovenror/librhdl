@@ -408,6 +408,7 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 	Segment *segment;
 	bool reverse;
 	Path::const_iterator curIter = path.begin();
+	Blocks::index_t segStart = 0;
 
 	while (true) {
 		skipTo = repeaterPosition;
@@ -430,12 +431,14 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 
 			//std::cerr << "  next seg "<< std::endl;
 
-			Blocks::index_t endPosition = repeaterPosition + segment -> distance();
+
+			Blocks::index_t endPosition = segStart + segment -> distance();
 
 			if ((endPosition <= skipTo) ||
 			   ((posIter = map.left.find(segment)) == map.left.end()))
 			{
 				repeaterPosition = endPosition;
+				segStart += segment -> distance();
 				continue;
 			}
 
@@ -465,6 +468,7 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 				}
 
 				repeaterPosition = endPosition;
+				segStart += segment -> distance();
 				continue;
 			}
 
@@ -492,6 +496,8 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 
 			if (repeaterPosition == stopAt)
 				break;
+
+			segStart += segment -> distance();
 		}
 
 		assert (repeaterPosition <= absLen);
