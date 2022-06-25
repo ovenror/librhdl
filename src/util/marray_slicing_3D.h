@@ -1,18 +1,10 @@
 #ifndef MULTI_ARRAY_SLICING_H
 #define MULTI_ARRAY_SLICING_H
 
-#include <boost/multi_array.hpp>
+#include "marray.h"
+#include <cassert>
 
 namespace marray {
-
-enum Axis {
-	Y=0, X=1, Z=2
-};
-
-using index_t = boost::multi_array<int, 3>::index;
-using dimensionality_t = decltype(boost::multi_array<int, 3>::dimensionality);
-using range = boost::multi_array_types::index_range;
-template <dimensionality_t DIM> using fullIndex = boost::array<index_t, DIM>;
 
 template <Axis axis, Axis axis_idx, dimensionality_t totaldim>
 struct IndexCutter1 {
