@@ -1,7 +1,7 @@
 #ifndef BLOCKSIM_H
 #define BLOCKSIM_H
 
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 #include "redstone.h"
 
@@ -12,14 +12,13 @@
 
 namespace rhdl::blocks {
 
+class Blocks;
+
 class BlockSim
 {
 public:
-	using Vec = Blocks::Vec;
-	using CVec = Blocks::CVec;
 	using SimMap = std::map<Vec, std::unique_ptr<BlockSim> >;
 	using Queue = std::queue<BlockSim *>;
-	using index_t = Blocks::index_t;
 
 	BlockSim(Queue &q);
 

@@ -3,7 +3,7 @@
 
 #include "representation/representationbase.h"
 #include "representation/netlist/netlist.h"
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 #include "util/iterable.h"
 
@@ -69,7 +69,7 @@ public:
 
 	//TreeModel &getModel() override {return *this;}
 
-	void toBlocks(blocks::Blocks::Cuboid b) const;
+	void toBlocks(blocks::Cuboid b) const;
 	void toInterface(blocks::Blocks::InterfaceMap &interface) const;
 	void computeSpatial();
 
@@ -165,8 +165,8 @@ protected:
 			const Connector &startConnector,
 			const std::map<const Connector *, bool> &wasReached) const;
 
-	blocks::Blocks::index_t xpos() const override {return 0;}
-	blocks::Blocks::index_t ypos() const override {return 0;}
+	blocks::index_t xpos() const override {return 0;}
+	blocks::index_t ypos() const override {return 0;}
 
 	using UnwrapType = std::function<MutableLayer::NodesIterable (const LayerPtr &)>;
 

@@ -2,7 +2,7 @@
 #define UNIQUESEGMENT_H
 
 #include "../tree/segment.h"
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 namespace rhdl {
 namespace spatial {
@@ -15,7 +15,7 @@ class UniqueSegment : public Segment
 {
 public:   
 	UniqueSegment(
-			Wire &wire, blocks::Blocks::index_t start, blocks::Blocks::index_t end,
+			Wire &wire, blocks::index_t start, blocks::index_t end,
 			Connector &frontConnector, Connector &backConnector);
 
 	const Wire &wire() const {return wire_;}
@@ -34,7 +34,7 @@ public:
 	UniqueSegment *straightBefore() const;
 	UniqueSegment *straightAfter() const;
 
-	void placeRepeaterAbs(blocks::Blocks::index_t absPos, bool reverse) override;
+	void placeRepeaterAbs(blocks::index_t absPos, bool reverse) override;
 
 protected:
 	bool noFrontCrossConnections() const override;
@@ -42,7 +42,7 @@ protected:
 	void addToStream(std::ostream &os) const override;
 
 private:
-	friend bool operator<(blocks::Blocks::index_t lhs, const UniqueSegment &rhs);
+	friend bool operator<(blocks::index_t lhs, const UniqueSegment &rhs);
 
 	Wire &wire_;
 

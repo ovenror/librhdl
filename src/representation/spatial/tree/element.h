@@ -2,7 +2,7 @@
 #define TM_ELEMENT_H
 
 #include "util/cached.h"
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 #include <vector>
 #include <memory>
@@ -17,8 +17,8 @@ public:
 
 	unsigned int index() const {return index_;}
 
-	blocks::Blocks::index_t position() const;
-	void setPosition(blocks::Blocks::index_t position);
+	blocks::index_t position() const;
+	void setPosition(blocks::index_t position);
 	bool hasPosition() const {return has_position_;}
 
 protected:
@@ -27,7 +27,7 @@ protected:
 private:
 	unsigned int index_;
 	bool has_position_;
-	blocks::Blocks::index_t position_;
+	blocks::index_t position_;
 };
 
 }

@@ -1,10 +1,13 @@
 #include "blockssim.h"
-#include "interface/isingle.h"
-#include "util/marray_slicing_3D.h"
+
 #include "blocks/bsredstone.h"
 #include "blocks/bstorch.h"
 #include "blocks/bsrepeater.h"
 #include "blocks/bsopaque.h"
+
+#include "representation/blocks/blocks.h"
+#include "interface/isingle.h"
+#include "util/marray_slicing_3D.h"
 
 #include <set>
 
@@ -105,14 +108,14 @@ void BlocksSim::internalStep()
 	propagate();
 }
 
-BlockSim &BlocksSim::getSim(const BlocksSim::Vec &pos)
+BlockSim &BlocksSim::getSim(const Vec &pos)
 {
 	auto isim = allSims_.find(pos);
 	assert (isim != allSims_.end());
 	return *(isim -> second);
 }
 
-void BlocksSim::test(const std::vector<BlocksSim::Vec> &onPositions)
+void BlocksSim::test(const std::vector<Vec> &onPositions)
 {
 	std::set<BlockSim *> torchSimSet;
 
@@ -196,7 +199,7 @@ bool BlocksSim::extendTest()
 	return true;
 }
 
-bool BlocksSim::torchWasReached(const BlocksSim::Vec &torchPos)
+bool BlocksSim::torchWasReached(const Vec &torchPos)
 {
 	BlockSim &sim = getSim(torchPos);
 	assert (sim.type() == Block::TORCH);
@@ -206,7 +209,7 @@ bool BlocksSim::torchWasReached(const BlocksSim::Vec &torchPos)
 	return !(*iTorchSim) -> onAfterSwitch();
 }
 
-bool BlocksSim::blockWasReached(const BlocksSim::Vec &pos)
+bool BlocksSim::blockWasReached(const Vec &pos)
 {
 	BlockSim &sim = getSim(pos);
 	assert (sim.type() == Block::OPAQUE || sim.type() == Block::REDSTONE);
@@ -241,15 +244,15 @@ std::vector<const ISingle *> BlocksSim::getIfaces(const Blocks &blocks) const
 
 std::ostream &operator<<(std::ostream &os, const BlocksSim &bs)
 {
-	BlockSim::Vec dims = bs.debug_dims_;
+	Vec dims = bs.debug_dims_;
 	boost::multi_array<char, 2> img(boost::extents[dims[1]][dims[2]]);
 
-	for (BlockSim::index_t x = 0; x < dims[1]; ++x)
-		for (BlockSim::index_t y = 0; y < dims[2]; ++y)
+	for (index_t x = 0; x < dims[1]; ++x)
+		for (index_t y = 0; y < dims[2]; ++y)
 			img[x][y] = ' ';
 
 	for (auto &kv : bs.allSims_) {
-		BlockSim::Vec pos = kv.first;
+		Vec pos = kv.first;
 		auto &sim = kv.second;
 
 		Block type = sim -> type();
@@ -281,8 +284,8 @@ std::ostream &operator<<(std::ostream &os, const BlocksSim &bs)
 		}
 	}
 
-	for (BlockSim::index_t x = 0; x < dims[1]; ++x) {
-		for (BlockSim::index_t y = 0; y < dims[2]; ++y) {
+	for (index_t x = 0; x < dims[1]; ++x) {
+		for (index_t y = 0; y < dims[2]; ++y) {
 			os << img[x][y];
 		}
 		os << std::endl;

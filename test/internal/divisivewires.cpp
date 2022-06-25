@@ -17,8 +17,8 @@ public:
 
 	const Container &asContainer() const override {return *this;}
 
-	virtual blocks::Blocks::index_t xpos() const {return 0;}
-	virtual blocks::Blocks::index_t ypos() const {return 0;}
+	virtual blocks::index_t xpos() const {return 0;}
+	virtual blocks::index_t ypos() const {return 0;}
 
 	virtual const Layer *above() const override {assert (0);}
 	virtual const Layer *below() const override {assert (0);}

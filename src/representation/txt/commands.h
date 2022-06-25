@@ -9,7 +9,7 @@
 #define REPRESENTATION_TXT_COMMANDS_H_
 
 #include "representation/representationbase.h"
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 namespace rhdl::txt {
 
@@ -19,12 +19,12 @@ public:
 
 	virtual ~Commands();
 
-	void moveTo(blocks::Blocks::Vec pos);
+	void moveTo(blocks::Vec pos);
 	void out(std::ostream &os) const;
 
 private:
 	const blocks::Blocks &blocks_;
-	blocks::Blocks::Vec translation_;
+	blocks::Vec translation_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Commands &commands);

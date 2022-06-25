@@ -1,4 +1,5 @@
 #include "bsopaque.h"
+#include "representation/blocks/blocks.h"
 
 namespace rhdl::blocks {
 
@@ -7,7 +8,7 @@ BSOpaque::BSOpaque(Queue &q) : BlockSim(q)
 
 }
 
-void BSOpaque::init_internal(const BlockSim::SimMap &smap, const BlockSim::Vec &pos, const Blocks &blocks)
+void BSOpaque::init_internal(const BlockSim::SimMap &smap, const Vec &pos, const Blocks &blocks)
 {
 	CVec top = blocks.cabove(pos);
 
@@ -41,7 +42,7 @@ void BSOpaque::init_internal(const BlockSim::SimMap &smap, const BlockSim::Vec &
 			break;
 		}
 
-		Blocks::CVec belo = Blocks::cbelow(theSide);
+		CVec belo = blocks::cbelow(theSide);
 
 		if (block.orientation() == (Direction) dir)
 			add(smap, theSide, Block::TORCH);

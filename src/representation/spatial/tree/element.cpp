@@ -5,17 +5,15 @@
 
 namespace rhdl {
 
-using blocks::Blocks;
-
 namespace spatial {
 
-Blocks::index_t Element::position() const
+blocks::index_t Element::position() const
 {
 	assert (has_position_);
 	return position_;
 }
 
-void Element::setPosition(Blocks::index_t position)
+void Element::setPosition(blocks::index_t position)
 {
 	assert (!hasPosition());
 	assert (position >= 0);

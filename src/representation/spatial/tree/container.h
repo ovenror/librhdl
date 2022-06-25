@@ -32,15 +32,15 @@ public:
 	virtual const TreeModel &getModel() const;
 	//virtual TreeModel &getModel();
 
-	blocks::Blocks::index_t width() const {return width_;}
-	blocks::Blocks::index_t height() const {return height_;}
+	blocks::index_t width() const {return width_;}
+	blocks::index_t height() const {return height_;}
 
-	virtual blocks::Blocks::index_t xpos() const = 0;
-	virtual blocks::Blocks::index_t ypos() const = 0;
+	virtual blocks::index_t xpos() const = 0;
+	virtual blocks::index_t ypos() const = 0;
 
 protected:
-	blocks::Blocks::index_t width_;
-	blocks::Blocks::index_t height_;
+	blocks::index_t width_;
+	blocks::index_t height_;
 
 	template <class ELEMENT>
 	static void insert(std::unique_ptr<ELEMENT> element, std::vector<std::unique_ptr<ELEMENT> > &collection);

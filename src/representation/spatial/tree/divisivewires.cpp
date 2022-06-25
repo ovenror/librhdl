@@ -11,8 +11,6 @@
 namespace rhdl {
 namespace spatial {
 
-using blocks::Blocks;
-
 DivisiveWires::DivisiveWires(Container &owner, bool vertical, bool anchors) :
 	Wires(owner, vertical, anchors)
 {}
@@ -76,7 +74,7 @@ void DivisiveWires::replaceCrosser(Wire &newCrosser)
 	}
 }
 
-bool DivisiveWires::mayBeCrossed(const Wire &newCrossingWire, Blocks::index_t at) const
+bool DivisiveWires::mayBeCrossed(const Wire &newCrossingWire, blocks::index_t at) const
 {
 	if (collection_.empty())
 		return true;
@@ -85,7 +83,7 @@ bool DivisiveWires::mayBeCrossed(const Wire &newCrossingWire, Blocks::index_t at
 	return mayBeCrossed(connected, newCrossingWire, at);
 }
 
-bool DivisiveWires::mayBeCrossed(const CollectedWire &liaison, const Wire &newCrossingWire, Blocks::index_t at) const
+bool DivisiveWires::mayBeCrossed(const CollectedWire &liaison, const Wire &newCrossingWire, blocks::index_t at) const
 {
 	assert(!liaison.anchor_);
 	assert(!newCrossingWire.anchor_);
@@ -168,12 +166,12 @@ std::forward_list<CollectedWire *> DivisiveWires::ascendingOrder() const
 	return result;
 }
 
-bool DivisiveWires::connectedBelow(const CollectedWire &wire, Blocks::index_t pos) const
+bool DivisiveWires::connectedBelow(const CollectedWire &wire, blocks::index_t pos) const
 {
 	return connected(wire, pos, true);
 }
 
-bool DivisiveWires::connectedAbove(const CollectedWire &wire, Blocks::index_t pos) const
+bool DivisiveWires::connectedAbove(const CollectedWire &wire, blocks::index_t pos) const
 {
 	return connected(wire, pos, false);
 }
@@ -183,14 +181,14 @@ bool DivisiveWires::connected(const Wire &crosser, bool below) const
 	return connected(crosser.position(), below);
 }
 
-bool DivisiveWires::connected(const CollectedWire &wire, Blocks::index_t pos, bool below) const
+bool DivisiveWires::connected(const CollectedWire &wire, blocks::index_t pos, bool below) const
 {
 	assert (wire.collection() == this);
 	auto theCrosser = crosser(pos, below);
 	return theCrosser && wire.isConnected(*theCrosser);
 }
 
-const Wire *DivisiveWires::crosser(Blocks::index_t pos, bool below) const
+const Wire *DivisiveWires::crosser(blocks::index_t pos, bool below) const
 {
 	const auto &theCrossers = crossers(below);
 	auto crosser = theCrossers.find(pos);
@@ -201,7 +199,7 @@ const Wire *DivisiveWires::crosser(Blocks::index_t pos, bool below) const
 	return nullptr;
 }
 
-CollectedWire *DivisiveWires::connected(Blocks::index_t pos, bool below) const
+CollectedWire *DivisiveWires::connected(blocks::index_t pos, bool below) const
 {
 	auto theCrosser = crosser(pos, below);
 
@@ -217,7 +215,7 @@ CollectedWire *DivisiveWires::connected(Blocks::index_t pos, bool below) const
 
 void DivisiveWires::computePositions()
 {
-	Blocks::index_t relpos = 0;
+	blocks::index_t relpos = 0;
 	auto order = ascendingOrder();
 
 	for (Wire *wire : order) {
@@ -229,7 +227,7 @@ void DivisiveWires::computePositions()
 		wire -> dropHorizontalCollected();
 }
 
-bool DivisiveWires::dropCollision(const CollectedWire &dropped, Blocks::index_t at, const CollectedWire &other) const
+bool DivisiveWires::dropCollision(const CollectedWire &dropped, blocks::index_t at, const CollectedWire &other) const
 {
 	assert (!dropped.anchor_);
 	assert (!other.anchor_);
@@ -376,7 +374,7 @@ void DivisiveWires::orderToStream(std::ostream &os, const std::forward_list<Coll
 		auto start = (*sortedCrossers.begin()) -> position();
 		auto end = (*sortedCrossers.rbegin()) -> position();
 
-		for (Blocks::index_t pos = 0; pos < start; ++pos)
+		for (blocks::index_t pos = 0; pos < start; ++pos)
 			os << " ";
 
 		for (auto pos = start; pos <= end; ++pos) {

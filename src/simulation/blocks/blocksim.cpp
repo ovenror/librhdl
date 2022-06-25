@@ -7,7 +7,7 @@ BlockSim::BlockSim(Queue &q)
 	: value_(0), queue_(q)
 {}
 
-void BlockSim::init(const BlockSim::SimMap &smap, const BlockSim::Vec &pos, const Blocks &blocks)
+void BlockSim::init(const BlockSim::SimMap &smap, const blocks::Vec &pos, const Blocks &blocks)
 {
 	debug_pos_ = pos;
 	init_internal(smap, pos, blocks);
@@ -21,7 +21,7 @@ void BlockSim::update(char value)
 		queue_.push(this);
 }
 
-void BlockSim::add(const BlockSim::SimMap &smap, const BlockSim::Vec &pos)
+void BlockSim::add(const BlockSim::SimMap &smap, const Vec &pos)
 {
 	if (smap.find(pos) == smap.end())
 		return;
@@ -29,7 +29,7 @@ void BlockSim::add(const BlockSim::SimMap &smap, const BlockSim::Vec &pos)
 	addExisting(smap, pos);
 }
 
-void BlockSim::add(const BlockSim::SimMap &smap, const BlockSim::Vec &pos, Block btype)
+void BlockSim::add(const BlockSim::SimMap &smap, const Vec &pos, Block btype)
 {    
 	if (smap.find(pos) == smap.end())
 		return;
@@ -38,7 +38,7 @@ void BlockSim::add(const BlockSim::SimMap &smap, const BlockSim::Vec &pos, Block
 		addExisting(smap, pos);
 }
 
-void BlockSim::addExisting(const BlockSim::SimMap &smap, const BlockSim::Vec &pos)
+void BlockSim::addExisting(const BlockSim::SimMap &smap, const Vec &pos)
 {
 	next_.push_back(smap.at(pos).get());
 }

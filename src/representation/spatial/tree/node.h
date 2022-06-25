@@ -34,18 +34,18 @@ public:
 
 	bool backwards() const {return false;}
 
-	blocks::Blocks::index_t place(blocks::Blocks::index_t startPos);
-	blocks::Blocks::index_t placeAt(blocks::Blocks::index_t pos);
-	bool placeableAt(blocks::Blocks::index_t pos) const;
-	bool outputPlaceableAt(blocks::Blocks::index_t pos) const;
-	bool inputPlaceableAt(blocks::Blocks::index_t pos) const;
-	void setPosition(blocks::Blocks::index_t pos);
+	blocks::index_t place(blocks::index_t startPos);
+	blocks::index_t placeAt(blocks::index_t pos);
+	bool placeableAt(blocks::index_t pos) const;
+	bool outputPlaceableAt(blocks::index_t pos) const;
+	bool inputPlaceableAt(blocks::index_t pos) const;
+	void setPosition(blocks::index_t pos);
 	void applyToWires(std::function<void(Wire &)> f);
 
-	blocks::Blocks::index_t ypos() const override;
-	void toBlocks(blocks::Blocks::Cuboid b) const;
+	blocks::index_t ypos() const override;
+	void toBlocks(blocks::Cuboid b) const;
 
-	const std::vector<blocks::Blocks::Vec> &getTorchPositions() const {return torchPositions_;}
+	const std::vector<blocks::Vec> &getTorchPositions() const {return torchPositions_;}
 
 	NodeGroup &node_group_;
 	bool invert_;
@@ -60,22 +60,22 @@ public:
 	bool rightTorch_;
 
 protected:
-	blocks::Blocks::index_t clearSpace(blocks::Blocks::index_t startPos);
-	blocks::Blocks::index_t clearHeadSpace(blocks::Blocks::index_t startPos);
-	blocks::Blocks::index_t clearFootSpace(blocks::Blocks::index_t startPos);
+	blocks::index_t clearSpace(blocks::index_t startPos);
+	blocks::index_t clearHeadSpace(blocks::index_t startPos);
+	blocks::index_t clearFootSpace(blocks::index_t startPos);
 
-	void mkInverter(blocks::Blocks::Cuboid segment) const;
+	void mkInverter(blocks::Cuboid segment) const;
 
 	bool isolatedCrossingByProximateCrosserBelow() const;
 	bool connectedCrossingByProximateCrosserAbove() const;
 
 private:
-	void addTorchPos(blocks::Blocks::Vec v) const;
+	void addTorchPos(blocks::Vec v) const;
 
 	NodeGroup *child_;
 	mutable unsigned int depthAfter_;
 	bool lowInverter_;
-	mutable std::vector<blocks::Blocks::Vec> torchPositions_;
+	mutable std::vector<blocks::Vec> torchPositions_;
 };
 
 }}

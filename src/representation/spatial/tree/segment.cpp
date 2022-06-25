@@ -9,8 +9,6 @@
 
 namespace rhdl::spatial {
 
-using blocks::Blocks;
-
 std::ostream &operator<<(std::ostream &os, const Segment &segment)
 {
 	os << segment.distance() << ": ";
@@ -44,11 +42,11 @@ bool Segment::terminal(bool back) const
 	return connector(back).terminal();
 }
 
-void Segment::placeRepeater(Blocks::index_t relPos, bool reverse)
+void Segment::placeRepeater(blocks::index_t relPos, bool reverse)
 {
 	assert (relPos >= 0 && relPos <= distance());
 
-	Blocks::index_t absPos;
+	blocks::index_t absPos;
 
 	if (reverse)
 		absPos = end() - relPos;
@@ -62,7 +60,7 @@ void Segment::placeRepeater(Blocks::index_t relPos, bool reverse)
 	placeRepeaterAbs(absPos, reverse);
 }
 
-Blocks::index_t Segment::nextRepeater(Blocks::index_t from, bool reverse) const
+blocks::index_t Segment::nextRepeater(blocks::index_t from, bool reverse) const
 {
 	assert (from >= 0 && from <= distance());
 
@@ -84,7 +82,7 @@ Blocks::index_t Segment::nextRepeater(Blocks::index_t from, bool reverse) const
 	}
 }
 
-Blocks::index_t Segment::firstRepeaterOffset() const
+blocks::index_t Segment::firstRepeaterOffset() const
 {
 	if (!firstUnique().wire().vertical()) {
 		return 2;
@@ -99,7 +97,7 @@ Blocks::index_t Segment::firstRepeaterOffset() const
 	return 0;
 }
 
-Blocks::index_t Segment::lastRepeaterOffset() const
+blocks::index_t Segment::lastRepeaterOffset() const
 {
 	if (!lastUnique().wire().vertical()) {
 		return 2;
@@ -120,18 +118,18 @@ Blocks::index_t Segment::lastRepeaterOffset() const
 		return 1;
 }
 
-Blocks::index_t Segment::repeaterOffset(bool back) const
+blocks::index_t Segment::repeaterOffset(bool back) const
 {
 	return back ? lastRepeaterOffset() : firstRepeaterOffset();
 }
 
-Blocks::index_t Segment::repeaterSpace() const
+blocks::index_t Segment::repeaterSpace() const
 {
-	Blocks::index_t result = distance() + 1 - firstRepeaterOffset() - lastRepeaterOffset();
+	blocks::index_t result = distance() + 1 - firstRepeaterOffset() - lastRepeaterOffset();
 	return result > 0 ? result : 0;
 }
 
-Segment::Segment(Blocks::index_t start, Blocks::index_t end)
+Segment::Segment(blocks::index_t start, blocks::index_t end)
 	: start_(start), end_(end)
 {}
 

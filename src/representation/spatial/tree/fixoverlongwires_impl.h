@@ -1,7 +1,7 @@
 #ifndef FIXOVERLONGWIRES_IMPL_H
 #define FIXOVERLONGWIRES_IMPL_H
 
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 #include "redstone.h"
 
@@ -33,7 +33,7 @@ Paths findPaths(const Link &link);
 
 void eraseWorkingLinks(std::map<Link, Paths> &paths);
 
-using RepeaterPlacement = std::pair<Current, blocks::Blocks::index_t>;
+using RepeaterPlacement = std::pair<Current, blocks::index_t>;
 
 void placeRepeater(const RepeaterPlacement &position);
 
@@ -69,7 +69,7 @@ RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
 void evaluatePositions(const std::map<Link, Paths> &paths, const SegmentToPositionIndex &map,
 		std::vector<TotalPositionRating> &result);
 
-using SplitPathRating = std::pair<unsigned int, blocks::Blocks::index_t>;
+using SplitPathRating = std::pair<unsigned int, blocks::index_t>;
 using PositionRating = std::array<SplitPathRating, 2>;
 
 struct PositionResult {
@@ -84,14 +84,14 @@ void evaluatePositions(
 		const Path &path, const SegmentToPositionIndex &map,
 		std::vector<PositionRating> &result);
 
-blocks::Blocks::index_t length(const Path &path);
-blocks::Blocks::index_t freeLength(
-		const Path &path, blocks::Blocks::index_t start);
+blocks::index_t length(const Path &path);
+blocks::index_t freeLength(
+		const Path &path, blocks::index_t start);
 
 bool fixed(const Path &path);
 
-PositionRating rate(blocks::Blocks::index_t length, blocks::Blocks::index_t repeaterPosition);
-SplitPathRating rate(blocks::Blocks::index_t length);
+PositionRating rate(blocks::index_t length, blocks::index_t repeaterPosition);
+SplitPathRating rate(blocks::index_t length);
 
 std::ostream &operator<<(std::ostream &os, const Path &path);
 

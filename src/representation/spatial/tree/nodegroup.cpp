@@ -8,8 +8,6 @@
 
 namespace rhdl {
 
-using blocks::Blocks;
-
 namespace spatial {
 
 NodeGroup::NodeGroup(Layer &container, unsigned int index,
@@ -50,10 +48,10 @@ Node &NodeGroup::insertPassThrough(unsigned int index)
 	return *nodes_[index];
 }
 
-Blocks::index_t NodeGroup::placeNode(Node &node, Blocks::index_t startPos)
+blocks::index_t NodeGroup::placeNode(Node &node, blocks::index_t startPos)
 {
 	if (nodes_.size() == 1 && parent_) {
-		Blocks::index_t inputPos = parent_ -> output_.position();
+		blocks::index_t inputPos = parent_ -> output_.position();
 
 		if (inputPos >= startPos && node.outputPlaceableAt(inputPos)) {
 			return node.placeAt(inputPos);

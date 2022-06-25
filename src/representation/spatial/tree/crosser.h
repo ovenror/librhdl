@@ -1,7 +1,7 @@
 #ifndef CROSSER_H
 #define CROSSER_H
 
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 #include <set>
 
 namespace rhdl {
@@ -26,7 +26,7 @@ public:
 
 	virtual void tryInsertCrosser(Wire &crosser) = 0;
 	virtual void replaceCrosser(Wire &newCrosser) = 0;
-	virtual bool mayBeCrossed(const Wire &wire, blocks::Blocks::index_t at) const = 0;
+	virtual bool mayBeCrossed(const Wire &wire, blocks::index_t at) const = 0;
 
 	const std::set<Crosser *> &getCrossers() const {return crossers_;}
 

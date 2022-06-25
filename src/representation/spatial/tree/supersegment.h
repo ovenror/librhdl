@@ -25,7 +25,7 @@ public:
 protected:
 	bool noFrontCrossConnections() const override;
 	bool noBackCrossConnections() const override;
-	void placeRepeaterAbs(blocks::Blocks::index_t absPos, bool reverse) override;
+	void placeRepeaterAbs(blocks::index_t absPos, bool reverse) override;
 	virtual void addToStream(std::ostream &os) const override;
 
 private:
@@ -33,8 +33,8 @@ private:
 		using is_transparent = void;
 
 		bool operator()(const UniqueSegment* const &lhs, const UniqueSegment* const &rhs) const;
-		bool operator()(const UniqueSegment* const &lhs, const blocks::Blocks::index_t &rhs) const;
-		bool operator()(const blocks::Blocks::index_t &lhs, const UniqueSegment* const &rhs) const;
+		bool operator()(const UniqueSegment* const &lhs, const blocks::index_t &rhs) const;
+		bool operator()(const blocks::index_t &lhs, const UniqueSegment* const &rhs) const;
 	};
 
 	const UniqueSegment &first_;

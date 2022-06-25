@@ -1,4 +1,5 @@
 #include "bstorch.h"
+#include "representation/blocks/blocks.h"
 
 namespace rhdl::blocks {
 
@@ -7,10 +8,10 @@ BSTorch::BSTorch(Queue &q) : BSDelay(q)
 	resetOnAfterSwitch();
 }
 
-void BSTorch::init_internal(const BlockSim::SimMap &smap, const BlockSim::Vec &pos, const Blocks &blocks)
+void BSTorch::init_internal(const BlockSim::SimMap &smap, const Vec &pos, const Blocks &blocks)
 {
 	add(smap, blocks.above(pos), Block::OPAQUE);
-	add(smap, blocks.below(pos), Block::REDSTONE);
+	add(smap, below(pos), Block::REDSTONE);
 
 	for (int i = 0; i < 4; ++i) {
 		Direction dir = static_cast<Direction>(i);

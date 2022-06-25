@@ -1,4 +1,5 @@
 #include "bsrepeater.h"
+#include "representation/blocks/blocks.h"
 
 namespace rhdl::blocks {
 
@@ -7,7 +8,7 @@ BSRepeater::BSRepeater(Queue &q) : BSDelay(q)
 	resetOnAfterSwitch();
 }
 
-void BSRepeater::init_internal(const BlockSim::SimMap &smap, const BlockSim::Vec &pos, const Blocks &blocks)
+void BSRepeater::init_internal(const BlockSim::SimMap &smap, const Vec &pos, const Blocks &blocks)
 {
 	Direction orientation = blocks[pos].orientation();
 	CVec front = blocks.csidestep(pos, orientation);

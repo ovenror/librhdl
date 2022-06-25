@@ -9,7 +9,7 @@
 #include "../tree/connection.h"
 #include "../tree/container.h"
 #include "../tree/crosser.h"
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 namespace rhdl {
 namespace spatial {
@@ -32,8 +32,8 @@ public:
 
 	const TreeModel &getModel() const {return owner_.getModel();}
 
-	blocks::Blocks::index_t xpos() const;
-	blocks::Blocks::index_t ypos() const;
+	blocks::index_t xpos() const;
+	blocks::index_t ypos() const;
 
 	CollectedWire &make();
 	CollectedWire &make(const std::shared_ptr<Connection> &connection);
@@ -61,21 +61,21 @@ public:
 	CollectedWire *findMax1(const spatial::Connection &c) const;
 	std::vector<CollectedWire *> findConnected(const spatial::Connection &c) const;
 
-	blocks::Blocks::index_t maxRelPos() const;
+	blocks::index_t maxRelPos() const;
 	bool noNonAnchors() const;
 	std::vector<CollectedWire *> top() const;
 	std::vector<CollectedWire *> bottom() const;
-	std::vector<CollectedWire *> wiresAt(blocks::Blocks::index_t position) const;
+	std::vector<CollectedWire *> wiresAt(blocks::index_t position) const;
 
 	void tryInsertCrosser(Wire &crosser) override;
 	void replaceCrosser(Wire &newCrosser) override;
-	bool mayBeCrossed(const Wire &wire, blocks::Blocks::index_t at) const override;
+	bool mayBeCrossed(const Wire &wire, blocks::index_t at) const override;
 
 	void applyToWires(std::function<void(Wire &)> f) const;
 
 	virtual void computePositions();
 
-	virtual bool dropCollision(const CollectedWire &dropped, blocks::Blocks::index_t at, const CollectedWire &other) const;
+	virtual bool dropCollision(const CollectedWire &dropped, blocks::index_t at, const CollectedWire &other) const;
 
 	unsigned int numIsolatedUpperInputCrossings(const CollectedWire &wire) const;
 

@@ -49,7 +49,7 @@ void CollectedWire::dropHorizontalCollected()
 		return;
 	}
 
-	blocks::Blocks::index_t pos = 0;
+	blocks::index_t pos = 0;
 
 	for (; pos < relativePosition_; pos += 2) {
 		auto iter = collection_.begin();

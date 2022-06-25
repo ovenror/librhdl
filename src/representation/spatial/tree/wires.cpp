@@ -7,9 +7,6 @@
 #include "../tree/treemodel.h"
 
 namespace rhdl {
-
-using blocks::Blocks;
-
 namespace spatial {
 
 Wires::Wires(Container &owner, bool vertical, bool anchors)
@@ -17,13 +14,13 @@ Wires::Wires(Container &owner, bool vertical, bool anchors)
 	  nextIndex_(0)
 {}
 
-Blocks::index_t Wires::xpos() const
+blocks::index_t Wires::xpos() const
 {
 	assert (!vertical_);
 	return 0;
 }
 
-Blocks::index_t Wires::ypos() const
+blocks::index_t Wires::ypos() const
 {
 	assert (!vertical_);
 	return position();
@@ -137,14 +134,14 @@ void Wires::replaceCrosser(Wire &newCrosser)
 	std::for_each(collection_.begin(), collection_.end(), [&](auto &pwire){pwire -> replaceCrosser_internal(newCrosser);});
 }
 
-bool Wires::mayBeCrossed(const Wire &wire, Blocks::index_t at) const
+bool Wires::mayBeCrossed(const Wire &wire, blocks::index_t at) const
 {
 	return std::all_of(collection_.begin(), collection_.end(), [&](auto &pwire){return pwire -> mayBeCrossed_internal(wire, at);});
 }
 
-Blocks::index_t Wires::maxRelPos() const
+blocks::index_t Wires::maxRelPos() const
 {
-	Blocks::index_t max = 0;
+	blocks::index_t max = 0;
 
 	for (auto &pwire : collection_) {
 		max = std::max(max, pwire -> relativePosition_);
@@ -168,7 +165,7 @@ std::vector<CollectedWire *> Wires::bottom() const
 	return wiresAt(0);
 }
 
-std::vector<CollectedWire *> Wires::wiresAt(Blocks::index_t position) const
+std::vector<CollectedWire *> Wires::wiresAt(blocks::index_t position) const
 {
 	std::vector<CollectedWire *> result;
 
@@ -209,7 +206,7 @@ unsigned int Wires::newIndex()
 	return nextIndex_++;
 }
 
-bool Wires::dropCollision(const CollectedWire &dropped, Blocks::index_t at, const CollectedWire &other) const
+bool Wires::dropCollision(const CollectedWire &dropped, blocks::index_t at, const CollectedWire &other) const
 {
 	assert (!dropped.anchor_);
 	assert (!other.anchor_);

@@ -28,14 +28,14 @@ Commands::Commands(const Blocks &blocks)
 
 Commands::~Commands() {}
 
-void Commands::moveTo(Blocks::Vec pos) {
+void Commands::moveTo(blocks::Vec pos) {
 	translation_ = pos;
 }
 
 static std::array<std::string, 4> facings{"west", "north", "east", "south"};
 
 void Commands::out(std::ostream& os) const {
-	Blocks::Vec mcpos, pos{0,0,0};
+	blocks::Vec mcpos, pos{0,0,0};
 	std::copy(translation_.begin(), translation_.end(), mcpos.begin());
 	
 

@@ -6,8 +6,6 @@
 namespace rhdl {
 namespace spatial {
 
-using blocks::Blocks;
-
 SingleWire::SingleWire(Container &owner, bool vertical, const std::shared_ptr<Connection> &connection, bool anchor) :
 	SingleWire(owner, vertical, anchor)
 {
@@ -48,7 +46,7 @@ void SingleWire::replaceCrosser(Wire &newCrosser)
 	replaceCrosser_internal(newCrosser);
 }
 
-bool SingleWire::mayBeCrossed(const Wire &wire, Blocks::index_t at) const
+bool SingleWire::mayBeCrossed(const Wire &wire, blocks::index_t at) const
 {
 	return mayBeCrossed_internal(wire, at);
 }

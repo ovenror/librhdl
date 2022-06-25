@@ -1,7 +1,7 @@
 #ifndef BLOCKSSIM_H
 #define BLOCKSSIM_H
 
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 #include "exposableinternalstatesim.h"
 #include "simulation/blocks/blocksim.h"
 
@@ -18,8 +18,6 @@ class BSDelay;
 class BlocksSim : public ExposableInternalStateSim
 {
 public:
-	using Vec = Blocks::Vec;
-
 	BlocksSim(const Blocks &blocks);
 
 	bool get(const ISingle *iface) const override;

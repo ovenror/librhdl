@@ -10,8 +10,6 @@
 namespace rhdl {
 namespace spatial {
 
-using blocks::Blocks;
-
 Node::Node(NodeGroup &container, unsigned int index, Wire &input_manifold, bool invert)
 	: Horizontal(index), node_group_(container),
 	  invert_(invert), output_(*this, true),
@@ -81,19 +79,19 @@ void Node::preComputeSpatial() {
 	height_ = 3;
 }
 
-bool Node::placeableAt(Blocks::index_t pos) const
+bool Node::placeableAt(blocks::index_t pos) const
 {
 	return inputPlaceableAt(pos) && outputPlaceableAt(pos);
 }
 
-bool Node::outputPlaceableAt(Blocks::index_t pos) const
+bool Node::outputPlaceableAt(blocks::index_t pos) const
 {
 	Layer &layer = node_group_.layer_;
 	const Wires &lcross = layer.cross();
 	return output_.mayCross(lcross, pos);
 }
 
-bool Node::inputPlaceableAt(Blocks::index_t pos) const
+bool Node::inputPlaceableAt(blocks::index_t pos) const
 {
 	Layer &layer = node_group_.layer_;
 	const Wires &cross_below = layer.crossBelow();
@@ -111,12 +109,12 @@ bool Node::inputIsConnected() const
 	return !invert_ || !isolatedCrossingByProximateCrosserBelow();
 }
 
-Blocks::index_t Node::place(Blocks::index_t startPos)
+blocks::index_t Node::place(blocks::index_t startPos)
 {
 	Layer &layer = node_group_.layer_;
 	assert (startPos == layer.asContainer().width() + 1);
 
-	Blocks::index_t skipPos = startPos + 2;
+	blocks::index_t skipPos = startPos + 2;
 
 	if (child() && layer.above() -> asContainer().width() + 1 == skipPos) {
 		assert (outputPlaceableAt(skipPos));
@@ -126,15 +124,15 @@ Blocks::index_t Node::place(Blocks::index_t startPos)
 	return placeAt(clearSpace(startPos));
 }
 
-Blocks::index_t Node::placeAt(Blocks::index_t pos)
+blocks::index_t Node::placeAt(blocks::index_t pos)
 {
 	setPosition(pos);
 	return pos + width_;
 }
 
-Blocks::index_t Node::clearSpace(Blocks::index_t startPos)
+blocks::index_t Node::clearSpace(blocks::index_t startPos)
 {
-	Blocks::index_t pos = startPos;
+	blocks::index_t pos = startPos;
 
 	assert (!input_.hasPosition());
 	assert (!output_.hasPosition());
@@ -144,10 +142,10 @@ Blocks::index_t Node::clearSpace(Blocks::index_t startPos)
 	return pos;
 }
 
-Blocks::index_t Node::clearFootSpace(Blocks::index_t startPos)
+blocks::index_t Node::clearFootSpace(blocks::index_t startPos)
 {
 	Layer &layer = node_group_.layer_;
-	Blocks::index_t pos = startPos;
+	blocks::index_t pos = startPos;
 	const Wires &cross_below = layer.crossBelow();
 
 	assert (!input_.hasPosition());
@@ -156,10 +154,10 @@ Blocks::index_t Node::clearFootSpace(Blocks::index_t startPos)
 	return pos;
 }
 
-Blocks::index_t Node::clearHeadSpace(Blocks::index_t startPos)
+blocks::index_t Node::clearHeadSpace(blocks::index_t startPos)
 {
 	Layer &layer = node_group_.layer_;
-	Blocks::index_t pos = startPos;
+	blocks::index_t pos = startPos;
 	const Wires &lcross = layer.cross();
 
 	assert (!output_.hasPosition());
@@ -169,7 +167,7 @@ Blocks::index_t Node::clearHeadSpace(Blocks::index_t startPos)
 }
 
 
-void Node::setPosition(Blocks::index_t pos)
+void Node::setPosition(blocks::index_t pos)
 {
 	Element::setPosition(pos);
 
@@ -219,26 +217,26 @@ bool Node::connectedCrossingByProximateCrosserAbove() const
 	return false;
 }
 
-void Node::addTorchPos(Blocks::Vec v) const
+void Node::addTorchPos(blocks::Vec v) const
 {
 	v[2] += ypos();
 	torchPositions_.push_back(v);
 }
 
-Blocks::index_t Node::ypos() const
+blocks::index_t Node::ypos() const
 {
 	return node_group_.ypos();
 }
 
-void Node::toBlocks(Blocks::Cuboid b) const
+void Node::toBlocks(blocks::Cuboid b) const
 {
-	Blocks::Cuboid target = Blocks::slice3(b, {0, 0, ypos()}, {0, 0, height_});
+	blocks::Cuboid target = blocks::slice3(b, {0, 0, ypos()}, {0, 0, height_});
 
 	if (invert_)
 		mkInverter(target);
 }
 
-void Node::mkInverter(Blocks::Cuboid segment) const
+void Node::mkInverter(blocks::Cuboid segment) const
 {
 	using blocks::Block;
 	using blocks::Direction;
@@ -247,25 +245,25 @@ void Node::mkInverter(Blocks::Cuboid segment) const
 	using blocks::LEFT;
 	using blocks::BACKWARD;
 
-	Blocks::index_t x = xpos();
-	Blocks::index_t r = xpos() + 1;
-	Blocks::index_t l = xpos() - 1;
-	Blocks::index_t baseline = lowInverter_ ? 1 : 2;
+	blocks::index_t x = xpos();
+	blocks::index_t r = xpos() + 1;
+	blocks::index_t l = xpos() - 1;
+	blocks::index_t baseline = lowInverter_ ? 1 : 2;
 
 	if (!shortcut_ || straightTorch_) {
-		Blocks::Vec v{baseline, x, 2};
+		blocks::Vec v{baseline, x, 2};
 		addTorchPos(v);
 		segment[baseline][x][2] = Block(Block::TORCH, FORWARD);
 	}
 
 	if (leftTorch_) {
-		Blocks::Vec v{baseline, l, 1};
+		blocks::Vec v{baseline, l, 1};
 		addTorchPos(v);
 		segment[baseline][l][1] = Block(Block::TORCH, LEFT);
 	}
 
 	if (rightTorch_) {
-		Blocks::Vec v{baseline, r, 1};
+		blocks::Vec v{baseline, r, 1};
 		addTorchPos(v);
 		segment[baseline][r][1] = Block(Block::TORCH, RIGHT);
 	}

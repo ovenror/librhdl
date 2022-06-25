@@ -1,6 +1,6 @@
 #include "../tree/fixoverlongwires_impl.h"
 
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 #include "redstone.h"
 
@@ -15,8 +15,6 @@
 #include "../tree/wire.h"
 
 namespace rhdl::spatial {
-
-using blocks::Blocks;
 
 void eraseWorkingLinks(std::map<Link, Paths> &paths)
 {
@@ -227,7 +225,7 @@ unsigned int makePositionMap(
 
 	for (const Current &current : eligible) {
 		Segment *segment = current.first;
-		Blocks::index_t space = segment -> repeaterSpace();
+		blocks::index_t space = segment -> repeaterSpace();
 
 		if (space <= 0)
 			continue;
@@ -283,7 +281,7 @@ RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
 		const std::map<Segment *, bool> &currents,
 		const SegmentToPositionIndex &map)
 {
-	Blocks::index_t distance = 0;
+	blocks::index_t distance = 0;
 	SegmentToPositionIndex::right_const_iterator iter;
 
 	while ((iter = map.right.find(positionIdx)) == map.right.end()) {
@@ -354,20 +352,20 @@ void evaluatePositions(
 	}
 }
 
-SplitPathRating rate(Blocks::index_t length)
+SplitPathRating rate(blocks::index_t length)
 {
-	constexpr Blocks::index_t mdPlusRepeater = redstone::maxWireLength + 1;
+	constexpr blocks::index_t mdPlusRepeater = redstone::maxWireLength + 1;
 	constexpr unsigned int mdPlusRepeaterShift = 4;
 	static_assert((1 << mdPlusRepeaterShift) == mdPlusRepeater, "universe: math error");
 
 	unsigned int repeatersNeeded = length >> mdPlusRepeaterShift;
-	Blocks::index_t residue = length - (repeatersNeeded << mdPlusRepeaterShift);
-	Blocks::index_t wasted = redstone::maxWireLength - residue;
+	blocks::index_t residue = length - (repeatersNeeded << mdPlusRepeaterShift);
+	blocks::index_t wasted = redstone::maxWireLength - residue;
 
 	return {repeatersNeeded, wasted};
 }
 
-PositionRating rate(Blocks::index_t length, Blocks::index_t repeaterPosition)
+PositionRating rate(blocks::index_t length, blocks::index_t repeaterPosition)
 {
 	assert (repeaterPosition < length);
 
@@ -394,13 +392,13 @@ std::ostream &operator<<(std::ostream &os, PositionRating &rating)
 
 void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std::vector<PositionRating> &result)
 {
-	Blocks::index_t absLen = length(path);
-	Blocks::index_t freeLen;
-	Blocks::index_t repeaterPosition = 0;
-	Blocks::index_t skipTo;
-	Blocks::index_t stopAt;
+	blocks::index_t absLen = length(path);
+	blocks::index_t freeLen;
+	blocks::index_t repeaterPosition = 0;
+	blocks::index_t skipTo;
+	blocks::index_t stopAt;
 
-	Blocks::index_t posIdx;
+	blocks::index_t posIdx;
 	SegmentToPositionIndex::left_map::const_iterator posIter;
 
 	//std::cerr << "Evaluating path " << path << std::endl;
@@ -408,7 +406,7 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 	Segment *segment;
 	bool reverse;
 	Path::const_iterator curIter = path.begin();
-	Blocks::index_t segStart = 0;
+	blocks::index_t segStart = 0;
 
 	while (true) {
 		skipTo = repeaterPosition;
@@ -432,7 +430,7 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 			//std::cerr << "  next seg "<< std::endl;
 
 
-			Blocks::index_t endPosition = segStart + segment -> distance();
+			blocks::index_t endPosition = segStart + segment -> distance();
 
 			if ((endPosition <= skipTo) ||
 			   ((posIter = map.left.find(segment)) == map.left.end()))
@@ -449,7 +447,7 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 				break;
 			}
 
-			Blocks::index_t skip = skipTo - repeaterPosition;
+			blocks::index_t skip = skipTo - repeaterPosition;
 
 			assert (repeaterPosition <= stopAt);
 
@@ -459,7 +457,7 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 			if (skip < 0)
 				skip = 0;
 
-			Blocks::index_t nUnskipped = segment -> repeaterSpace() - skip;
+			blocks::index_t nUnskipped = segment -> repeaterSpace() - skip;
 
 			if (nUnskipped < 0) {
 				if (stopAt < endPosition) {
@@ -511,9 +509,9 @@ void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std:
 	//std::cerr << end << std::endl;
 }
 
-Blocks::index_t length(const Path &path)
+blocks::index_t length(const Path &path)
 {
-	Blocks::index_t result = 1;
+	blocks::index_t result = 1;
 
 	for (const Current &current : path) {
 		const Segment *segment = current.first;
@@ -524,10 +522,10 @@ Blocks::index_t length(const Path &path)
 	return result;
 }
 
-Blocks::index_t freeLength(const Path &path, Blocks::index_t start)
+blocks::index_t freeLength(const Path &path, blocks::index_t start)
 {
-	Blocks::index_t curEnd = 0;
-	Blocks::index_t curStart = 0;
+	blocks::index_t curEnd = 0;
+	blocks::index_t curStart = 0;
 	Path::const_iterator curIter;
 	const Segment *segment;
 	bool reverse;
@@ -549,8 +547,8 @@ Blocks::index_t freeLength(const Path &path, Blocks::index_t start)
 		return 1;
 	}
 
-	Blocks::index_t curRelPos = start - curStart;
-	Blocks::index_t nextRep = segment -> nextRepeater(curRelPos, reverse);
+	blocks::index_t curRelPos = start - curStart;
+	blocks::index_t nextRep = segment -> nextRepeater(curRelPos, reverse);
 
 	if (nextRep != -1) {
 		assert (nextRep >= curRelPos);
@@ -647,15 +645,15 @@ void createSuperSegments(const Connection &connection)
 
 bool fixed(const Path &path)
 {
-	Blocks::index_t pos = 0;
-	Blocks::index_t lastRep = -1;
+	blocks::index_t pos = 0;
+	blocks::index_t lastRep = -1;
 
 	for (const Current &current : path) {
 		const Segment *segment = current.first;
 		bool reverse = current.second;
 
-		Blocks::index_t relLastRep = lastRep - pos;
-		Blocks::index_t relNextRep;
+		blocks::index_t relLastRep = lastRep - pos;
+		blocks::index_t relNextRep;
 
 		if ((relNextRep = segment -> nextRepeater(0, reverse)) == -1) {
 			pos += segment -> distance();

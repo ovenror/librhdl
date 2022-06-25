@@ -6,9 +6,7 @@
 
 namespace rhdl::spatial {
 
-using blocks::Blocks;
-
-Connector::Connector(Blocks::index_t xpos, Blocks::index_t ypos)
+Connector::Connector(blocks::index_t xpos, blocks::index_t ypos)
 	: xpos_(xpos), ypos_(ypos), terminal_(true)
 {}
 
@@ -22,7 +20,7 @@ Connector::SuperCurrentIterable Connector::superConnected() const
 	return SuperCurrentIterable(begin, end);
 }
 
-Blocks::index_t Connector::getPositionOn(const Wire &w) const
+blocks::index_t Connector::getPositionOn(const Wire &w) const
 {
 	return w.vertical() ? ypos_ : xpos_;
 }

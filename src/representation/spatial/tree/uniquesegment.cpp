@@ -1,15 +1,14 @@
-#include "../tree/uniquesegment.h"
+#include "uniquesegment.h"
+#include "connector.h"
+#include "supersegment.h"
+#include "wire.h"
 
-#include "../tree/connector.h"
-#include "../tree/supersegment.h"
-#include "../tree/wire.h"
+#include "representation/blocks/types.h"
 
 namespace rhdl::spatial {
 
-using blocks::Blocks;
-
 UniqueSegment::UniqueSegment(
-		Wire &wire, Blocks::index_t start, Blocks::index_t end,
+		Wire &wire, blocks::index_t start, blocks::index_t end,
 		Connector &front, Connector &back)
 
 	: Segment(start, end), wire_(wire), front_(front), back_(back)
@@ -28,7 +27,7 @@ Segment &UniqueSegment::super() {
 	}
 }
 
-void UniqueSegment::placeRepeaterAbs(Blocks::index_t absPos, bool reverse)
+void UniqueSegment::placeRepeaterAbs(blocks::index_t absPos, bool reverse)
 {
 	wire_.addRepeater(absPos, reverse);
 }

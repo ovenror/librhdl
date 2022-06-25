@@ -8,6 +8,7 @@
 #include "representation/spatial/tree/treemodel.h"
 #include "representation/spatial/tree/uniquesegment.h"
 #include "representation/spatial/tree/wire.h"
+
 #include "entity/entity.h"
 
 #include "interface/isingle.h"
@@ -19,9 +20,9 @@ using namespace rhdl::spatial;
 using rhdl::Interface;
 using rhdl::ISingle;
 using rhdl::IComposite;
-using rhdl::blocks::Blocks;
 using rhdl::netlist::Netlist;
 using rhdl::netlist::VertexRef;
+namespace blocks = rhdl::blocks;
 
 class TestModel : public TreeModel {
 public:
@@ -90,7 +91,7 @@ TEST(WireTest, wiresConnectedAt)
 	ASSERT_EQ(m.out -> wiresConnectedAt(m.height() - 1).size(), 3UL);
 }
 
-void testFindPaths_oneway(const Connector &from, const Connector &to, std::vector<std::vector<Blocks::index_t>> &distances, Paths *paths = nullptr)
+void testFindPaths_oneway(const Connector &from, const Connector &to, std::vector<std::vector<blocks::index_t>> &distances, Paths *paths = nullptr)
 {
 	Paths dummy;
 	if (!paths)
@@ -110,7 +111,7 @@ void testFindPaths_oneway(const Connector &from, const Connector &to, std::vecto
 			unsigned int i = 0;
 
 			for (; i < path.size(); ++i) {
-				Blocks::index_t pathDist = path[i].first -> distance();
+				blocks::index_t pathDist = path[i].first -> distance();
 
 				if (path[i].second)
 					pathDist = -pathDist;
@@ -130,9 +131,9 @@ void testFindPaths_oneway(const Connector &from, const Connector &to, std::vecto
 	}
 }
 
-void testFindPaths(const Connector &from, const Connector &to, std::vector<std::vector<Blocks::index_t>> &distances, Paths *paths = nullptr)
+void testFindPaths(const Connector &from, const Connector &to, std::vector<std::vector<blocks::index_t>> &distances, Paths *paths = nullptr)
 {
-	std::vector<std::vector<Blocks::index_t>> rdistances;
+	std::vector<std::vector<blocks::index_t>> rdistances;
 
 	for (const auto &path : distances)
 	{
@@ -153,7 +154,7 @@ TEST(FindPaths, iIn_iOut)
 {
 	TestModel m;
 
-	std::vector<std::vector<Blocks::index_t>> pdists =
+	std::vector<std::vector<blocks::index_t>> pdists =
 	{
 		{
 		#if 0
@@ -191,7 +192,7 @@ TEST(FindPaths, iIn_Inv)
 {
 	TestModel m;
 
-	std::vector<std::vector<Blocks::index_t>> pdists =
+	std::vector<std::vector<blocks::index_t>> pdists =
 	{
 		{
 		#if 0

@@ -30,7 +30,7 @@ public:
 
 	void tryInsertCrosser(Wire &crosser) override;
 	void replaceCrosser(Wire &newCrosser) override;
-	bool mayBeCrossed(const Wire &wire, blocks::Blocks::index_t at) const override;
+	bool mayBeCrossed(const Wire &wire, blocks::index_t at) const override;
 
 	const std::vector<const Wire *> debug_getWires() const override;
 };

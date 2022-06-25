@@ -4,9 +4,6 @@
 #include "util/iterator_pair.h"
 
 namespace rhdl {
-
-using blocks::Blocks;
-
 namespace spatial {
 
 MutableLayer::MutableLayer(TreeModel &container, unsigned int index)
@@ -64,14 +61,14 @@ void MutableLayer::createShortcuts()
 {
 	auto ipfrom = nodes().begin();
 	const auto end = nodes().end();
-	Blocks::index_t rangeBegin = 0;
-	Blocks::index_t preRangeEnd = 0;
+	blocks::index_t rangeBegin = 0;
+	blocks::index_t preRangeEnd = 0;
 
 	while (ipfrom != end) {
 		auto ipto = ipfrom;
 		Wire &ipfrom_out = (*ipfrom) -> output_;
 		const Connection &connection = *ipfrom_out.connection_;
-		Blocks::index_t lastNodeOutputPos;
+		blocks::index_t lastNodeOutputPos;
 
 		for (; ipto != end && (*ipto) -> output_.isConnected(connection); ++ipto) {
 			lastNodeOutputPos = (*ipto) -> output_.position();
@@ -170,12 +167,12 @@ std::vector<const Wire *> MutableLayer::upperLayerInputs(const std::function<boo
 }
 
 
-Blocks::index_t MutableLayer::tryCreateShortcut(
+blocks::index_t MutableLayer::tryCreateShortcut(
 		MutableLayer::NodesIterator from, MutableLayer::NodesIterator to,
-		Blocks::index_t rangeBegin, Blocks::index_t lastNodeOutputPos,
-		Blocks::index_t rangeEnd)
+		blocks::index_t rangeBegin, blocks::index_t lastNodeOutputPos,
+		blocks::index_t rangeEnd)
 {
-	Blocks::index_t result = lastNodeOutputPos;
+	blocks::index_t result = lastNodeOutputPos;
 	auto numOutputs = distance(from, to);
 	assert (numOutputs >= 1);
 
@@ -221,7 +218,7 @@ Blocks::index_t MutableLayer::tryCreateShortcut(
 	 * - Mark necessary straight torches for shortest cut.
 	 */
 	const std::vector<const Wire *> upperWires = Layer::upperLayerInputs(connection);
-	Blocks::index_t upperPos = -1;
+	blocks::index_t upperPos = -1;
 
 	NodesIterator ipnode = from;
 
@@ -301,7 +298,7 @@ void MutableLayer::computeHorizontalCollectedWiresPosition()
 
 void MutableLayer::computeVertical()
 {
-	Blocks::index_t max_ng_height = 0;
+	blocks::index_t max_ng_height = 0;
 
 	for (auto &png : nodegroups_) {
 		png -> computeVertical();
@@ -359,12 +356,12 @@ Wires &MutableLayer::crossBelow()
 	return lbelow ? lbelow -> cross() : model_.lowerCross();
 }
 
-Blocks::index_t MutableLayer::xpos() const
+blocks::index_t MutableLayer::xpos() const
 {
 	return 0;
 }
 
-Blocks::index_t MutableLayer::ypos() const
+blocks::index_t MutableLayer::ypos() const
 {
 	return position();
 }
@@ -390,11 +387,11 @@ MutableLayer::NodesIterable MutableLayer::nodes() const
 	return CatGenerator<GroupNodesIterator>(node_containers_begin(), node_containers_end());
 }
 
-void MutableLayer::toBlocks(Blocks::Cuboid b) const
+void MutableLayer::toBlocks(blocks::Cuboid b) const
 {
 	for (auto &pwire : shortcuts_) {
 		Wire &wire = *pwire;
-		Blocks::index_t start = wire.start_;
+		blocks::index_t start = wire.start_;
 
 		Wire::blocks(-1, wire.segment(b), start, wire.end_ - start);
 	}

@@ -36,11 +36,11 @@ std::unique_ptr<Blocks> BGTree::execute(const TreeModel &source) const
 	return result;
 }
 
-static bool maybeShortcut(const Blocks::Cuboid &blocks, Blocks::Vec invBlockPosStart)
+static bool maybeShortcut(const blocks::Cuboid &blocks, blocks::Vec invBlockPosStart)
 {
 	using blocks::Direction;
 
-	std::array<Blocks::CVec, 2> lr;
+	std::array<blocks::CVec, 2> lr;
 
 	for (unsigned int idx = 0; idx <= 1; ++idx) {
 		lr[idx].first = true;
@@ -55,51 +55,51 @@ static bool maybeShortcut(const Blocks::Cuboid &blocks, Blocks::Vec invBlockPosS
 			//std::cerr << lr[idx].second[2] << std::endl;
 
 			Direction dir = (Direction) (idx << 1);
-			Blocks::CVec &side = lr[idx];
+			blocks::CVec &side = lr[idx];
 
 			if (!side.first)
 				continue;
 
-			Blocks::Vec theSide = side.second;
+			blocks::Vec theSide = side.second;
 
-			assert (Blocks::cabove(blocks, theSide).first);
-			assert (Blocks::cbelow(theSide).first);
+			assert (blocks::cabove(blocks, theSide).first);
+			assert (blocks::cbelow(theSide).first);
 
-			Blocks::Vec abov = Blocks::above(theSide);
-			Blocks::Vec belo = Blocks::below(theSide);
+			blocks::Vec abov = blocks::above(theSide);
+			blocks::Vec belo = blocks::below(theSide);
 
-			if (Blocks::index(blocks, belo) != Block::REDSTONE)
+			if (blocks::index(blocks, belo) != Block::REDSTONE)
 				return false;
 
-			if (Blocks::index(blocks, theSide) == Block::OPAQUE) {
-				return Blocks::index(blocks, abov) != Block::REDSTONE;
+			if (blocks::index(blocks, theSide) == Block::OPAQUE) {
+				return blocks::index(blocks, abov) != Block::REDSTONE;
 			}
 
-			side = Blocks::csidestep(blocks, theSide, dir);
+			side = blocks::csidestep(blocks, theSide, dir);
 		}
 	}
 
 	return false;
 }
 
-boost::multi_array<char, 2> BGTree::project(Blocks::Cuboid blocks)
+boost::multi_array<char, 2> BGTree::project(blocks::Cuboid blocks)
 {
-	Blocks::index_t width = Blocks::dimensions(blocks)[1];
-	Blocks::index_t height = Blocks::dimensions(blocks)[2];
+	blocks::index_t width = blocks::dimensions(blocks)[1];
+	blocks::index_t height = blocks::dimensions(blocks)[2];
 	boost::multi_array<char, 2> result(boost::extents[width][height]);
 
-	for (Blocks::index_t x = 0; x < width; ++x) {
-		for (Blocks::index_t y = 0; y < height; ++y) {
-			Blocks::Vec invBlockPosStart({2, x, y});
+	for (blocks::index_t x = 0; x < width; ++x) {
+		for (blocks::index_t y = 0; y < height; ++y) {
+			blocks::Vec invBlockPosStart({2, x, y});
 
-			result[x][y] = project(Blocks::slice1(blocks, {0, x, y}, (Axis) 0), maybeShortcut(blocks, invBlockPosStart));
+			result[x][y] = project(blocks::slice1(blocks, {0, x, y}, (blocks::Axis) 0), maybeShortcut(blocks, invBlockPosStart));
 		}
 	}
 
 	return result;
 }
 
-char BGTree::project(Blocks::Line line, bool shortCut)
+char BGTree::project(blocks::Line line, bool shortCut)
 {
 	using blocks::Direction;
 	using blocks::RIGHT;
@@ -193,7 +193,7 @@ char BGTree::project(Blocks::Line line, bool shortCut)
 		return 'o';
 	}
 
-	for (Blocks::index_t h=0; h<4; ++h)
+	for (blocks::index_t h=0; h<4; ++h)
 		if (line[h] != Block::UNSET)
 			return 'E';
 

@@ -14,7 +14,6 @@
 namespace rhdl {
 namespace spatial {
 
-using blocks::Blocks;
 using blocks::Block;
 
 Wire::Wire(Container &owner, bool anchor, unsigned int index)
@@ -148,7 +147,7 @@ void Wire::computeAbsolutePosition()
 	computeAbsolutePosition(vertical() ? owner_.xpos() : owner_.ypos());
 }
 
-void Wire::computeAbsolutePosition(Blocks::index_t offset)
+void Wire::computeAbsolutePosition(blocks::index_t offset)
 {
 	assert (offset < 16*9*2);
 	assert (relativePosition_ < 16*9*2);
@@ -156,7 +155,7 @@ void Wire::computeAbsolutePosition(Blocks::index_t offset)
 	setPosition(relativePosition_ + offset);
 }
 
-void Wire::setPosition(Blocks::index_t position)
+void Wire::setPosition(blocks::index_t position)
 {    
 	Element::setPosition(position);
 
@@ -194,17 +193,17 @@ bool Wire::hasOverlappingExtentsWith(const Wire &other) const
 	return true;
 }
 
-std::vector<Wire::Range> Wire::freeRanges(Blocks::index_t minSize) const
+std::vector<Wire::Range> Wire::freeRanges(blocks::index_t minSize) const
 {
 	std::vector<Wire::Range> result;
 
 	assert (!has_extents_);
 	assert (!anchor_);
 
-	Blocks::index_t start = start_;
+	blocks::index_t start = start_;
 
 	for (const Wire *w : sorted_crossers_) {
-		Blocks::index_t end = w -> position();
+		blocks::index_t end = w -> position();
 		if (end - start >= minSize)
 			result.push_back({start, end});
 	}
@@ -216,7 +215,7 @@ void Wire::tryInsertCrosser_internal(Wire &crosser)
 {
 	assert (!has_extents_);
 
-	Blocks::index_t where = crosser.position();
+	blocks::index_t where = crosser.position();
 
 	if (crosser.has_extents_ && hasPosition()) {
 		if (position() < crosser.start_ - 1)
@@ -265,7 +264,7 @@ void Wire::replaceCrosser_internal(Wire &newCrosser)
 	sorted_crossers_.insert(&newCrosser);
 }
 
-bool Wire::mayBeCrossed_internal(const Wire &by, Blocks::index_t at) const
+bool Wire::mayBeCrossed_internal(const Wire &by, blocks::index_t at) const
 {
 	assert (vertical() != by.vertical());
 
@@ -281,7 +280,7 @@ bool Wire::mayBeCrossed_internal(const Wire &by, Blocks::index_t at) const
 	return existing.isConnected(by) || by.anchor_ || existing.anchor_;
 }
 
-bool Wire::mayCross(const Crosser &crosser, Blocks::index_t at) const
+bool Wire::mayCross(const Crosser &crosser, blocks::index_t at) const
 {
 	return crosser.mayBeCrossed(*this, at);
 }
@@ -321,7 +320,7 @@ bool Wire::isInCrossingRangeOf(const Wire &w) const
 	return position() >= w.start_ && position() < w.end_;
 }
 
-std::vector<Wire *> Wire::wiresCrossConnectedAt(Blocks::index_t pos) const
+std::vector<Wire *> Wire::wiresCrossConnectedAt(blocks::index_t pos) const
 {
 	std::vector<Wire *> result;
 
@@ -343,8 +342,8 @@ bool Wire::occupiesSameXY(const Wire &w) const
 {
 	assert (has_extents_ && w.has_extents_);
 
-	Blocks::index_t pos = position();
-	Blocks::index_t wpos = w.position();
+	blocks::index_t pos = position();
+	blocks::index_t wpos = w.position();
 
 	if (vertical() == w.vertical()) {
 		if (pos != wpos)
@@ -357,7 +356,7 @@ bool Wire::occupiesSameXY(const Wire &w) const
 	}
 }
 
-std::vector<Wire *> Wire::wiresConnectedAt(Blocks::index_t pos) const
+std::vector<Wire *> Wire::wiresConnectedAt(blocks::index_t pos) const
 {
 	std::vector<Wire *> result;
 
@@ -437,7 +436,7 @@ void Wire::tryBecomeAnchor()
 	}
 }
 
-void Wire::toBlocks(Blocks::Cuboid b) const
+void Wire::toBlocks(blocks::Cuboid b) const
 {
 	//std::cerr << "blk " << *this << std::endl;
 
@@ -448,8 +447,8 @@ void Wire::toBlocks(Blocks::Cuboid b) const
 	/*
 	 * TODO: Use segments
 	 */
-	Blocks::Wall seg = segment(b); // not that one
-	Blocks::index_t lastConnection = start_;
+	blocks::Wall seg = segment(b); // not that one
+	blocks::index_t lastConnection = start_;
 
 	for (auto *pcrosser : sorted_crossers_) {
 		const Wire &crosser = *pcrosser;
@@ -457,10 +456,10 @@ void Wire::toBlocks(Blocks::Cuboid b) const
 		if (!isConnected(crosser))
 			continue;
 
-		Blocks::index_t currentConnection = crosser.position();
+		blocks::index_t currentConnection = crosser.position();
 		assert (currentConnection < end_);
 		assert (currentConnection >= lastConnection || currentConnection == start_);
-		Blocks::index_t blocks_between = currentConnection - lastConnection;
+		blocks::index_t blocks_between = currentConnection - lastConnection;
 
 		if (crosser.anchor_)
 			if (vertical()) //purely cosmetic
@@ -495,7 +494,7 @@ void Wire::createSegments()
 
 	assert(w.position() == start_);
 
-	Blocks::index_t lastPos = start_;
+	blocks::index_t lastPos = start_;
 	Connector *lastSharedSegment = addConnector(lastPos);
 
 	for (; iw != sorted_crossers_.end(); ++iw) {
@@ -504,7 +503,7 @@ void Wire::createSegments()
 		if (!isConnected(w))
 			continue;
 
-		Blocks::index_t nextPos = w.position();
+		blocks::index_t nextPos = w.position();
 		assert (vertical() || nextPos >= lastPos + 2);
 
 		Connector *nextSharedSegment = addConnector(nextPos);
@@ -533,7 +532,7 @@ const Connector &Wire::back() const
 }
 
 UniqueSegment &Wire::addSegment(
-		Blocks::index_t start, Blocks::index_t end,
+		blocks::index_t start, blocks::index_t end,
 		Connector *startSeg, Connector *endSeg)
 {
 	auto ptr = std::make_unique<UniqueSegment>(*this, start, end, *startSeg, *endSeg);
@@ -542,7 +541,7 @@ UniqueSegment &Wire::addSegment(
 	return result;
 }
 
-Connector *Wire::addConnector(Blocks::index_t pos)
+Connector *Wire::addConnector(blocks::index_t pos)
 {
 	auto iseg = connectors_.find(pos);
 
@@ -558,8 +557,8 @@ Connector *Wire::addConnector(Blocks::index_t pos)
 		return iseg -> get();
 	}
 
-	Blocks::index_t xpos = vertical() ? position() : pos;
-	Blocks::index_t ypos = vertical() ? pos : position();
+	blocks::index_t xpos = vertical() ? position() : pos;
+	blocks::index_t ypos = vertical() ? pos : position();
 	std::shared_ptr<Connector> segPtr = nullptr;
 
 	//std::cerr << "  create" << std::endl;
@@ -580,7 +579,7 @@ const Connector &Wire::onlyConnector() const
 	return **connectors_.begin();
 }
 
-Connector &Wire::getConnectorAt(Blocks::index_t pos) const
+Connector &Wire::getConnectorAt(blocks::index_t pos) const
 {
 	assert (!connectors_.empty());
 	auto iseg = connectors_.find(pos);
@@ -588,19 +587,19 @@ Connector &Wire::getConnectorAt(Blocks::index_t pos) const
 	return **iseg;
 }
 
-Blocks::Line Wire::line(Blocks::Wall segment, Blocks::index_t height, Blocks::index_t position, Blocks::index_t length)
+blocks::Line Wire::line(blocks::Wall segment, blocks::index_t height, blocks::index_t position, blocks::index_t length)
 {
-	return Blocks::slice1(segment, {height, position}, (Axis) 1, length);
+	return blocks::slice1(segment, {height, position}, (blocks::Axis) 1, length);
 }
 
-Blocks::Wall Wire::segment(Blocks::Cuboid &blocks) const
+blocks::Wall Wire::segment(blocks::Cuboid &blocks) const
 {
-	return Blocks::slice2(
+	return blocks::slice2(
 				blocks, {0, vertical() ? position() : 0, vertical() ? 0 : position()},
-				(Axis) (vertical() ? 1 : 2), {0, 0});
+				(blocks::Axis) (vertical() ? 1 : 2), {0, 0});
 }
 
-void Wire::placeRepeater(const Repeater &r, blocks::Blocks::Cuboid b) const
+void Wire::placeRepeater(const Repeater &r, blocks::Cuboid b) const
 {
 	using blocks::Direction;
 	using blocks::FORWARD;
@@ -614,7 +613,7 @@ void Wire::placeRepeater(const Repeater &r, blocks::Blocks::Cuboid b) const
 	segment(b)[vertical() ? 1 : 3][r.position] = Block(Block::REPEATER, orientation);
 }
 
-void Wire::blocks_isolated(Blocks::Wall line_segment, Blocks::index_t position, Blocks::index_t length) const
+void Wire::blocks_isolated(blocks::Wall line_segment, blocks::index_t position, blocks::index_t length) const
 {
 	if (!length)
 		return;
@@ -622,15 +621,15 @@ void Wire::blocks_isolated(Blocks::Wall line_segment, Blocks::index_t position, 
 	blocks(vertical() ? -1 : 1, line_segment, position, length);
 }
 
-void Wire::blocks_connected(Blocks::Wall line_segment, Blocks::index_t position, Blocks::index_t length) const
+void Wire::blocks_connected(blocks::Wall line_segment, blocks::index_t position, blocks::index_t length) const
 {
 	blocks(0, line_segment, position, length);
 }
 
-void Wire::blocks(int height_offset, Blocks::Wall line_segment, Blocks::index_t position, Blocks::index_t length)
+void Wire::blocks(int height_offset, blocks::Wall line_segment, blocks::index_t position, blocks::index_t length)
 {
-	Blocks::fill(line(line_segment, 1 + height_offset, position, length), Block::OPAQUE);
-	Blocks::fill(line(line_segment, 2 + height_offset, position, length), Block::REDSTONE);
+	blocks::fill(line(line_segment, 1 + height_offset, position, length), Block::OPAQUE);
+	blocks::fill(line(line_segment, 2 + height_offset, position, length), Block::REDSTONE);
 }
 
 std::ostream &operator<<(std::ostream &os, const Wire &cw)
@@ -686,17 +685,17 @@ bool Wire::ConnectorLess::operator()(const std::shared_ptr<Connector> &lhs, cons
 	return lhs -> getPositionOn(this_) < rhs -> getPositionOn(this_);
 }
 
-bool Wire::ConnectorLess::operator()(const std::shared_ptr<Connector> &lhs, Blocks::index_t rhs) const
+bool Wire::ConnectorLess::operator()(const std::shared_ptr<Connector> &lhs, blocks::index_t rhs) const
 {
 	return lhs -> getPositionOn(this_) < rhs;
 }
 
-bool Wire::ConnectorLess::operator()(Blocks::index_t lhs, const std::shared_ptr<Connector> &rhs) const
+bool Wire::ConnectorLess::operator()(blocks::index_t lhs, const std::shared_ptr<Connector> &rhs) const
 {
 	return lhs < rhs -> getPositionOn(this_);
 }
 
-void Wire::addRepeater(Blocks::index_t position, bool backwards)
+void Wire::addRepeater(blocks::index_t position, bool backwards)
 {
 	assert (position >= start_ && position < end_);
 
@@ -704,7 +703,7 @@ void Wire::addRepeater(Blocks::index_t position, bool backwards)
 	repeaters_.emplace(std::make_unique<Repeater>(std::move(r)));
 }
 
-void Wire::placeRepeaters(blocks::Blocks::Cuboid b) const
+void Wire::placeRepeaters(blocks::Cuboid b) const
 {
 	for (const auto &repeater : repeaters_) {
 		placeRepeater(*repeater, b);

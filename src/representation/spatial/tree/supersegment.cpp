@@ -6,15 +6,13 @@
 
 namespace rhdl::spatial {
 
-using blocks::Blocks;
-
 SuperSegment::SuperSegment(const std::vector<UniqueSegment *> &segments)
 	: Segment(segments.front()->start(), segments.back()->end()),
 	  first_(*segments.front()), last_(*segments.back())
 {
 	assert (segments.size() >= 2);
 
-	Blocks::index_t lastEnd = start_;
+	blocks::index_t lastEnd = start_;
 	for (UniqueSegment *segment : segments) {
 		assert (segment -> start() == lastEnd);
 		parts_.insert(segment);
@@ -42,7 +40,7 @@ bool SuperSegment::noBackCrossConnections() const
 	return frontConnector().terminal();
 }
 
-void SuperSegment::placeRepeaterAbs(Blocks::index_t absPos, bool reverse)
+void SuperSegment::placeRepeaterAbs(blocks::index_t absPos, bool reverse)
 {
 	auto iter = parts_.lower_bound(absPos);
 	assert (iter != parts_.end());
@@ -70,12 +68,12 @@ bool SuperSegment::PartLess::operator()(const UniqueSegment * const &lhs, const 
 	return lhs -> end() < rhs -> end();
 }
 
-bool SuperSegment::PartLess::operator()(const UniqueSegment * const &lhs, const Blocks::index_t &rhs) const
+bool SuperSegment::PartLess::operator()(const UniqueSegment * const &lhs, const blocks::index_t &rhs) const
 {
 	return lhs -> end() < rhs;
 }
 
-bool SuperSegment::PartLess::operator()(const Blocks::index_t &lhs, const UniqueSegment * const &rhs) const
+bool SuperSegment::PartLess::operator()(const blocks::index_t &lhs, const UniqueSegment * const &rhs) const
 {
 	return lhs < rhs -> end();
 }

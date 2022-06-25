@@ -255,7 +255,7 @@ std::map<const Connection *, netlist::VertexRef> TreeModel::createModel(
 	return vertexMap;
 }
 
-void TreeModel::toBlocks(Blocks::Cuboid b) const
+void TreeModel::toBlocks(blocks::Cuboid b) const
 {
 	applyToWires([&](Wire &w){w.toBlocks(b);});
 
@@ -274,8 +274,8 @@ void TreeModel::toInterface(Blocks::InterfaceMap &interface) const
 
 		bool bottom = wire.collection() == &bottom_;
 
-		Blocks::index_t yPos = bottom ? 0 : height_ - 1;
-		Blocks::index_t height = 1;
+		blocks::index_t yPos = bottom ? 0 : height_ - 1;
+		blocks::index_t height = 1;
 
 		if (bottom && layers_[0] -> ypos() == 0)
 			height = 2;
@@ -400,7 +400,7 @@ void TreeModel::placeNodes()
 
 void TreeModel::computeWidth()
 {
-	Blocks::index_t max_layer_width = 0;
+	blocks::index_t max_layer_width = 0;
 
 	for (auto &player : layers_) {
 		max_layer_width  = std::max(max_layer_width , player -> width());
@@ -896,7 +896,7 @@ NodeGroup *TreeModel::bottomToGroup(const Wire &bottomWire)
 
 void TreeModel::computeVertical()
 {
-	Blocks::index_t pos = 0;
+	blocks::index_t pos = 0;
 
 	bottom_anchors_.computePositions();
 	bottom_anchors_.setPosition(0);
@@ -990,7 +990,7 @@ void TreeModel::assessLinks(
 		assert(endNode && endNode -> invert_);
 		auto endTorchPositions = endNode -> getTorchPositions();
 
-		for (Blocks::Vec torchPos : endTorchPositions)
+		for (blocks::Vec torchPos : endTorchPositions)
 			wasReached[&getInputConnector(*endNode)] |= sim.torchWasReached(torchPos);
 	}
 

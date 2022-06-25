@@ -1,7 +1,7 @@
 #ifndef SHAREDSEGMENT_H
 #define SHAREDSEGMENT_H
 
-#include "representation/blocks/blocks.h"
+#include "representation/blocks/types.h"
 
 #include "boost/iterator/transform_iterator.hpp"
 
@@ -19,7 +19,7 @@ class Wire;
 class Connector
 {
 public:
-	Connector(blocks::Blocks::index_t xpos, blocks::Blocks::index_t ypos);
+	Connector(blocks::index_t xpos, blocks::index_t ypos);
 
 	bool terminal() {return terminal_;}
 
@@ -30,7 +30,7 @@ public:
 	const std::vector<UniqueCurrent> &connected() const {return connected_;}
 	SuperCurrentIterable superConnected() const;
 
-	blocks::Blocks::index_t getPositionOn(const Wire &w) const;
+	blocks::index_t getPositionOn(const Wire &w) const;
 
 	void addIncoming(UniqueSegment &segment);
 	void addOutgoing(UniqueSegment &segment);
@@ -38,7 +38,7 @@ public:
 	bool terminal() const;
 	UniqueSegment *straightPartner(const UniqueSegment &segment) const;
 
-	std::pair<blocks::Blocks::index_t, blocks::Blocks::index_t> position() const {return {xpos_, ypos_};}
+	std::pair<blocks::index_t, blocks::index_t> position() const {return {xpos_, ypos_};}
 
 protected:
 	void add(UniqueCurrent &&c);
@@ -48,8 +48,8 @@ private:
 	bool breaksTerminality(const UniqueCurrent &c) const;
 
 	std::vector<UniqueCurrent> connected_;
-	blocks::Blocks::index_t xpos_;
-	blocks::Blocks::index_t ypos_;
+	blocks::index_t xpos_;
+	blocks::index_t ypos_;
 	bool terminal_;
 };
 

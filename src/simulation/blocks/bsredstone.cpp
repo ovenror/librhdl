@@ -1,4 +1,5 @@
 #include "bsredstone.h"
+#include "representation/blocks/blocks.h"
 
 namespace rhdl::blocks {
 
@@ -7,11 +8,11 @@ BSRedstone::BSRedstone(Queue &q) : BlockSim(q)
 
 }
 
-void BSRedstone::init_internal(const BlockSim::SimMap &smap, const BlockSim::Vec &pos, const Blocks& blocks)
+void BSRedstone::init_internal(const BlockSim::SimMap &smap, const Vec &pos, const Blocks& blocks)
 {
 	auto sides = blocks.allSides(pos);
 
-	add(smap, blocks.cbelow(pos).second, Block::OPAQUE);
+	add(smap, cbelow(pos).second, Block::OPAQUE);
 
 	std::array<bool, 4> hasRedstone = {false, false, false, false};
 
@@ -38,7 +39,7 @@ void BSRedstone::init_internal(const BlockSim::SimMap &smap, const BlockSim::Vec
 		std::array<CVec, 3> column = {
 			blocks.cabove(theSide),
 			side,
-			blocks.cbelow(theSide)
+			cbelow(theSide)
 		};
 
 		unsigned int z = opaqueAbove ? 1 : 0;
