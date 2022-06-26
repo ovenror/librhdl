@@ -66,7 +66,7 @@ void SimTester::addSimulator(const Representation &r, bool use_behavior)
     if (ptr == nullptr)
     	return;
 
-    ptr = std::make_unique<SimPrinter>(std::move(ptr), ifaces_);
+    //ptr = std::make_unique<SimPrinter>(std::move(ptr), ifaces_);
     sims_[r.timing()].push_back(std::move(ptr));
 }
 

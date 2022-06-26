@@ -98,7 +98,7 @@ bool SimFuzzer::run()
 
 void SimFuzzer::flip()
 {
-    std::cerr << "flippin..." << std::endl;
+    //std::cerr << "flippin..." << std::endl;
 
     for (auto iface : tester_.inIFaces()) {
         //std::cerr << "  " << iface -> name() << " (" << iface << "): ";
@@ -110,7 +110,7 @@ void SimFuzzer::flip()
             //std::cerr << "0";
             tester_.set(iface, false);
         }
-        std::cerr << std::endl;
+        //std::cerr << std::endl;
     }
 }
 
