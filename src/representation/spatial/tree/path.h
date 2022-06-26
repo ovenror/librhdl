@@ -35,9 +35,7 @@ public:
 
 	const PathElement &operator[](size_t i) const {return elements_[i];}
 
-	void evaluatePositions(
-			const SegmentToPositionIndex &map,
-			std::vector<PositionRating> &result) const;
+	void evaluatePositions(std::vector<PositionRating> &result) const;
 
 	blocks::index_t freeLength(blocks::index_t start) const;
 	blocks::index_t freeLength(blocks::index_t start, const_iterator &) const;

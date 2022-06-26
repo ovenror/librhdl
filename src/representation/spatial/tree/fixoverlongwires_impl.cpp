@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <limits>
+#include <unordered_set>
 
 namespace rhdl::spatial {
 
@@ -48,11 +49,10 @@ FixConnectionResult fixConnection(const Links &links)
 	for (const auto &kv : paths)
 		assert (kv.second.size() == 1);
 
-	std::map<Segment *, bool> currents =
-			identifyEligibleCurrents(paths);
+	auto all_segments = identifyCurrents(paths);
 
-	SegmentToPositionIndex segmentToPositionIdx;
-	unsigned int nPositions = makePositionMap(currents, segmentToPositionIdx);
+	GlobalRepeaterPositionToSegment segmentToPositionIdx;
+	unsigned int nPositions = makePositionMap(all_segments, segmentToPositionIdx);
 
 	eraseWorkingLinks(paths);
 
@@ -62,7 +62,7 @@ FixConnectionResult fixConnection(const Links &links)
 	RepeaterPlacement bestPosition;
 
 	while (!paths.empty()) {
-		bestPosition = findBestPlacement(paths, currents, segmentToPositionIdx, nPositions);
+		bestPosition = findBestPlacement(paths, segmentToPositionIdx, nPositions);
 
 		if (bestPosition.first.first == nullptr)
 			return FixConnectionResult::BROKEN;
@@ -144,37 +144,23 @@ Paths findPaths(const Link &link)
 	return paths;
 }
 
-const std::map<Segment *, bool> identifyEligibleCurrents(
+std::unordered_set<Segment *> identifyCurrents(
 		const std::map<Link, Paths> &paths)
 {
-	std::set<Segment *> bidirectionalSegments;
-	std::map<Segment *, bool> result;
+	std::unordered_set<Segment *> segments;
 
 	for (const auto &kv : paths) {
 		for (const auto &ppath : kv.second) {
 			for (const PathElement &element : *ppath) {
-				Segment *segment = &element.segment();
-				bool reverse = element.reverse();
-				std::map<Segment *, bool>::iterator iter;
+				auto &segment = element.segment();
 
-				if (bidirectionalSegments.find(segment) != bidirectionalSegments.end())
-					continue;
-
-				if ((iter = result.find(segment)) == result.end()) {
-					result[segment] = reverse;
-					continue;
-				}
-
-				if (iter -> second == reverse)
-					continue;
-
-				result.erase(iter);
-				bidirectionalSegments.insert(iter -> first);
+				segment.useDirection(element.reverse());
+				segments.emplace(&segment);
 			}
 		}
 	}
 
-	return result;
+	return segments;
 }
 
 std::ostream &operator<<(std::ostream &os, const Path &path)
@@ -210,14 +196,15 @@ const Connector &getIFaceConnector(const Wire &ifaceWire)
 }
 
 unsigned int makePositionMap(
-		const std::map<Segment *, bool> &eligible,
-		SegmentToPositionIndex &result)
+		std::unordered_set<Segment *>  segments,
+		GlobalRepeaterPositionToSegment &result)
 {
-	SegmentToPositionIndex::left_map &left = result.left;
 	unsigned int idx = 0;
 
-	for (const Current &current : eligible) {
-		Segment *segment = current.first;
+	for (auto *segment : segments) {
+		if (!segment -> isOneway())
+			continue;
+
 		blocks::index_t space = segment -> repeaterSpace();
 
 		if (space <= 0)
@@ -225,8 +212,9 @@ unsigned int makePositionMap(
 
 		//std::cerr << "adding " << *segment << " to map: " << idx;
 
-		left.insert(SegmentToPositionIndex::left_value_type(segment, idx));
 		idx += space;
+		result.emplace(idx, std::ref(*segment));
+		segment -> setGlobalRepeaterPositionsEndIdx(idx);
 		//std::cerr << "--" << idx-1 << std::endl;
 	}
 
@@ -234,18 +222,17 @@ unsigned int makePositionMap(
 }
 
 RepeaterPlacement findBestPlacement(const std::map<Link, Paths> &paths,
-		const std::map<Segment *, bool> &currents,
-		const SegmentToPositionIndex &map,
+		const GlobalRepeaterPositionToSegment &map,
 		unsigned int nPositions)
 {    
 	std::vector<TotalPositionRating> evaluatedPositions(nPositions);
 
-	evaluatePositions(paths, map, evaluatedPositions);
-	return findBestPlacement(currents, map, evaluatedPositions);
+	evaluatePositions(paths, evaluatedPositions);
+	return findBestPlacement(map, evaluatedPositions);
 }
 
-RepeaterPlacement findBestPlacement(const std::map<Segment *, bool> &currents,
-		const SegmentToPositionIndex &map,
+RepeaterPlacement findBestPlacement(
+		const GlobalRepeaterPositionToSegment &map,
 		const std::vector<TotalPositionRating> &evaluatedPositions)
 {
 	TotalPositionResult dummyResult;
@@ -261,7 +248,7 @@ RepeaterPlacement findBestPlacement(const std::map<Segment *, bool> &currents,
 				))
 			continue;
 
-		RepeaterPlacement placement = getPlacementFromIdx(posIdx, currents, map);
+		RepeaterPlacement placement = getPlacementFromIdx(posIdx, map);
 
 		bestPosition = placement;
 		bestRating = &posRating;
@@ -270,29 +257,21 @@ RepeaterPlacement findBestPlacement(const std::map<Segment *, bool> &currents,
 	return bestPosition;
 }
 
-RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
-		const std::map<Segment *, bool> &currents,
-		const SegmentToPositionIndex &map)
+RepeaterPlacement getPlacementFromIdx(
+		unsigned int positionIdx,
+		const GlobalRepeaterPositionToSegment &map)
 {
-	blocks::index_t distance = 0;
-	SegmentToPositionIndex::right_const_iterator iter;
+	auto iter = map.upper_bound(positionIdx);
+	assert (iter != map.end());
 
-	while ((iter = map.right.find(positionIdx)) == map.right.end()) {
-		--positionIdx;
-		++distance;
-	}
-
-	Segment *segment = iter -> second;
-	bool reverse = currents.at(segment);
-
-	distance += segment -> repeaterOffset(reverse);
-
-	return {{segment, reverse}, distance};
+	Segment &segment = iter -> second;
+	bool reverse = segment.getOnewayReverse();
+	auto offset = segment.globalRepeaterPositionIdxToLocalOffset(positionIdx);
+	return {{&segment, reverse}, offset};
 }
 
 void evaluatePositions(
 		const std::map<Link, Paths> &paths,
-		const SegmentToPositionIndex &map,
 		std::vector<TotalPositionRating> &result)
 {
 	constexpr unsigned int invertersNeededCutoff = 10;
@@ -302,7 +281,7 @@ void evaluatePositions(
 
 		SplitPathRating defaultWorst = {invertersNeededCutoff, 0};
 		std::vector<PositionRating> linkResult(result.size(), {defaultWorst, defaultWorst});
-		evaluatePositions(thePaths, map, linkResult);
+		evaluatePositions(thePaths, linkResult);
 
 		for (unsigned int posIdx = 0; posIdx < result.size(); ++posIdx) {
 			TotalPositionRating &posRating = result[posIdx];
@@ -327,13 +306,12 @@ void evaluatePositions(
 
 
 void evaluatePositions(
-		const Paths &paths, const SegmentToPositionIndex &map,
-		std::vector<PositionRating> &result)
+		const Paths &paths,	std::vector<PositionRating> &result)
 {
 	for (const auto &ppath : paths) {
 		SplitPathRating worst = {std::numeric_limits<unsigned int>::max(), redstone::maxWireLength};
 		std::vector<PositionRating> pathResult(result.size(), {worst, worst});
-		ppath -> evaluatePositions(map, pathResult);
+		ppath -> evaluatePositions(pathResult);
 
 		for (unsigned int posIdx = 0; posIdx < result.size(); ++posIdx) {
 			PositionRating &best = result[posIdx];

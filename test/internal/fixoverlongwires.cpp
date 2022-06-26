@@ -251,15 +251,21 @@ TEST(PathEvaluation, shortPaths)
 	EXPECT_EQ(first.length(), 8);
 	EXPECT_EQ(second.length(), 12);
 
-	SegmentToPositionIndex map;
-	auto eligible = identifyEligibleCurrents(paths);
+	GlobalRepeaterPositionToSegment map;
+	auto segments = identifyCurrents(paths);
 
-	EXPECT_FALSE(eligible.empty());
+	EXPECT_FALSE(segments.empty());
 
-	for (const auto &kv : eligible) {
-		const Segment *segment = kv.first;
+	bool hasOneway = false;
+	for (const auto *segment : segments) {
+		if (!segment -> isOneway())
+			continue;
+
+		hasOneway = true;
 		EXPECT_FALSE(&segment->firstUnique().wire() == m.c0_0);
 	}
+
+	EXPECT_TRUE(hasOneway);
 }
 
 TEST(PathEvaluation, freeLength)
@@ -273,6 +279,7 @@ TEST(PathEvaluation, freeLength)
 
 	createSuperSegments(*m.in -> connection_);
 	std::map<Link, Paths> paths = findPaths(links);
+	identifyCurrents(paths);
 
 	const Path &first = *paths.at(links[0])[0];
 	const Path &second = *paths.at(links[0])[1];

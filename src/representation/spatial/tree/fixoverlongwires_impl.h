@@ -10,12 +10,13 @@
 
 #include "util/catiterator.h"
 
-#include <boost/bimap.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 
 #include <iostream>
 #include <set>
 #include <list>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace rhdl::spatial {
 
@@ -24,7 +25,8 @@ class SuperSegment;
 class Path;
 
 using Segments = std::vector<const Segment *>;
-using SegmentToPositionIndex = boost::bimap<Segment *, unsigned int>;
+using GlobalRepeaterPositionToSegment =
+		std::map<unsigned int, std::reference_wrapper<Segment>>;
 
 using Paths = std::vector<std::unique_ptr<Path>>;
 
@@ -37,16 +39,16 @@ using RepeaterPlacement = std::pair<Current, blocks::index_t>;
 
 void placeRepeater(const RepeaterPlacement &position);
 
-const std::map<Segment *, bool> identifyEligibleCurrents(const std::map<Link, Paths> &paths);
+std::unordered_set<Segment *> identifyCurrents(const std::map<Link, Paths> &paths);
 
-unsigned int makePositionMap(const std::map<Segment *, bool> &eligible,
-		SegmentToPositionIndex &result);
+unsigned int makePositionMap(
+		std::unordered_set<Segment *> segments,
+		GlobalRepeaterPositionToSegment &result);
 
 using BestPlacementResult = std::pair<RepeaterPlacement, Links>;
 
 RepeaterPlacement findBestPlacement(const std::map<Link, Paths> &paths,
-		const std::map<Segment *, bool> &currents,
-		const SegmentToPositionIndex &map,
+		const GlobalRepeaterPositionToSegment &map,
 		unsigned int nPositions);
 
 using TotalPositionRating = std::vector<std::array<unsigned int, redstone::maxWireLength + 1>>;
@@ -58,15 +60,16 @@ struct TotalPositionResult {
 	std::vector<Link> linksFixed_;
 };
 
-RepeaterPlacement findBestPlacement(const std::map<Segment *, bool> &currents,
-		const SegmentToPositionIndex &map,
+RepeaterPlacement findBestPlacement(
+		const GlobalRepeaterPositionToSegment &map,
 		const std::vector<TotalPositionRating> &evaluatedPositions);
 
-RepeaterPlacement getPlacementFromIdx(unsigned int positionIdx,
-		const std::map<Segment *, bool> &currents,
-		const SegmentToPositionIndex &map);
+RepeaterPlacement getPlacementFromIdx(
+		unsigned int positionIdx,
+		const GlobalRepeaterPositionToSegment &map);
 
-void evaluatePositions(const std::map<Link, Paths> &paths, const SegmentToPositionIndex &map,
+void evaluatePositions(
+		const std::map<Link, Paths> &paths,
 		std::vector<TotalPositionRating> &result);
 
 using SplitPathRating = std::pair<unsigned int, blocks::index_t>;
@@ -77,8 +80,8 @@ struct PositionResult {
 	std::vector<Link> linksFixed_;
 };
 
-void evaluatePositions(const Paths &paths, const SegmentToPositionIndex &map,
-		std::vector<PositionRating> &result);
+void evaluatePositions(
+		const Paths &paths, std::vector<PositionRating> &result);
 
 bool fixed(const Path &path);
 

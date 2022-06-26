@@ -75,9 +75,7 @@ std::ostream &operator<<(std::ostream &os, PositionRating &rating)
 	return os;
 }
 
-void Path::evaluatePositions(
-		const SegmentToPositionIndex &map,
-		std::vector<PositionRating> &result) const
+void Path::evaluatePositions(std::vector<PositionRating> &result) const
 {
 	blocks::index_t freeLen;
 	blocks::index_t repeaterPosition = 0;
@@ -85,7 +83,6 @@ void Path::evaluatePositions(
 	blocks::index_t stopAt;
 
 	blocks::index_t posIdx;
-	SegmentToPositionIndex::left_map::const_iterator posIter;
 
 	//std::cerr << "Evaluating path " << std::endl << *this << std::endl;
 
@@ -141,7 +138,7 @@ void Path::evaluatePositions(
 
 			assert (endPosition >= skipTo);
 
-			if ((posIter = map.left.find(segment)) == map.left.end())
+			if (!segment -> hasGlobalRepeaterPositions())
 			{
 				repeaterPosition = endPosition;
 				continue;
@@ -179,7 +176,8 @@ void Path::evaluatePositions(
 			repeaterPosition += skip;
 			int nIterations = std::min(stopAt - repeaterPosition, nUnskipped);
 
-			unsigned int startIdx = posIter -> second + skip;
+			unsigned int allStartIdx = segment -> getGlobalRepeaterPositionsStartIdx();
+			unsigned int startIdx = allStartIdx + skip;
 			unsigned int endIdx = startIdx + nIterations;
 
 			for (posIdx = startIdx; posIdx < endIdx; ++posIdx) {

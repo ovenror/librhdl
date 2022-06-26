@@ -51,19 +51,43 @@ public:
 	blocks::index_t firstRepeaterOffset() const;
 	blocks::index_t lastRepeaterOffset() const;
 	blocks::index_t repeaterOffset(bool back) const;
+	blocks::index_t getOnewayRepeatersStart() const;
+	blocks::index_t getOnewayRepeatersBackOffset() const;
+	blocks::index_t getOnewayRepeatersEnd() const;
+	blocks::index_t globalRepeaterPositionIdxToLocalOffset(unsigned int) const;
 	blocks::index_t repeaterSpace() const;
+
+	bool isOneway() const;
+	bool getOnewayReverse() const;
+
+	void useDirection(bool reverse);
+
+	void setGlobalRepeaterPositionsEndIdx(unsigned int);
+	bool hasGlobalRepeaterPositions() const;
+	unsigned int getGlobalRepeaterPositionsStartIdx() const;
 
 protected:
 	friend std::ostream &operator<<(std::ostream &os, const Segment &segment);
+	bool hasOnewayDirection() const;
+	void setOnewayDirection(bool reverse);
+	void setBiDirectional();
+	void assertDirection(bool reverse) const;
+
+	unsigned int getGlobalRepeaterPositionsEndIdx() const;
 
 	virtual bool noFrontCrossConnections() const = 0;
 	virtual bool noBackCrossConnections() const = 0;
 	virtual void placeRepeaterAbs(blocks::index_t absPos, bool reverse) = 0;
 	virtual void addToStream(std::ostream &os) const = 0;
 
+	mutable std::set<blocks::index_t> repeaters_;
 	const blocks::index_t start_;
 	const blocks::index_t end_;
-	mutable std::set<blocks::index_t> repeaters_;
+	unsigned int globalRepeaterPositionsEndIdx_;
+	bool hasGlobalRepeaterPositions_ = false;
+	bool oneway_ = true;
+	bool hasOnewayDirection_ = false;
+	bool onewayReverse_ = false;
 };
 
 std::ostream &operator<<(std::ostream &os, const Segment &segment);
