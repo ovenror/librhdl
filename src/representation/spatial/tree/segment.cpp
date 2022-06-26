@@ -4,8 +4,8 @@
 #include "../tree/connector.h"
 #include "../tree/node.h"
 #include "../tree/supersegment.h"
-#include "../tree/uniquesegment.h"
 #include "../tree/wire.h"
+#include "atomicsegment.h"
 
 namespace rhdl::spatial {
 
@@ -22,7 +22,7 @@ static std::ostream &current_out(std::ostream &os, const Segment *segment, bool 
 	return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const UniqueCurrent &current)
+std::ostream &operator<<(std::ostream &os, const AtomicCurrent &current)
 {
 	return current_out(os, current.first, current.second);
 }

@@ -11,10 +11,10 @@ class Wire;
 class Connector;
 class SuperSegment;
 
-class UniqueSegment : public Segment
+class AtomicSegment : public Segment
 {
 public:   
-	UniqueSegment(
+	AtomicSegment(
 			Wire &wire, blocks::index_t start, blocks::index_t end,
 			Connector &frontConnector, Connector &backConnector);
 
@@ -23,16 +23,16 @@ public:
 	const Connector &frontConnector() const override {return front_;}
 	const Connector &backConnector() const override {return back_;}
 
-	const UniqueSegment &firstUnique() const override {return *this;}
-	const UniqueSegment &lastUnique() const override {return *this;}
+	const AtomicSegment &firstUnique() const override {return *this;}
+	const AtomicSegment &lastUnique() const override {return *this;}
 
 	Segment &super();
 
 	void setSuper(const std::shared_ptr<SuperSegment> &super) const;
 	bool hasSuper() const {return super_ != nullptr;}
 
-	UniqueSegment *straightBefore() const;
-	UniqueSegment *straightAfter() const;
+	AtomicSegment *straightBefore() const;
+	AtomicSegment *straightAfter() const;
 
 	void placeRepeaterAbs(blocks::index_t absPos, bool reverse) override;
 
@@ -42,7 +42,7 @@ protected:
 	void addToStream(std::ostream &os) const override;
 
 private:
-	friend bool operator<(blocks::index_t lhs, const UniqueSegment &rhs);
+	friend bool operator<(blocks::index_t lhs, const AtomicSegment &rhs);
 
 	Wire &wire_;
 

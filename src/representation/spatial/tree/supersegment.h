@@ -8,19 +8,19 @@
 namespace rhdl {
 namespace spatial {
 
-class UniqueSegment;
+class AtomicSegment;
 class Connector;
 
 class SuperSegment : public Segment
 {
 public:
-	SuperSegment(const std::vector<UniqueSegment *> &segments);
+	SuperSegment(const std::vector<AtomicSegment *> &segments);
 
 	const Connector &frontConnector() const override;
 	const Connector &backConnector() const override;
 
-	const UniqueSegment &firstUnique() const override {return first_;}
-	const UniqueSegment &lastUnique() const override {return last_;}
+	const AtomicSegment &firstUnique() const override {return first_;}
+	const AtomicSegment &lastUnique() const override {return last_;}
 
 protected:
 	bool noFrontCrossConnections() const override;
@@ -32,14 +32,14 @@ private:
 	struct PartLess {
 		using is_transparent = void;
 
-		bool operator()(const UniqueSegment* const &lhs, const UniqueSegment* const &rhs) const;
-		bool operator()(const UniqueSegment* const &lhs, const blocks::index_t &rhs) const;
-		bool operator()(const blocks::index_t &lhs, const UniqueSegment* const &rhs) const;
+		bool operator()(const AtomicSegment* const &lhs, const AtomicSegment* const &rhs) const;
+		bool operator()(const AtomicSegment* const &lhs, const blocks::index_t &rhs) const;
+		bool operator()(const blocks::index_t &lhs, const AtomicSegment* const &rhs) const;
 	};
 
-	const UniqueSegment &first_;
-	const UniqueSegment &last_;
-	std::set<UniqueSegment *, PartLess> parts_;
+	const AtomicSegment &first_;
+	const AtomicSegment &last_;
+	std::set<AtomicSegment *, PartLess> parts_;
 };
 
 }

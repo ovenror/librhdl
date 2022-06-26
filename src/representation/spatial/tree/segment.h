@@ -11,11 +11,11 @@
 namespace rhdl {
 namespace spatial {
 
-class UniqueSegment;
+class AtomicSegment;
 class Segment;
 class Connector;
 
-using UniqueCurrent = std::pair<UniqueSegment *, bool>;
+using AtomicCurrent = std::pair<AtomicSegment *, bool>;
 
 /*
  * Segment with flow direction.
@@ -42,8 +42,8 @@ public:
 	const Connector &connector(bool back) const;
 	bool terminal(bool back) const;
 
-	virtual const UniqueSegment &firstUnique() const = 0;
-	virtual const UniqueSegment &lastUnique() const = 0;
+	virtual const AtomicSegment &firstUnique() const = 0;
+	virtual const AtomicSegment &lastUnique() const = 0;
 
 	void placeRepeater(blocks::index_t relPos, bool reverse);
 	blocks::index_t nextRepeater(blocks::index_t from, bool reverse) const;
@@ -91,7 +91,7 @@ protected:
 };
 
 std::ostream &operator<<(std::ostream &os, const Segment &segment);
-std::ostream &operator<<(std::ostream &os, const UniqueCurrent &current);
+std::ostream &operator<<(std::ostream &os, const AtomicCurrent &current);
 std::ostream &operator<<(std::ostream &os, const Current &current);
 
 }

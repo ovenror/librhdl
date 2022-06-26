@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
+#include "../../src/representation/spatial/tree/atomicsegment.h"
 #include "representation/spatial/tree/fixoverlongwires_impl.h"
 #include "representation/spatial/tree/layer.h"
 #include "representation/spatial/tree/node.h"
 #include "representation/spatial/tree/nodegroup.h"
 #include "representation/spatial/tree/supersegment.h"
 #include "representation/spatial/tree/treemodel.h"
-#include "representation/spatial/tree/uniquesegment.h"
 #include "representation/spatial/tree/wire.h"
 #include "representation/spatial/tree/path.h"
 

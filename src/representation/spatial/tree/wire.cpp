@@ -8,8 +8,8 @@
 #include "../tree/layer.h"
 #include "../tree/node.h"
 #include "../tree/nodegroup.h"
-#include "../tree/uniquesegment.h"
 #include "../tree/wires.h"
+#include "atomicsegment.h"
 
 namespace rhdl {
 namespace spatial {
@@ -483,7 +483,7 @@ void Wire::toBlocks(blocks::Cuboid b) const
 
 void Wire::createSegments()
 {
-	assert (uniqueSegments_.empty());
+	assert (atomicSegments_.empty());
 
 	if (anchor_)
 		return;
@@ -531,13 +531,13 @@ const Connector &Wire::back() const
 	return getConnectorAt(end_ - 1);
 }
 
-UniqueSegment &Wire::addSegment(
+AtomicSegment &Wire::addSegment(
 		blocks::index_t start, blocks::index_t end,
 		Connector *startSeg, Connector *endSeg)
 {
-	auto ptr = std::make_unique<UniqueSegment>(*this, start, end, *startSeg, *endSeg);
-	UniqueSegment &result = *ptr;
-	uniqueSegments_.push_back(std::move(ptr));
+	auto ptr = std::make_unique<AtomicSegment>(*this, start, end, *startSeg, *endSeg);
+	AtomicSegment &result = *ptr;
+	atomicSegments_.push_back(std::move(ptr));
 	return result;
 }
 

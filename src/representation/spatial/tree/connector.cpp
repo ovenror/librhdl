@@ -1,8 +1,8 @@
 #include "../tree/connector.h"
 
 #include "../tree/node.h"
-#include "../tree/uniquesegment.h"
 #include "../tree/wire.h"
+#include "atomicsegment.h"
 
 namespace rhdl::spatial {
 
@@ -12,7 +12,7 @@ Connector::Connector(blocks::index_t xpos, blocks::index_t ypos)
 
 Connector::SuperCurrentIterable Connector::superConnected() const
 {
-	Super super = [](const UniqueCurrent &c){return Current(&c.first -> super(), c.second);};
+	Super super = [](const AtomicCurrent &c){return Current(&c.first -> super(), c.second);};
 
 	auto begin = boost::make_transform_iterator(connected_.begin(), super);
 	auto end = boost::make_transform_iterator(connected_.end(), super);
@@ -25,14 +25,14 @@ blocks::index_t Connector::getPositionOn(const Wire &w) const
 	return w.vertical() ? ypos_ : xpos_;
 }
 
-UniqueSegment *Connector::straightPartner(const UniqueSegment &segment) const
+AtomicSegment *Connector::straightPartner(const AtomicSegment &segment) const
 {
 	assert (!segment.wire().anchor_);
-	UniqueSegment *result = nullptr;
+	AtomicSegment *result = nullptr;
 	const Wire &wSegment = segment.wire();
 
-	for (const UniqueCurrent &c : connected()) {
-		UniqueSegment *partner = c.first;
+	for (const AtomicCurrent &c : connected()) {
+		AtomicSegment *partner = c.first;
 		const Wire &wPartner = partner -> wire();
 
 		if (partner == &segment)
@@ -50,21 +50,21 @@ UniqueSegment *Connector::straightPartner(const UniqueSegment &segment) const
 	return result;
 }
 
-void Connector::add(UniqueCurrent &&c)
+void Connector::add(AtomicCurrent &&c)
 {
 	checkPathTerminality(c);
 	connected_.push_back(c);
 }
 
-bool Connector::breaksTerminality(const UniqueCurrent &c) const
+bool Connector::breaksTerminality(const AtomicCurrent &c) const
 {
-	const UniqueSegment *s = c.first;
+	const AtomicSegment *s = c.first;
 
 	if (s -> wire().anchor_)
 		return false;
 
-	for (const UniqueCurrent &c : connected()) {
-		const UniqueSegment *segment = c.first;
+	for (const AtomicCurrent &c : connected()) {
+		const AtomicSegment *segment = c.first;
 
 		if (!segment -> wire().anchor_)
 			return true;
@@ -79,9 +79,9 @@ bool Connector::terminal() const
 	return terminal_;
 
 #if 0
-	const UniqueSegment *found = nullptr;
+	const AtomicSegment *found = nullptr;
 	for (const Current &c : connected()) {
-		const UniqueSegment *segment = c.first;
+		const AtomicSegment *segment = c.first;
 
 		if (segment -> wire().anchor_)
 			continue;
@@ -96,17 +96,17 @@ bool Connector::terminal() const
 #endif
 }
 
-void Connector::addIncoming(UniqueSegment &segment)
+void Connector::addIncoming(AtomicSegment &segment)
 {
 	add({&segment, true});
 }
 
-void Connector::addOutgoing(UniqueSegment &segment)
+void Connector::addOutgoing(AtomicSegment &segment)
 {
 	add({&segment, false});
 }
 
-void Connector::checkPathTerminality(const UniqueCurrent &c)
+void Connector::checkPathTerminality(const AtomicCurrent &c)
 {
 	if (!terminal_)
 		return;

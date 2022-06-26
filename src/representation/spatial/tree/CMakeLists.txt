@@ -1,5 +1,6 @@
 target_sources(rhdl_obj
 	PRIVATE
+		atomicsegment.cpp
 		collectedwire.cpp
 		connection.cpp
 		connector.cpp
@@ -20,7 +21,6 @@ target_sources(rhdl_obj
 		singlewire.cpp
 		supersegment.cpp
 		treemodel.cpp
-		uniquesegment.cpp
 		wire.cpp
 		wires.cpp
 )

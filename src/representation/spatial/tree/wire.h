@@ -19,7 +19,7 @@ class NodeGroup;
 class Layer;
 class Connection;
 
-class UniqueSegment;
+class AtomicSegment;
 class Connector;
 
 class Wire : public Element
@@ -100,7 +100,7 @@ public:
 	void createSegments();
 
 	bool hasSegments() const;
-	const std::vector<std::unique_ptr<UniqueSegment>> &segments() const {return uniqueSegments_;}
+	const std::vector<std::unique_ptr<AtomicSegment>> &segments() const {return atomicSegments_;}
 
 	const Connector &front() const;
 	const Connector &back() const;
@@ -187,7 +187,7 @@ private:
 		const Wire &this_;
 	};
 
-	UniqueSegment &addSegment(blocks::index_t start, blocks::index_t end,
+	AtomicSegment &addSegment(blocks::index_t start, blocks::index_t end,
 			Connector *startSeg, Connector *endSeg);
 
 	Connector *addConnector(blocks::index_t pos);
@@ -197,7 +197,7 @@ private:
 
 	void placeRepeater(const Repeater &, blocks::Cuboid) const;
 
-	std::vector<std::unique_ptr<UniqueSegment>> uniqueSegments_;
+	std::vector<std::unique_ptr<AtomicSegment>> atomicSegments_;
 	std::set<std::shared_ptr<Connector>, ConnectorLess> connectors_;
 	std::set<std::unique_ptr<Repeater>> repeaters_;
 };

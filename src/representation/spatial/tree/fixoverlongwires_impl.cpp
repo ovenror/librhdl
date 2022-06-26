@@ -5,7 +5,6 @@
 #include "layer.h"
 #include "node.h"
 #include "supersegment.h"
-#include "uniquesegment.h"
 #include "wire.h"
 #include "path.h"
 #include "pathbuilder.h"
@@ -19,6 +18,7 @@
 #include <memory>
 #include <limits>
 #include <unordered_set>
+#include "atomicsegment.h"
 
 namespace rhdl::spatial {
 
@@ -354,7 +354,7 @@ void placeRepeater(const RepeaterPlacement &position)
 	position.first.first -> placeRepeater(position.second, position.first.second);
 }
 
-using SegmentContainer = std::vector<std::unique_ptr<UniqueSegment>>;
+using SegmentContainer = std::vector<std::unique_ptr<AtomicSegment>>;
 using GetSegmentContainer = std::function<const SegmentContainer &(const Wire *)>;
 using SegmentContainerIterator = boost::transform_iterator<GetSegmentContainer, Connection::iterator>;
 using SegmentIterator = CatIterator<SegmentContainerIterator>;
@@ -383,12 +383,12 @@ static SegmentIterable allSegments(const Connection &connection)
 void createSuperSegments(const Connection &connection)
 {
 	for (const auto &psegment : allSegments(connection)) {
-		UniqueSegment *segment = psegment.get();
+		AtomicSegment *segment = psegment.get();
 
 		if (segment -> hasSuper())
 			continue;
 
-		UniqueSegment *before;
+		AtomicSegment *before;
 
 		while (true) {
 			before = segment -> straightBefore();
@@ -399,12 +399,12 @@ void createSuperSegments(const Connection &connection)
 			segment = before;
 		}
 
-		UniqueSegment *next = segment -> straightAfter();
+		AtomicSegment *next = segment -> straightAfter();
 
 		if (!next)
 			continue;
 
-		std::vector<UniqueSegment *> segments = {segment, next};
+		std::vector<AtomicSegment *> segments = {segment, next};
 		segment = next -> straightAfter();
 
 		while (segment) {
@@ -414,7 +414,7 @@ void createSuperSegments(const Connection &connection)
 
 		auto superPtr = std::make_shared<SuperSegment>(segments);
 
-		for (const UniqueSegment *segment : segments)
+		for (const AtomicSegment *segment : segments)
 			segment -> setSuper(superPtr);
 	}
 }
