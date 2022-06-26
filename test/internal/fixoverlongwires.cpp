@@ -8,6 +8,7 @@
 #include "representation/spatial/tree/treemodel.h"
 #include "representation/spatial/tree/uniquesegment.h"
 #include "representation/spatial/tree/wire.h"
+#include "representation/spatial/tree/path.h"
 
 #include "entity/entity.h"
 
@@ -109,14 +110,23 @@ void testFindPaths_oneway(const Connector &from, const Connector &to, std::vecto
 				continue;
 
 			unsigned int i = 0;
+			auto pos = 0;
 
 			for (; i < path.size(); ++i) {
-				blocks::index_t pathDist = path[i].first -> distance();
+				blocks::index_t pathDist = path[i].segment().distance();
 
-				if (path[i].second)
+				if (path[i].reverse())
 					pathDist = -pathDist;
 
 				if (pathDist != (*idists)[i])
+					break;
+
+				if (path[i].startPos() != pos)
+					break;
+
+				pos += std::abs(pathDist);
+
+				if (path[i].endPos() != pos)
 					break;
 			}
 
@@ -238,8 +248,8 @@ TEST(PathEvaluation, shortPaths)
 	const Path &first = *paths.at(links[0])[0];
 	const Path &second = *paths.at(links[0])[1];
 
-	EXPECT_EQ(length(first), 8);
-	EXPECT_EQ(length(second), 12);
+	EXPECT_EQ(first.length(), 8);
+	EXPECT_EQ(second.length(), 12);
 
 	SegmentToPositionIndex map;
 	auto eligible = identifyEligibleCurrents(paths);
@@ -270,21 +280,21 @@ TEST(PathEvaluation, freeLength)
 
 	ASSERT_EQ (second.size(), 4UL);
 
-	EXPECT_EQ(freeLength(first, 0), 8);
-	EXPECT_EQ(freeLength(second, 0), 12);
-	EXPECT_EQ(freeLength(rsecond, 0), 12);
+	EXPECT_EQ(first.freeLength(0), 8);
+	EXPECT_EQ(second.freeLength(0), 12);
+	EXPECT_EQ(rsecond.freeLength(0), 12);
 
-	EXPECT_EQ(freeLength(first, 2), 6);
-	EXPECT_EQ(freeLength(second, 2), 10);
+	EXPECT_EQ(first.freeLength(2), 6);
+	EXPECT_EQ(second.freeLength(2), 10);
 
-	EXPECT_EQ(freeLength(first, 3), 5);
-	EXPECT_EQ(freeLength(second, 3), 9);
+	EXPECT_EQ(first.freeLength(3), 5);
+	EXPECT_EQ(second.freeLength(3), 9);
 
-	EXPECT_EQ(freeLength(first, 4), 4);
-	EXPECT_EQ(freeLength(second, 4), 8);
-	EXPECT_EQ(freeLength(rsecond, 4), 8);
+	EXPECT_EQ(first.freeLength(4), 4);
+	EXPECT_EQ(second.freeLength(4), 8);
+	EXPECT_EQ(rsecond.freeLength(4), 8);
 
-	Segment &seg1 = *second[1].first;
+	Segment &seg1 = second[1].segment();
 	seg1.placeRepeater(1, false);
 
 	EXPECT_EQ(seg1.nextRepeater(0, false), 1);
@@ -295,16 +305,16 @@ TEST(PathEvaluation, freeLength)
 	EXPECT_EQ(seg1.nextRepeater(3, true), 3);
 	EXPECT_EQ(seg1.nextRepeater(4, true), -1);
 
-	EXPECT_EQ(freeLength(second, 0), 3);
-	EXPECT_EQ(freeLength(second, 1), 2);
-	EXPECT_EQ(freeLength(second, 2), 1);
+	EXPECT_EQ(second.freeLength(0), 3);
+	EXPECT_EQ(second.freeLength(1), 2);
+	EXPECT_EQ(second.freeLength(2), 1);
 
-	EXPECT_EQ(freeLength(second, 3), 0);
-	EXPECT_EQ(freeLength(second, 4), 8);
-	EXPECT_EQ(freeLength(second, 5), 7);
-	EXPECT_EQ(freeLength(second, 6), 6);
+	EXPECT_EQ(second.freeLength(3), 0);
+	EXPECT_EQ(second.freeLength(4), 8);
+	EXPECT_EQ(second.freeLength(5), 7);
+	EXPECT_EQ(second.freeLength(6), 6);
 
-	EXPECT_EQ(freeLength(rsecond, 0), 8);
+	EXPECT_EQ(rsecond.freeLength(0), 8);
 
 	seg1.placeRepeater(1, true);
 
@@ -320,17 +330,17 @@ TEST(PathEvaluation, freeLength)
 	EXPECT_EQ(seg1.nextRepeater(3, true), 3);
 	EXPECT_EQ(seg1.nextRepeater(4, true), -1);
 
-	Segment &seg3 = *second[3].first;
+	Segment &seg3 = second[3].segment();
 	seg3.placeRepeater(1, false);
 
-	EXPECT_EQ(freeLength(second, 5), 0);
-	EXPECT_EQ(freeLength(second, 6), 3);
-	EXPECT_EQ(freeLength(second, 9), 0);
-	EXPECT_EQ(freeLength(second, 10), 2);
+	EXPECT_EQ(second.freeLength(5), 0);
+	EXPECT_EQ(second.freeLength(6), 3);
+	EXPECT_EQ(second.freeLength(9), 0);
+	EXPECT_EQ(second.freeLength(10), 2);
 
-	EXPECT_EQ(freeLength(rsecond, 0), 2);
-	EXPECT_EQ(freeLength(rsecond, 2), 0);
-	EXPECT_EQ(freeLength(rsecond, 3), 3);
+	EXPECT_EQ(rsecond.freeLength(0), 2);
+	EXPECT_EQ(rsecond.freeLength(2), 0);
+	EXPECT_EQ(rsecond.freeLength(3), 3);
 }
 
 TEST(PathEvaluation, rateSplitPath)

@@ -1,6 +1,9 @@
 #ifndef FIXOVERLONGWIRES_IMPL_H
 #define FIXOVERLONGWIRES_IMPL_H
 
+#include "fixoverlongwires.h"
+#include "segment.h"
+
 #include "representation/blocks/types.h"
 
 #include "redstone.h"
@@ -13,19 +16,16 @@
 #include <iostream>
 #include <set>
 #include <list>
-#include "../tree/connection.h"
-#include "../tree/fixoverlongwires.h"
-#include "../tree/segment.h"
 
 namespace rhdl::spatial {
 
 class Connector;
 class SuperSegment;
+class Path;
 
 using Segments = std::vector<const Segment *>;
 using SegmentToPositionIndex = boost::bimap<Segment *, unsigned int>;
 
-using Path = std::vector<Current>;
 using Paths = std::vector<std::unique_ptr<Path>>;
 
 std::map<Link, Paths> findPaths(const Links &links);
@@ -79,14 +79,6 @@ struct PositionResult {
 
 void evaluatePositions(const Paths &paths, const SegmentToPositionIndex &map,
 		std::vector<PositionRating> &result);
-
-void evaluatePositions(
-		const Path &path, const SegmentToPositionIndex &map,
-		std::vector<PositionRating> &result);
-
-blocks::index_t length(const Path &path);
-blocks::index_t freeLength(
-		const Path &path, blocks::index_t start);
 
 bool fixed(const Path &path);
 

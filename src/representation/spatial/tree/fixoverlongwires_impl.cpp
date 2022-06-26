@@ -1,18 +1,23 @@
-#include "../tree/fixoverlongwires_impl.h"
+#include "fixoverlongwires_impl.h"
+
+#include "connection.h"
+#include "connector.h"
+#include "layer.h"
+#include "node.h"
+#include "supersegment.h"
+#include "uniquesegment.h"
+#include "wire.h"
+#include "path.h"
+#include "pathbuilder.h"
 
 #include "representation/blocks/types.h"
 
 #include "redstone.h"
 
+#include <deque>
 #include <functional>
 #include <memory>
 #include <limits>
-#include "../tree/connector.h"
-#include "../tree/layer.h"
-#include "../tree/node.h"
-#include "../tree/supersegment.h"
-#include "../tree/uniquesegment.h"
-#include "../tree/wire.h"
 
 namespace rhdl::spatial {
 
@@ -89,66 +94,54 @@ Paths findPaths(const Link &link)
 	//std::cerr << "to" << std::endl;
 	//std::cerr << "    " << *sEnd << std::endl;
 
+	Paths paths;
+
 	if (sStart == sEnd) {
-		Paths paths;
-		paths.push_back(std::make_unique<Path>(Path()));
+		paths.emplace_back(std::make_unique<Path>(Path({})));
 		return paths;
 	}
 
-	Paths allPaths;
-	std::vector<std::pair<Path, const Connector *>> lastPaths = {{{}, sStart}};
-	std::vector<std::pair<Path, const Connector *>> currentPaths;
+	std::vector<PathBuilder> pathBuilders = {PathBuilder(*sStart)};
+	std::vector<PathBuilder> nextPathBuilders;
 
-	for (unsigned int len = 1; !lastPaths.empty(); ++len) {
-		for (const auto &last : lastPaths) {
-			const Path &lastPath = last.first;
-			const Connector *lastSharedSegment = last.second;
-
-			assert (lastPath.size() == len - 1);
+	for (unsigned int len = 1; !pathBuilders.empty(); ++len) {
+		for (const auto &pathBuilder : pathBuilders) {
+			assert (pathBuilder.size() == len - 1);
 
 			//std::cerr << "extending..." << std::endl;
-			//std::cerr << lastPath << std::endl;
+			//std::cerr << pathBuilder << std::endl;
 
-			for (const Current &current : lastSharedSegment -> superConnected()) {
+			for (const Current &current : pathBuilder.head().superConnected()) {
 				const Segment *segment = current.first;
 
 				//std::cerr << "  trying..." << std::endl;
 				//std::cerr << "  " << current << std::endl;
 
-				if (std::any_of(
-							lastPath.begin(), lastPath.end(),
-							[segment](const Current &c)
-							{
-								return c.first == segment;
-							}
-							))
+				if (pathBuilder.contains(*segment))
 					continue;
 
 				//std::cerr << "  new..." << std::endl;
 
-				const Connector &nextSharedSegment = current.second ?
-							segment -> frontConnector() : segment -> backConnector();
+				auto next = pathBuilder + current;
 
-				if (&nextSharedSegment == sEnd) {
+				if (&next.head() == sEnd) {
 					//std::cerr << "   !!!FOUND PATH!!!" << std::endl;
-					allPaths.push_back(std::make_unique<Path>(lastPath));
-					allPaths.back() -> push_back(current);
+					paths.emplace_back(next.build());
 				}
 				else {
 					//std::cerr << "   ready for next round" << std::endl;
-					currentPaths.emplace_back(lastPath, &nextSharedSegment);
-					currentPaths.back().first.push_back(current);
+					nextPathBuilders.emplace_back(std::move(next));
 				}
 			}
 		}
 
-		lastPaths = std::move(currentPaths);
-		currentPaths = {};
+		pathBuilders = std::move(nextPathBuilders);
+		nextPathBuilders = {};
 	}
 
-	assert (!allPaths.empty());
+	assert (!paths.empty());
 
-	return allPaths;
+	return paths;
 }
 
 const std::map<Segment *, bool> identifyEligibleCurrents(
@@ -159,9 +152,9 @@ const std::map<Segment *, bool> identifyEligibleCurrents(
 
 	for (const auto &kv : paths) {
 		for (const auto &ppath : kv.second) {
-			for (const Current &current : *ppath) {
-				Segment *segment = current.first;
-				bool reverse = current.second;
+			for (const PathElement &element : *ppath) {
+				Segment *segment = &element.segment();
+				bool reverse = element.reverse();
 				std::map<Segment *, bool>::iterator iter;
 
 				if (bidirectionalSegments.find(segment) != bidirectionalSegments.end())
@@ -188,8 +181,8 @@ std::ostream &operator<<(std::ostream &os, const Path &path)
 {
 	os << "PATH" << std::endl;
 
-	for (const Current &c: path) {
-		os << "  " << c << std::endl;
+	for (const auto &e: path) {
+		os << "  " << e << std::endl;
 	}
 
 	return os;
@@ -340,7 +333,7 @@ void evaluatePositions(
 	for (const auto &ppath : paths) {
 		SplitPathRating worst = {std::numeric_limits<unsigned int>::max(), redstone::maxWireLength};
 		std::vector<PositionRating> pathResult(result.size(), {worst, worst});
-		evaluatePositions(*ppath, map, pathResult);
+		ppath -> evaluatePositions(map, pathResult);
 
 		for (unsigned int posIdx = 0; posIdx < result.size(); ++posIdx) {
 			PositionRating &best = result[posIdx];
@@ -376,201 +369,6 @@ PositionRating rate(blocks::index_t length, blocks::index_t repeaterPosition)
 		return {rback, rfront};
 	else
 		return {rfront, rback};
-}
-
-std::ostream &operator<<(std::ostream &os, SplitPathRating &rating)
-{
-	os << "(" << rating.first << "," << rating.second << ")";
-	return os;
-}
-
-std::ostream &operator<<(std::ostream &os, PositionRating &rating)
-{
-	os << "(" << rating[0] << "," << rating[1] << ")";
-	return os;
-}
-
-void evaluatePositions(const Path &path, const SegmentToPositionIndex &map, std::vector<PositionRating> &result)
-{
-	blocks::index_t absLen = length(path);
-	blocks::index_t freeLen;
-	blocks::index_t repeaterPosition = 0;
-	blocks::index_t skipTo;
-	blocks::index_t stopAt;
-
-	blocks::index_t posIdx;
-	SegmentToPositionIndex::left_map::const_iterator posIter;
-
-	//std::cerr << "Evaluating path " << path << std::endl;
-
-	Segment *segment;
-	bool reverse;
-	Path::const_iterator curIter = path.begin();
-	blocks::index_t segStart = 0;
-
-	while (true) {
-		skipTo = repeaterPosition;
-		freeLen = freeLength(path, skipTo);
-
-		while (freeLen <= redstone::maxWireLength) {
-			skipTo += freeLen + 1;
-
-			if (skipTo >= absLen)
-				return;
-
-			freeLen = freeLength(path, skipTo);
-		}
-
-		stopAt = skipTo + freeLen;
-
-		for (; curIter != path.end(); ++ curIter) {
-			segment = curIter -> first;
-			reverse = curIter -> second;
-
-			//std::cerr << "  next seg "<< std::endl;
-
-
-			blocks::index_t endPosition = segStart + segment -> distance();
-
-			if ((endPosition <= skipTo) ||
-			   ((posIter = map.left.find(segment)) == map.left.end()))
-			{
-				repeaterPosition = endPosition;
-				segStart += segment -> distance();
-				continue;
-			}
-
-			repeaterPosition += segment -> repeaterOffset(reverse);
-
-			if (repeaterPosition >= stopAt) {
-				repeaterPosition = stopAt;
-				break;
-			}
-
-			blocks::index_t skip = skipTo - repeaterPosition;
-
-			assert (repeaterPosition <= stopAt);
-
-			if (repeaterPosition == stopAt)
-				break;
-
-			if (skip < 0)
-				skip = 0;
-
-			blocks::index_t nUnskipped = segment -> repeaterSpace() - skip;
-
-			if (nUnskipped < 0) {
-				if (stopAt < endPosition) {
-					repeaterPosition = stopAt;
-					break;
-				}
-
-				repeaterPosition = endPosition;
-				segStart += segment -> distance();
-				continue;
-			}
-
-			repeaterPosition += skip;
-			int nIterations = std::min(stopAt - repeaterPosition, nUnskipped);
-
-			unsigned int startIdx = posIter -> second + skip;
-			unsigned int endIdx = startIdx + nIterations;
-
-			for (posIdx = startIdx; posIdx < endIdx; ++posIdx) {
-				//std::cerr << repeaterPosition << ",";
-				auto rating = rate(freeLen, repeaterPosition++ - skipTo);
-				//std::cerr << posIdx << ": " << segment << ", ";
-				//std::cerr << (posIdx - (posIter -> second) + (segment -> repeaterOffset(reverse)));
-				//std::cerr << ": " << rating << std::endl;
-				result[posIdx] = rating;
-			}
-
-			assert (repeaterPosition <= stopAt);
-
-			repeaterPosition += segment -> repeaterOffset(!reverse) - 1;
-
-			if (repeaterPosition >= stopAt)
-				repeaterPosition = stopAt;
-
-			if (repeaterPosition == stopAt)
-				break;
-
-			segStart += segment -> distance();
-		}
-
-		assert (repeaterPosition <= absLen);
-
-		if (curIter == path.end() || repeaterPosition == absLen)
-			break;
-
-		++repeaterPosition;
-	}
-
-	//std::cerr << end << std::endl;
-}
-
-blocks::index_t length(const Path &path)
-{
-	blocks::index_t result = 1;
-
-	for (const Current &current : path) {
-		const Segment *segment = current.first;
-		result += segment -> distance();
-	}
-
-
-	return result;
-}
-
-blocks::index_t freeLength(const Path &path, blocks::index_t start)
-{
-	blocks::index_t curEnd = 0;
-	blocks::index_t curStart = 0;
-	Path::const_iterator curIter;
-	const Segment *segment;
-	bool reverse;
-
-	for (curIter = path.cbegin(); curIter != path.cend(); ++curIter) {
-		segment = curIter -> first;
-		reverse = curIter -> second;
-
-		curEnd += segment -> distance();
-
-		if (curEnd > start)
-			break;
-
-		curStart = curEnd;
-	}
-
-	if (curIter == path.cend()) {
-		assert (start == curEnd);
-		return 1;
-	}
-
-	blocks::index_t curRelPos = start - curStart;
-	blocks::index_t nextRep = segment -> nextRepeater(curRelPos, reverse);
-
-	if (nextRep != -1) {
-		assert (nextRep >= curRelPos);
-		return nextRep - curRelPos;
-	}
-
-	++curIter;
-	for (;curIter != path.cend(); ++curIter) {
-		segment = curIter -> first;
-		reverse = curIter -> second;
-
-		nextRep = segment -> nextRepeater(0, reverse);
-
-		if (nextRep != -1) {
-			return curEnd + nextRep - start;
-		}
-
-		curEnd += segment -> distance();
-	}
-
-
-	return curEnd - start + 1;
 }
 
 void placeRepeater(const RepeaterPlacement &position)
