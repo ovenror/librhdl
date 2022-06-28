@@ -78,7 +78,7 @@ std::ostream &operator<<(std::ostream &os, PositionRating &rating)
 void Path::evaluatePositions(std::vector<PositionRating> &result) const
 {
 	blocks::index_t freeLen;
-	blocks::index_t repeaterPosition = 0;
+	blocks::index_t positionInPath = 0;
 	blocks::index_t skipTo;
 	blocks::index_t stopAt;
 
@@ -92,7 +92,7 @@ void Path::evaluatePositions(std::vector<PositionRating> &result) const
 
 	while (true) {
 		assert (pathElement != cend());
-		skipTo = repeaterPosition;
+		skipTo = positionInPath;
 		auto freeIter = pathElement;
 		freeLen = freeLength(skipTo, freeIter);
 
@@ -124,7 +124,7 @@ void Path::evaluatePositions(std::vector<PositionRating> &result) const
 			assert (skipTo + freeLen <= length_);
 		}
 
-		repeaterPosition = pathElement -> startPos();
+		positionInPath = pathElement -> startPos();
 		stopAt = skipTo + freeLen;
 		assert (stopAt <= length_);
 
@@ -140,22 +140,22 @@ void Path::evaluatePositions(std::vector<PositionRating> &result) const
 
 			if (!segment -> hasGlobalRepeaterPositions())
 			{
-				repeaterPosition = endPosition;
+				positionInPath = endPosition;
 				continue;
 			}
 
-			repeaterPosition += segment -> repeaterOffset(reverse);
+			positionInPath += segment -> repeaterOffset(reverse);
 
-			if (repeaterPosition >= stopAt) {
-				repeaterPosition = stopAt;
+			if (positionInPath >= stopAt) {
+				positionInPath = stopAt;
 				break;
 			}
 
-			blocks::index_t skip = skipTo - repeaterPosition;
+			blocks::index_t skip = skipTo - positionInPath;
 
-			assert (repeaterPosition <= stopAt);
+			assert (positionInPath <= stopAt);
 
-			if (repeaterPosition == stopAt)
+			if (positionInPath == stopAt)
 				break;
 
 			if (skip < 0)
@@ -165,16 +165,16 @@ void Path::evaluatePositions(std::vector<PositionRating> &result) const
 
 			if (nUnskipped < 0) {
 				if (stopAt < endPosition) {
-					repeaterPosition = stopAt;
+					positionInPath = stopAt;
 					break;
 				}
 
-				repeaterPosition = endPosition;
+				positionInPath = endPosition;
 				continue;
 			}
 
-			repeaterPosition += skip;
-			int nIterations = std::min(stopAt - repeaterPosition, nUnskipped);
+			positionInPath += skip;
+			int nIterations = std::min(stopAt - positionInPath, nUnskipped);
 
 			unsigned int allStartIdx = segment -> getGlobalRepeaterPositionsStartIdx();
 			unsigned int startIdx = allStartIdx + skip;
@@ -182,30 +182,30 @@ void Path::evaluatePositions(std::vector<PositionRating> &result) const
 
 			for (posIdx = startIdx; posIdx < endIdx; ++posIdx) {
 				//std::cerr << repeaterPosition << ",";
-				auto rating = rate(freeLen, repeaterPosition++ - skipTo);
+				auto rating = rate(freeLen, positionInPath++ - skipTo);
 				//std::cerr << posIdx << ": " << segment << ", ";
 				//std::cerr << (posIdx - (posIter -> second) + (segment -> repeaterOffset(reverse)));
 				//std::cerr << ": " << rating << std::endl;
 				result[posIdx] = rating;
 			}
 
-			assert (repeaterPosition <= stopAt);
+			assert (positionInPath <= stopAt);
 
-			repeaterPosition += segment -> repeaterOffset(!reverse) - 1;
+			positionInPath += segment -> repeaterOffset(!reverse) - 1;
 
-			if (repeaterPosition >= stopAt)
-				repeaterPosition = stopAt;
+			if (positionInPath >= stopAt)
+				positionInPath = stopAt;
 
-			if (repeaterPosition == stopAt)
+			if (positionInPath == stopAt)
 				break;
 		}
 
-		assert (repeaterPosition <= length_);
+		assert (positionInPath <= length_);
 
-		if (pathElement == cend() || repeaterPosition == length_)
+		if (pathElement == cend() || positionInPath == length_)
 			break;
 
-		++repeaterPosition;
+		++positionInPath;
 	}
 
 	//std::cerr << "end" << std::endl;
