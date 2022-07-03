@@ -1,9 +1,9 @@
 add_executable(internaltests $<TARGET_OBJECTS:rhdl_obj>
+	connection.cpp
 	divisivewires.cpp
 	fixoverlongwires.cpp
-	connection.cpp
+	netlist.cpp
 )
-
 add_subdirectory(simulation)
 
 target_include_directories(internaltests PRIVATE ${CMAKE_SOURCE_DIR}/src)
