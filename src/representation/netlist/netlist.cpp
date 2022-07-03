@@ -18,7 +18,9 @@ Netlist::Netlist(
 		MappedRepresentation<Netlist, VertexRef>(
 				entity, parent, timing, std::move(ifaceMap)),
 		graph_(std::move(graph))
-{}
+{
+	removeUnnecessaryOneways();
+}
 
 
 Netlist::Netlist(
@@ -121,6 +123,88 @@ void Netlist::remapInterface(const std::map<VertexRef, VertexRef> &vertexMap)
 	}
 }
 
+void Netlist::removeUnnecessaryOneways()
+{
+	for (auto v1 : Iterable(graph_.vertices())) {
+		if (graph_.countOut(v1) == 0)
+			continue;
+
+		bool v1_extra_out = iCountOut(v1) > 1;
+		std::vector<VertexRef> eligible_v2;
+		bool ok = true;
+
+		for (auto e12 : Iterable(graph_.outEdges(v1))) {
+			auto v2 = graph_.target(e12);
+
+			/*
+			 * check v1 -> v1
+			 */
+			if (v2 == v1) {
+				ok = false;
+				break;
+			}
+
+			if (graph_.countOut(v2) < 1 || iCountIn(v2) > 1)
+				continue;
+
+			assert (iCountIn(v2) == 1);
+
+			bool v2_ok = true;
+
+			for (auto e23 : Iterable(graph_.outEdges(v2))) {
+				auto v3 = graph_.target(e23);
+
+				if (v3 == v2 || v3 == v1) {
+					ok = false;
+					break;
+				}
+
+				if (iCountIn(v3) == 1)
+					continue;
+
+				if (v1_extra_out || (iCountOut(v2) > 1)) {
+					v2_ok = false;
+					break;
+				}
+			}
+
+			if (!v2_ok)
+				continue;
+
+			eligible_v2.push_back(v2);
+		}
+
+		if (!ok)
+			continue;
+
+		for (auto v2 : eligible_v2) {
+			graph_.clear(v2);
+
+			for (auto e23 : Iterable(graph_.outEdges(v2))) {
+				auto v3 = graph_.target(e23);
+
+				graph_.eat(v1, v3);
+
+				for (auto [iface, vi] : ifaceMap_) {
+					if (vi == v3)
+						ifaceMap_.at(iface) = v1;
+				}
+			}
+
+			for (auto &[iface, vi] : ifaceMap_) {
+				if (vi != v2)
+					continue;
+
+				assert (iface -> direction() == SingleDirection::OUT);
+
+				vi = graph_.addVertex();
+				graph_.connect(v1, vi);
+			}
+		}
+	}
+
+	removeDisconnectedVertices();
+}
 
 size_t Netlist::iCount(VertexRef v, SingleDirection dir) const
 {

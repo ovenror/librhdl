@@ -48,6 +48,8 @@ public:
 	void remapInterface(const std::map<VertexRef, VertexRef> &vertexMap);
 
 private:
+	void removeUnnecessaryOneways();
+
 	size_t iCountIn(VertexRef) const;
 	size_t iCountOut(VertexRef) const;
 	size_t iCount(VertexRef, SingleDirection) const;
