@@ -13,7 +13,7 @@ using namespace boost;
 
 namespace rhdl::netlist {
 
-bool Graph_Impl_Boost::isomorphic(Graph_Impl_Boost &g) const
+bool Graph_Impl_Boost::isomorphic(const Graph_Impl_Boost &g) const
 {
 	return boost::isomorphism(this -> rep_, g.rep_);
 }
@@ -174,6 +174,11 @@ void Graph_Impl_Boost::createOneway(VertexRef from, VertexRef to)
 bool Graph_Impl_Boost::isInternal(VertexRef v) const
 {
 	return countOut(v) && countIn(v);
+}
+
+void Graph_Impl_Boost::clear(VertexRef vertex)
+{
+	clear_vertex(vertex, rep_);
 }
 
 }
