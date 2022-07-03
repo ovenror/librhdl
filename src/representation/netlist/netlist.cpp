@@ -121,4 +121,46 @@ void Netlist::remapInterface(const std::map<VertexRef, VertexRef> &vertexMap)
 	}
 }
 
+
+size_t Netlist::iCount(VertexRef v, SingleDirection dir) const
+{
+	size_t result = 0;
+
+	for (const auto [iface, iv] : ifaceMap_) {
+		if (iv == v)
+			++result;
+	}
+
+	return result;
+}
+
+bool Netlist::iHas(VertexRef v, SingleDirection dir) const
+{
+	for (const auto [iface, iv] : ifaceMap_) {
+		if (iv == v)
+			return true;
+	}
+
+	return false;
+}
+
+size_t Netlist::iCountIn(VertexRef v) const
+{
+	return graph_.countIn(v) + iCount(v, SingleDirection::IN);
+}
+
+size_t Netlist::iCountOut(VertexRef v) const
+{
+	return graph_.countOut(v) + iCount(v, SingleDirection::OUT);
+}
+
+bool Netlist::iHasIn(VertexRef v) const
+{
+	return graph_.countIn(v) || iHas(v, SingleDirection::IN);
+}
+
+bool Netlist::iHasOut(VertexRef v) const
+{
+	return graph_.countOut(v) || iHas(v, SingleDirection::OUT);
+}
 }

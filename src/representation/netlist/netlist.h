@@ -1,9 +1,10 @@
 #ifndef NETLIST_H
 #define NETLIST_H
 
-#include "graph_impl.h"
-#include <forward_list>
 #include "../mappedrepresentation.h"
+#include "graph_impl.h"
+#include "interface/direction.h"
+#include <forward_list>
 
 namespace rhdl {
 
@@ -47,6 +48,14 @@ public:
 	void remapInterface(const std::map<VertexRef, VertexRef> &vertexMap);
 
 private:
+	size_t iCountIn(VertexRef) const;
+	size_t iCountOut(VertexRef) const;
+	size_t iCount(VertexRef, SingleDirection) const;
+
+	bool iHasIn(VertexRef) const;
+	bool iHasOut(VertexRef) const;
+	bool iHas(VertexRef, SingleDirection) const;
+
 	Graph graph_;
 };
 
