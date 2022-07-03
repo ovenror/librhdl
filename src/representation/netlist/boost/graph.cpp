@@ -74,7 +74,10 @@ static std::map<VertexRef, VertexRef> absorb_internal(
 		if (!filter(*src_vi))
 			continue;
 
-		vmap[*src_vi] = add_vertex(dest);
+		auto newV = add_vertex(dest);
+		dest[newV].ifaces_in = src[*src_vi].ifaces_in;
+		dest[newV].ifaces_out = src[*src_vi].ifaces_out;
+		vmap[*src_vi] = newV;
 	}
 
 	graph_traits<GraphRep>::edge_iterator src_ei, src_ei_end;

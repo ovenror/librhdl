@@ -19,6 +19,7 @@ Netlist::Netlist(
 				entity, parent, timing, std::move(ifaceMap)),
 		graph_(std::move(graph))
 {
+	initIFaceProperties();
 	removeUnnecessaryOneways();
 }
 
@@ -204,47 +205,42 @@ void Netlist::removeUnnecessaryOneways()
 	}
 
 	removeDisconnectedVertices();
-}
 
-size_t Netlist::iCount(VertexRef v, SingleDirection dir) const
-{
-	size_t result = 0;
-
-	for (const auto [iface, iv] : ifaceMap_) {
-		if (iv == v)
-			++result;
-	}
-
-	return result;
-}
-
-bool Netlist::iHas(VertexRef v, SingleDirection dir) const
-{
-	for (const auto [iface, iv] : ifaceMap_) {
-		if (iv == v)
-			return true;
-	}
-
-	return false;
 }
 
 size_t Netlist::iCountIn(VertexRef v) const
 {
-	return graph_.countIn(v) + iCount(v, SingleDirection::IN);
+	return graph_.countIn(v) + graph_[v].ifaces_in.size();
 }
 
 size_t Netlist::iCountOut(VertexRef v) const
 {
-	return graph_.countOut(v) + iCount(v, SingleDirection::OUT);
+	return graph_.countOut(v) + graph_[v].ifaces_out.size();
 }
 
 bool Netlist::iHasIn(VertexRef v) const
 {
-	return graph_.countIn(v) || iHas(v, SingleDirection::IN);
+	return graph_.countIn(v) || !graph_[v].ifaces_in.empty();
 }
 
 bool Netlist::iHasOut(VertexRef v) const
 {
-	return graph_.countOut(v) || iHas(v, SingleDirection::OUT);
+	return graph_.countOut(v) || !graph_[v].ifaces_out.empty();
 }
+void Netlist::initIFaceProperties()
+{
+	for (auto [iface, v] : ifaceMap_) {
+		switch (iface -> direction()) {
+		case SingleDirection::OUT:
+			graph_[v].ifaces_out.emplace(iface);
+			break;
+		case SingleDirection::IN:
+			graph_[v].ifaces_in.emplace(iface);
+			break;
+		default:
+			assert (0);
+		}
+	}
+}
+
 }

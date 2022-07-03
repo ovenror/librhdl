@@ -52,11 +52,11 @@ private:
 
 	size_t iCountIn(VertexRef) const;
 	size_t iCountOut(VertexRef) const;
-	size_t iCount(VertexRef, SingleDirection) const;
 
 	bool iHasIn(VertexRef) const;
 	bool iHasOut(VertexRef) const;
-	bool iHas(VertexRef, SingleDirection) const;
+
+	void initIFaceProperties();
 
 	Graph graph_;
 };

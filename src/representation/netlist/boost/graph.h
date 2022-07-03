@@ -2,14 +2,24 @@
 #define _NETLIST_BOOST_GRAPH_H_
 
 #include <boost/graph/adjacency_list.hpp>
+
+#include <unordered_set>
 #include <vector>
 
 //using namespace boost;
 
+namespace rhdl {
 
-namespace rhdl::netlist {
+class ISingle;
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS> GraphRep;
+namespace netlist {
+
+struct Connection {
+	std::unordered_set<const ISingle *> ifaces_in;
+	std::unordered_set<const ISingle *> ifaces_out;
+};
+
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Connection> GraphRep;
 typedef GraphRep::vertex_descriptor VertexRef;
 typedef GraphRep::edge_descriptor EdgeRef;
 
@@ -92,6 +102,9 @@ public:
 
 	operator std::string() const;
 
+	auto &operator[](VertexRef v) {return rep_[v];}
+	const auto &operator[](VertexRef v) const {return rep_[v];}
+
 private:
 	friend std::ostream &operator<<(std::ostream &os, const Graph_Impl_Boost &graph);
 
@@ -100,6 +113,7 @@ private:
 
 std::ostream &operator<<(std::ostream &os, const Graph_Impl_Boost &graph);
 
-}
+} //namespace netlist
+} //namespace rhdl
 
 #endif // _NETLIST_BOOST_GRAPH_H_
