@@ -184,12 +184,7 @@ void Netlist::removeUnnecessaryOneways()
 			for (auto e23 : Iterable(graph_.outEdges(v2))) {
 				auto v3 = graph_.target(e23);
 
-				graph_.eat(v1, v3);
-
-				for (auto [iface, vi] : ifaceMap_) {
-					if (vi == v3)
-						ifaceMap_.at(iface) = v1;
-				}
+				eat(v1, v3);
 			}
 
 			for (auto &[iface, vi] : ifaceMap_) {
@@ -241,6 +236,17 @@ void Netlist::initIFaceProperties()
 			assert (0);
 		}
 	}
+}
+
+void Netlist::eat(VertexRef eater, VertexRef eaten)
+{
+	for (auto iface : graph_[eaten].ifaces_in)
+		ifaceMap_[iface] = eater;
+
+	for (auto iface : graph_[eaten].ifaces_out)
+		ifaceMap_[iface] = eater;
+
+	graph_.eat(eater, eaten);
 }
 
 }

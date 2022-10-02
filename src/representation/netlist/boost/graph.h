@@ -17,6 +17,13 @@ namespace netlist {
 struct Connection {
 	std::unordered_set<const ISingle *> ifaces_in;
 	std::unordered_set<const ISingle *> ifaces_out;
+
+	Connection &operator +=(Connection &&eaten)
+	{
+		std::move(eaten.ifaces_in.begin(), eaten.ifaces_in.end(), std::inserter(ifaces_in, ifaces_in.begin()));
+		std::move(eaten.ifaces_out.begin(), eaten.ifaces_out.end(), std::inserter(ifaces_out, ifaces_out.begin()));
+		return *this;
+	}
 };
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Connection> GraphRep;

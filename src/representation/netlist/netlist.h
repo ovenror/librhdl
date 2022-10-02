@@ -58,6 +58,8 @@ private:
 
 	void initIFaceProperties();
 
+	void eat(VertexRef, VertexRef);
+
 	Graph graph_;
 };
 

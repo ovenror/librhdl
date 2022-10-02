@@ -57,8 +57,9 @@ void Graph_Impl_Boost::eat(VertexRef eater, VertexRef eaten)
 		connect(*iter, eater);
 	}
 
+	rep_[eater] += std::move(rep_[eaten]);
+
 	clear_vertex(eaten, rep_);
-	//remove_vertex(eaten, rep_);
 }
 
 static std::map<VertexRef, VertexRef> absorb_internal(
