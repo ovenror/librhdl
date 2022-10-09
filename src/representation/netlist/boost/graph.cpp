@@ -58,6 +58,7 @@ void Graph_Impl_Boost::eat(VertexRef eater, VertexRef eaten)
 	}
 
 	rep_[eater] += std::move(rep_[eaten]);
+	rep_[eaten] = {};
 
 	clear_vertex(eaten, rep_);
 }
