@@ -101,7 +101,12 @@ static std::map<VertexRef, VertexRef> absorb_internal(
 std::map<VertexRef, VertexRef> Graph_Impl_Boost::removeDisconnectedVertices()
 {
 	GraphRep next;
-	auto map = absorb_internal(next, rep_, [=](VertexRef v){return countIn(v) || countOut(v);});
+	auto map = absorb_internal(
+			next, rep_, [&](VertexRef v){
+				return countIn(v) || countOut(v) ||
+						!rep_[v].ifaces_in.empty() ||
+						!rep_[v].ifaces_out.empty();
+			});
 	rep_ = next;
 	return map;
 }
@@ -109,7 +114,7 @@ std::map<VertexRef, VertexRef> Graph_Impl_Boost::removeDisconnectedVertices()
 std::map<VertexRef, VertexRef> Graph_Impl_Boost::removeVertex(VertexRef vertex)
 {
 	GraphRep next;
-	auto map = absorb_internal(next, rep_, [=](VertexRef v){return v != vertex;});
+	auto map = absorb_internal(next, rep_, [&](VertexRef v){return v != vertex;});
 	rep_ = next;
 	return map;
 }
