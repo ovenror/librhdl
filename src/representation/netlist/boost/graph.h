@@ -99,6 +99,8 @@ public:
 	void createOneway(VertexRef from, VertexRef to);
 	void clearOutEdges(VertexRef vertex);
 	void clear(VertexRef vertex);
+	void clear_out(VertexRef vertex);
+	void clear_in(VertexRef vertex);
 	void eat(VertexRef eater, VertexRef eaten);
 	std::map<VertexRef, VertexRef> removeVertex(VertexRef vertex);
 	std::map<VertexRef, VertexRef> removeDisconnectedVertices();

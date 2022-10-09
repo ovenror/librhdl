@@ -191,4 +191,14 @@ void Graph_Impl_Boost::clear(VertexRef vertex)
 	clear_vertex(vertex, rep_);
 }
 
+void Graph_Impl_Boost::clear_out(VertexRef vertex)
+{
+	clear_out_edges(vertex, rep_);
+}
+
+void Graph_Impl_Boost::clear_in(VertexRef vertex)
+{
+	clear_in_edges(vertex, rep_);
+}
+
 }
