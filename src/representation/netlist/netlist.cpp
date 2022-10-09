@@ -179,28 +179,28 @@ void Netlist::removeUnnecessaryOneways()
 			continue;
 
 		for (auto v2 : eligible_v2) {
-			graph_.clear(v2);
+			std::unordered_set<VertexRef> v3s;
 
 			for (auto e23 : Iterable(graph_.outEdges(v2))) {
 				auto v3 = graph_.target(e23);
+				v3s.insert(v3);
+			}
 
+			graph_.clear_out(v2);
+
+			for (auto v3: v3s) {
 				eat(v1, v3);
 			}
 
-			for (auto &[iface, vi] : ifaceMap_) {
-				if (vi != v2)
-					continue;
+			assert (graph_[v2].ifaces_in.empty());
 
-				assert (iface -> direction() == SingleDirection::OUT);
-
-				vi = graph_.addVertex();
-				graph_.connect(v1, vi);
+			if (graph_[v2].ifaces_out.empty()) {
+				graph_.clear_in(v2);
 			}
 		}
 	}
 
 	removeDisconnectedVertices();
-
 }
 
 size_t Netlist::iCountIn(VertexRef v) const
