@@ -112,8 +112,38 @@ static bool transformsTo(Netlist::Graph g, const Netlist::Graph &ref)
 	return transform(g).isomorphic(ref);
 }
 
+static bool isomorphic(const Netlist &nl, const Netlist::Graph &ref)
+{
+	return nl.graph().isomorphic(ref);
+}
+
 TEST(RemoveUnnecessaryOneways, Simple) {
 	EXPECT_TRUE(transformsTo(mkOneway(), Netlist::Graph()));
+}
+
+TEST(RemoveUnnecessaryOneways, SimpleIface) {
+	vVector v(3);
+	const ISingle in("in", SingleDirection::IN);
+	const ISingle out("out", SingleDirection::OUT);
+
+	Netlist::Graph singleVertex;
+	singleVertex.addVertex();
+
+	auto oneway = mkOneway(v.begin());
+
+	auto oneway0in = mkNetlist(oneway, {{&in, v[0]}});
+	auto oneway0out = mkNetlist(oneway, {{&out, v[0]}});
+	auto oneway1in = mkNetlist(oneway, {{&in, v[1]}});
+	auto oneway1out = mkNetlist(oneway, {{&out, v[1]}});
+	auto oneway2in = mkNetlist(oneway, {{&in, v[2]}});
+	auto oneway2out = mkNetlist(oneway, {{&out, v[2]}});
+
+	EXPECT_TRUE(isomorphic(oneway0in, singleVertex));
+	EXPECT_TRUE(isomorphic(oneway0out, singleVertex));
+	EXPECT_TRUE(isomorphic(oneway1in, oneway1in.graph()));
+	EXPECT_TRUE(isomorphic(oneway1out, inverter));
+	EXPECT_TRUE(isomorphic(oneway2in, singleVertex));
+	EXPECT_TRUE(isomorphic(oneway2out, singleVertex));
 }
 
 TEST(RemoveUnnecessaryOneways,SimpleExtra) {
