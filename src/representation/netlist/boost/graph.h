@@ -38,6 +38,12 @@ public:
 	typedef boost::graph_traits<GraphRep>::out_edge_iterator OutEdgeIterator;
 	typedef boost::graph_traits<GraphRep>::in_edge_iterator InEdgeIterator;
 
+	size_t size() const
+	{
+		auto [begin, end] = vertices();
+		return std::distance(begin, end);
+	}
+
 	std::pair<VertexIterator, VertexIterator> vertices() const {
 		return boost::vertices(rep_);
 	}
