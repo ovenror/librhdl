@@ -63,6 +63,22 @@ static Netlist::Graph mkOneway(vIterator v = dummy.begin())
 }
 
 /*
+ * 0 -> 1
+ * |
+ * + -> 2
+ */
+static Netlist::Graph mkMiniVee(vIterator v = dummy.begin())
+{
+	Netlist::Graph miniVee;
+
+	addVertices(miniVee, v, 3);
+	miniVee.connect(v[0], v[1]);
+	miniVee.connect(v[0], v[2]);
+
+	return miniVee;
+}
+
+/*
  * 0 -> 1 -> 2
  *      |
  *      + -> 3
@@ -160,6 +176,29 @@ TEST(RemoveUnnecessaryOneways,SimpleExtra) {
 	EXPECT_TRUE(transformsTo(onewayExtraOut, inverter));
 	EXPECT_TRUE(transformsTo(onewayExtraIn, inverter));
 
+	const ISingle in("in", SingleDirection::IN);
+	const ISingle out("out", SingleDirection::OUT);
+
+	auto onewayExtraOut0in = mkNetlist(onewayExtraOut, {{&in, v[0]}});
+	auto onewayExtraOut0out = mkNetlist(onewayExtraOut, {{&out, v[0]}});
+	auto onewayExtraOut1in = mkNetlist(onewayExtraOut, {{&in, v[1]}});
+	auto onewayExtraOut1out = mkNetlist(onewayExtraOut, {{&out, v[1]}});
+	auto onewayExtraOut2in = mkNetlist(onewayExtraOut, {{&in, v[2]}});
+	auto onewayExtraOut2out = mkNetlist(onewayExtraOut, {{&out, v[2]}});
+	auto onewayExtraOutExtraIn = mkNetlist(onewayExtraOut, {{&in, extraOut}});
+	auto onewayExtraOutExtraOut = mkNetlist(onewayExtraOut, {{&out, extraOut}});
+
+	Netlist::Graph minivee = mkMiniVee();
+
+	EXPECT_TRUE(isomorphic(onewayExtraOut0in, inverter));
+	EXPECT_TRUE(isomorphic(onewayExtraOut0out, inverter));
+	EXPECT_TRUE(isomorphic(onewayExtraOut1in, onewayExtraOut));
+	EXPECT_TRUE(isomorphic(onewayExtraOut1out, minivee));
+	EXPECT_TRUE(isomorphic(onewayExtraOut2in, onewayExtraOut));
+	EXPECT_TRUE(isomorphic(onewayExtraOut2out, inverter));
+	EXPECT_TRUE(isomorphic(onewayExtraOutExtraIn, inverter));
+	EXPECT_TRUE(isomorphic(onewayExtraOutExtraOut, inverter));
+
 	auto onewayExtraBoth = mkOneway(v.begin());
 	extraIn = onewayExtraBoth.addVertex();
 	extraOut = onewayExtraBoth.addVertex();
@@ -167,6 +206,18 @@ TEST(RemoveUnnecessaryOneways,SimpleExtra) {
 	onewayExtraBoth.connect(extraIn, v[2]);
 
 	EXPECT_TRUE(transformsTo(onewayExtraBoth, onewayExtraBoth));
+
+	/*
+	 * onewayExtraBoth should never be transformed, but for the sake of
+	 * completeness, test it also with interfaces in all possible places.
+	 */
+
+	for (auto v : Iterable(onewayExtraBoth.vertices())) {
+		for (const auto *iface : {&in, &out}) {
+			auto ifaced = mkNetlist(onewayExtraBoth, {{iface, v}});
+			EXPECT_TRUE(isomorphic(ifaced, onewayExtraBoth));
+		}
+	}
 }
 
 TEST(RemoveUnnecessaryOneways, Y) {
