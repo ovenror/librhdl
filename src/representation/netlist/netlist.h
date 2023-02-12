@@ -60,6 +60,8 @@ private:
 
 	void eat(VertexRef, VertexRef);
 
+	bool existsElementRef(VertexRef v) override {return v < graph_.size();}
+
 	Graph graph_;
 };
 

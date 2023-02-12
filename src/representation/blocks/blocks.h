@@ -70,6 +70,8 @@ public:
 	void fill(Block value);
 
 private:
+	bool existsElementRef(BlockRef) override;
+
 	Container the_blocks_;
 };
 
@@ -118,6 +120,16 @@ inline void Blocks::fill(Block value)
 	blocks::fill(the_blocks_, value);
 }
 
+inline bool Blocks::existsElementRef(BlockRef vec)
+{
+	for (index_t i = 0; i < BlockRef::static_size; ++i)
+	{
+		if (vec[i] >= dimensions()[i])
+			return false;
+	}
+
+	return true;
+}
 
 #if 0
 /* operator= does not work! */

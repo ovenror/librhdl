@@ -10,6 +10,7 @@
 
 #include "representationbase.h"
 
+#include <algorithm>
 #include <map>
 
 namespace rhdl {
@@ -36,6 +37,9 @@ public:
 	static void remap(InterfaceMap &, std::map<ElementRef, ElementRef>);
 
 protected:
+	virtual bool existsElementRef(ELEMENT_REF) = 0;
+	void checkIfaceMap();
+
 	InterfaceMap ifaceMap_;
 };
 
@@ -56,6 +60,15 @@ inline void rhdl::MappedRepresentation<RepType, ELEMENT_REF>::remap(
 	}
 }
 
+template<class RepType, class ELEMENT_REF>
+inline void MappedRepresentation<RepType, ELEMENT_REF>::checkIfaceMap()
+{
+	assert (std::all_of(ifaceMap_.begin(), ifaceMap_.end(), [&](auto &kv){
+		return existsElementRef(kv.second);
+	}));
+}
+
 } /* namespace rhdl */
+
 
 #endif /* SRC_REPRESENTATION_MAPPEDREPRESENTATION_H_ */

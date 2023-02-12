@@ -19,6 +19,7 @@ Netlist::Netlist(
 				entity, parent, timing, std::move(ifaceMap)),
 		graph_(std::move(graph))
 {
+	checkIfaceMap();
 	initIFaceProperties();
 	removeUnnecessaryOneways();
 }
