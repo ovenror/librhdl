@@ -224,6 +224,38 @@ TEST(RemoveUnnecessaryOneways, Y) {
 	EXPECT_TRUE(transformsTo(mkWhy(), Netlist::Graph()));
 }
 
+TEST(RemoveUnnecessaryOneways, YIface) {
+	vVector v(4);
+	auto why = mkWhy(v.begin());
+
+	const ISingle in("in", SingleDirection::IN);
+	const ISingle out("out", SingleDirection::OUT);
+
+	auto why0in = mkNetlist(why, {{&in, v[0]}});
+	auto why0out = mkNetlist(why, {{&out, v[0]}});
+	auto why1in = mkNetlist(why, {{&in, v[1]}});
+	auto why1out = mkNetlist(why, {{&out, v[1]}});
+	auto why2in = mkNetlist(why, {{&in, v[2]}});
+	auto why2out = mkNetlist(why, {{&out, v[2]}});
+	auto why3in = mkNetlist(why, {{&in, v[3]}});
+	auto why3out = mkNetlist(why, {{&out, v[3]}});
+
+	Netlist::Graph singleVertex;
+	singleVertex.addVertex();
+	auto oneway = mkOneway();
+	auto inverter = mkInverter();
+
+	EXPECT_TRUE(isomorphic(why0in, singleVertex));
+	EXPECT_TRUE(isomorphic(why0out, singleVertex));
+	EXPECT_TRUE(isomorphic(why1in, why));
+	EXPECT_TRUE(isomorphic(why1out, inverter));
+	EXPECT_TRUE(isomorphic(why2in, oneway));
+	EXPECT_TRUE(isomorphic(why2out, singleVertex));
+	EXPECT_TRUE(isomorphic(why3in, oneway));
+	EXPECT_TRUE(isomorphic(why3out, singleVertex));
+}
+
+
 TEST(RemoveUnnecessaryOneways, YExtra) {
 	vVector v(4);
 
@@ -241,8 +273,13 @@ TEST(RemoveUnnecessaryOneways, YExtra) {
 	extraIn = whyExtraIn1.addVertex();
 	whyExtraIn1.connect(extraIn, v[3]);
 
-	EXPECT_TRUE(transformsTo(whyExtraIn0, whyExtraIn0));
-	EXPECT_TRUE(transformsTo(whyExtraIn1, whyExtraIn1));
+	vVector resultV(3);
+	auto result = mkOneway(resultV.begin());
+	auto resExtraIn = result.addVertex();
+	result.connect(resExtraIn, resultV[2]);
+
+	EXPECT_TRUE(transformsTo(whyExtraIn0, result));
+	EXPECT_TRUE(transformsTo(whyExtraIn1, result));
 }
 
 TEST(RemoveUnnecessaryOneways, V)
