@@ -133,6 +133,7 @@ void Netlist::removeUnnecessaryOneways()
 
 		bool v1_extra_out = iCountOut(v1) > 1;
 		std::vector<VertexRef> eligible_v2;
+		std::map<VertexRef, VertexRef> eligible_v3;
 		bool ok = true;
 
 		for (auto e12 : Iterable(graph_.outEdges(v1))) {
@@ -161,37 +162,33 @@ void Netlist::removeUnnecessaryOneways()
 					break;
 				}
 
-				if (iCountIn(v3) == 1)
+				if (iCountIn(v3) == 1) {
+					eligible_v3.insert({v2, v3});
 					continue;
-
-				if (v1_extra_out || (iCountOut(v2) > 1)) {
-					v2_ok = false;
-					break;
 				}
+
+				if (!v1_extra_out && (iCountOut(v2) == 1)) {
+					eligible_v3.insert({v2, v3});
+					continue;
+				}
+
+				v2_ok = false;
 			}
 
-			if (!v2_ok)
-				continue;
-
-			eligible_v2.push_back(v2);
+			if (v2_ok)
+				eligible_v2.push_back(v2);
 		}
 
 		if (!ok)
 			continue;
 
+		for (auto [v2, v3] : eligible_v3) {
+			graph_.disconnect(v2, v3);
+			eat(v1, v3);
+		}
+
 		for (auto v2 : eligible_v2) {
-			std::unordered_set<VertexRef> v3s;
-
-			for (auto e23 : Iterable(graph_.outEdges(v2))) {
-				auto v3 = graph_.target(e23);
-				v3s.insert(v3);
-			}
-
 			graph_.clear_out(v2);
-
-			for (auto v3: v3s) {
-				eat(v1, v3);
-			}
 
 			assert (graph_[v2].ifaces_in.empty());
 

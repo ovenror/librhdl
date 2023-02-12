@@ -58,6 +58,11 @@ public:
 		return boost::add_edge(from, to, rep_).first;
 	}
 
+	void disconnect(VertexRef from, VertexRef to)
+	{
+		boost::remove_edge(from, to, rep_);
+	}
+
 	VertexRef source(EdgeRef e) const
 	{
 		return boost::source(e, rep_);
