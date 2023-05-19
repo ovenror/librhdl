@@ -220,8 +220,13 @@ bool Netlist::iHasOut(VertexRef v) const
 {
 	return graph_.countOut(v) || !graph_[v].ifaces_out.empty();
 }
+
 void Netlist::initIFaceProperties()
 {
+	for (auto v : Iterable(graph_.vertices())) {
+		graph_[v] = {};
+	}
+
 	for (auto [iface, v] : ifaceMap_) {
 		switch (iface -> direction()) {
 		case SingleDirection::OUT:
