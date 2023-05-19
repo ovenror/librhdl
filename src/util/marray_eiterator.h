@@ -12,16 +12,18 @@ template <class MARRAY, size_type DIM>
 struct EIteratorGenerator;
 
 template <class MARRAY, size_type DIM>
-class eiterator : std::iterator<
-		std::forward_iterator_tag, typename MARRAY::element>
+class eiterator
 {
 public:
-	using Super = std::iterator<std::output_iterator_tag, typename MARRAY::element>;
-
 	using ITERATOR = typename MARRAY::iterator;
 	using SUBARRAY = typename ITERATOR::value_type;
 	using GENERATOR = EIteratorGenerator<SUBARRAY, DIM-1>;
 	using SUB_EITERATOR = typename GENERATOR::RESULT;
+
+	using value_type = typename MARRAY::element;
+	using reference = typename MARRAY::element&;
+	using iterator_category = std::forward_iterator_tag;
+	using difference_type = typename SUB_EITERATOR::difference_type;
 
 	eiterator() {} //unusable
 
@@ -63,7 +65,7 @@ public:
 
 	bool operator!=(const eiterator &other) const {return !(*this == other);}
 
-	typename Super::reference operator*() const
+	reference operator*() const
 	{
 		assert (iterator_ != end_);
 		assert (sub_eiterator_ != sub_end_);
