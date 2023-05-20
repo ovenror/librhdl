@@ -33,6 +33,8 @@ public:
 
 	void breakTiming();
 
+	std::string canonicalName() const;
+
 protected:
 	Representation(
 			const Entity &entity, TypeID id, const Representation *parent,
@@ -41,10 +43,14 @@ protected:
 	Representation(const Entity &entity);
 
 private:
+	size_t register_descendant() const;
+
 	const TypeID typeID_;
 	const Entity &entity_;
 	const Representation *parent_;
 	const Timing *timing_;
+	const size_t sibling_index_;
+	mutable size_t num_descendants_ = 0;
 };
 
 }

@@ -46,9 +46,24 @@ Representation::Representation(
 		const Entity &entity, TypeID id, const Representation *parent,
 		const Timing *timing)
 	:
-	  typeID_(id), entity_(entity), parent_(parent), timing_(timing)
+	  typeID_(id), entity_(entity), parent_(parent), timing_(timing),
+	  sibling_index_(parent_ ? parent_ -> register_descendant() : 0)
 {
 	assert (!timing || &timing -> entity() == &entity);
+}
+
+std::string Representation::canonicalName() const
+{
+	std::stringstream name;
+
+	if (parent_)
+		name << parent_ -> canonicalName();
+	else
+		name << entity_.name();
+
+	name << "_" << typeID() << sibling_index_;
+
+	return name.str();
 }
 
 Representation::Representation(const Entity &entity)
@@ -59,6 +74,11 @@ std::unique_ptr<Simulator> Representation::makeSimulator(
 		bool use_behavior) const
 {
 	return nullptr;
+}
+
+size_t Representation::register_descendant() const
+{
+	return num_descendants_++;
 }
 
 }
