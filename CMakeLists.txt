@@ -21,6 +21,13 @@ target_include_directories(rhdl_obj PRIVATE src)
 target_include_directories(rhdl_obj PUBLIC include)
 target_compile_features(rhdl_obj PRIVATE cxx_std_17)
 
+if(MSVC)
+    add_definitions(/FI"${PROJECT_SOURCE_DIR}/src/util/debug.h")
+else()
+    # GCC or Clang
+    add_definitions(-include ${PROJECT_SOURCE_DIR}/src/util/debug.h)
+endif()
+
 option(sharedLib "Build rhdl library as a shared library" OFF)
 
 if (sharedLib)

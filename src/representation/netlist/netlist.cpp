@@ -184,10 +184,13 @@ void Netlist::removeUnnecessaryOneways()
 
 		for (auto [v2, v3] : eligible_v3) {
 			graph_.disconnect(v2, v3);
+			LOG(DEBUG) << "removing oneway: "
+					<< v1 << " eat " << v3 << std::endl;
 			eat(v1, v3);
 		}
 
 		for (auto v2 : eligible_v2) {
+			LOG(DEBUG) << "removing oneway: clear " << v2 << std::endl;
 			graph_.clear_out(v2);
 
 			assert (graph_[v2].ifaces_in.empty());
