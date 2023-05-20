@@ -39,7 +39,7 @@ protected:
 	Representation(const Entity &entity);
 
 private:
-	TypeID typeID_;
+	const TypeID typeID_;
 	const Entity &entity_;
 	const Representation *parent_;
 	const Timing *timing_;
