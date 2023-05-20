@@ -10,6 +10,9 @@
 
 namespace rhdl {
 
+Representation::~Representation() {
+}
+
 bool Representation::isChild(const Representation *r) const
 {
 	assert (r);

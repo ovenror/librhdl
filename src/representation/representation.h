@@ -19,6 +19,8 @@ class Representation
 public:
 	using TypeID = RepresentationTypeID;
 
+	virtual ~Representation();
+
 	TypeID typeID() const {return typeID_;}
 	const Entity& entity() const {return entity_;}
 	const Timing *timing() const {return timing_;}
