@@ -216,8 +216,10 @@ std::unique_ptr<TreeModel> TreeModel::make(
 		if (unsynthesizableVertices.empty())
 			break;
 
-		//for (auto v : unsynthesizableVertices)
-		//	std::cerr << "split " << v << std::endl;
+		LOG(DEBUG) << source.get().canonicalName() << " has unsynthesizable vertices" << std::endl;
+
+		for (auto v : unsynthesizableVertices)
+			LOG(DEBUG) << "split " << v << std::endl;
 
 		source = entity.addRepresentation(Netlist(source, unsynthesizableVertices));
 		++count;

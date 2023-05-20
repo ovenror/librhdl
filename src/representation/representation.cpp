@@ -50,6 +50,8 @@ Representation::Representation(
 	  sibling_index_(parent_ ? parent_ -> register_descendant() : 0)
 {
 	assert (!timing || &timing -> entity() == &entity);
+
+	LOG(LOG_REP) << "Creating representation " << canonicalName() << std::endl;
 }
 
 std::string Representation::canonicalName() const
