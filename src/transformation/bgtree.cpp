@@ -33,6 +33,8 @@ std::unique_ptr<Blocks> BGTree::execute(const TreeModel &source) const
 	auto assessment = source.assessLinks(target);
 	assert (!source.hasBrokenLinks(assessment));
 
+	LOG(LOG_REP) << project(target.slice3({0,0,0}));
+
 	return result;
 }
 
