@@ -6,6 +6,7 @@
 
 #include <array>
 #include <forward_list>
+#include <fstream>
 #include <unordered_map>
 
 namespace rhdl::netlist {
@@ -21,7 +22,9 @@ Netlist::Netlist(
 {
 	checkIfaceMap();
 	initIFaceProperties();
+	dot();
 	removeUnnecessaryOneways();
+	dot(".opt");
 }
 
 
@@ -33,7 +36,9 @@ Netlist::Netlist(
 {}
 
 Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
-	: Netlist(source)
+	: MappedRepresentation(
+				source.entity(), &source, source.timing(), source.ifaceMap()),
+			graph_(source.graph())
 {
 	assert (!toSplit.empty());
 
@@ -42,6 +47,7 @@ Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
 	}
 
 	breakTiming();
+	dot();
 }
 
 std::unique_ptr<Simulator> Netlist::makeSimulator(bool use_behavior) const
@@ -253,6 +259,16 @@ void Netlist::eat(VertexRef eater, VertexRef eaten)
 		ifaceMap_[iface] = eater;
 
 	graph_.eat(eater, eaten);
+}
+
+void Netlist::dot(std::string extra) const
+{
+	if (logLevel >= LOG_REP) {
+		std::stringstream filename;
+		filename << canonicalName() << extra << ".dot";
+		std::ofstream dotfile(filename.str());
+		dotfile << graph_;
+	}
 }
 
 }

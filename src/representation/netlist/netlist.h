@@ -48,6 +48,12 @@ public:
 	void remapInterface(const std::map<VertexRef, VertexRef> &vertexMap);
 
 private:
+	static Netlist make(
+			const Entity &entity,
+			Graph graph, InterfaceMap ifaceMap,
+			const Representation *parent = nullptr,
+			const Timing *timing = nullptr);
+
 	void removeUnnecessaryOneways();
 
 	size_t iCountIn(VertexRef) const;
@@ -61,6 +67,8 @@ private:
 	void eat(VertexRef, VertexRef);
 
 	bool existsElementRef(VertexRef v) override {return v < graph_.size();}
+
+	void dot(std::string extra = "") const;
 
 	Graph graph_;
 };
