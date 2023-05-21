@@ -40,7 +40,10 @@ Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
 				source.entity(), &source, source.timing(), source.ifaceMap()),
 			graph_(source.graph())
 {
-	horizontalSplitVertices(toSplit);
+	assert (!toSplit.empty());
+
+	//horizontalSplitVertices(toSplit);
+	verticalSplitVertices(toSplit);
 	breakTiming();
 	dot();
 }
@@ -259,13 +262,42 @@ void Netlist::eat(VertexRef eater, VertexRef eaten)
 
 void Netlist::horizontalSplitVertices(std::forward_list<VertexRef> toSplit)
 {
-	assert (!toSplit.empty());
-
 	for (const auto &vertex : toSplit) {
 		horizontalSplitVertex(vertex);
 	}
 
 	removeDisconnectedVertices();
+}
+
+void Netlist::verticalSplitVertices(std::forward_list<VertexRef> toSplit)
+{
+	for (const auto &vertex : toSplit) {
+		verticalSplitVertex(vertex);
+	}
+}
+
+void Netlist::verticalSplitVertex(VertexRef vertex)
+{
+	auto outEdges = Iterable(graph_.outEdges(vertex));
+
+	auto middle = graph_.addVertex();
+	auto out = graph_.addVertex();
+
+
+	for (auto outEdge : outEdges) {
+		graph_.connect(out, graph_.target(outEdge));
+	}
+
+	graph_.clearOutEdges(vertex);
+	graph_.connect(vertex, middle);
+	graph_.connect(middle, out);
+
+	graph_[out].ifaces_out = std::move(graph_[vertex].ifaces_out);
+	graph_[vertex].ifaces_out.clear();
+
+	for (auto iface : graph_[out].ifaces_out) {
+		ifaceMap_[iface] = out;
+	}
 }
 
 void Netlist::dot(std::string extra) const

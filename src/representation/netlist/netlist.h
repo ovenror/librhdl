@@ -40,6 +40,8 @@ public:
 
 	void horizontalSplitVertices(std::forward_list<VertexRef> toSplit);
 	void horizontalSplitVertex(VertexRef vertex);
+	void verticalSplitVertices(std::forward_list<VertexRef> toSplit);
+	void verticalSplitVertex(VertexRef vertex);
 
 	void removeVertex(VertexRef vertex);
 
