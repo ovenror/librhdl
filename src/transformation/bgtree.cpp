@@ -34,6 +34,8 @@ std::unique_ptr<Blocks> BGTree::execute(const TreeModel &source) const
 	assert (!source.hasBrokenLinks(assessment));
 
 	LOG(LOG_REP) << project(target.slice3({0,0,0}));
+	auto dim = target.dimensions();
+	LOG(LOG_REP) << dim[0] << " x " << dim[1] << " x " << dim[2] << std::endl;
 
 	return result;
 }
