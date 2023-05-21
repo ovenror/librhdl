@@ -2,6 +2,8 @@
 
 #include "util/iterable.h"
 
+#include "interface/isingle.h"
+
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/isomorphism.hpp>
 
@@ -168,9 +170,36 @@ Graph_Impl_Boost::operator std::string() const
 	return ss.str();
 }
 
+class VertexWriter {
+public:
+	VertexWriter(const GraphRep &rep) : rep_(rep) {}
+
+	template <class VertexOrEdge>
+	void operator()(std::ostream& out, const VertexOrEdge& v) const
+	{
+		if (!rep_[v].ifaces_in.empty() || !rep_[v].ifaces_out.empty()) {
+			out << "[shape=doublecircle, label=\"" << v;
+
+			for (auto iface : rep_[v].ifaces_in) {
+				out << "\n<" << iface -> name();
+			}
+
+			for (auto iface : rep_[v].ifaces_out) {
+				out << "\n" << iface -> name() << ">";
+			}
+
+			out << "\"]";
+		}
+	}
+
+private:
+	const GraphRep &rep_;
+};
+
+
 std::ostream &operator<<(std::ostream &os, const Graph_Impl_Boost &graph)
 {
-	write_graphviz(os, graph.rep_);
+	write_graphviz(os, graph.rep_, VertexWriter(graph.rep_));
 	return os;
 }
 
