@@ -40,12 +40,7 @@ Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
 				source.entity(), &source, source.timing(), source.ifaceMap()),
 			graph_(source.graph())
 {
-	assert (!toSplit.empty());
-
-	for (const auto &vertex : toSplit) {
-		splitVertex(vertex);
-	}
-
+	horizontalSplitVertices(toSplit);
 	breakTiming();
 	dot();
 }
@@ -81,7 +76,7 @@ void Netlist::removeDisconnectedVertices()
 	remapInterface(graph_.removeDisconnectedVertices());
 }
 
-void Netlist::splitVertex(VertexRef vertex)
+void Netlist::horizontalSplitVertex(VertexRef vertex)
 {
 	auto inEdges = Iterable(graph_.inEdges(vertex));
 	auto outEdges = Iterable(graph_.outEdges(vertex));
@@ -95,28 +90,29 @@ void Netlist::splitVertex(VertexRef vertex)
 		graph_.connect(collector, graph_.target(outEdge));
 	}
 
-	for (auto &kv : ifaceMap_) {
-		if (kv.second != vertex)
-			continue;
-
-		const ISingle *iface = kv.first;
-
+	for (auto iface : graph_[vertex].ifaces_in) {
 		auto collector = graph_.addVertex();
 
-		if (iface -> direction() == rhdl::Interface::Direction::OUT) {
-			for (EdgeRef inEdge : inEdges)
-				graph_.connect(graph_.source(inEdge), collector);
-		}
+		for (EdgeRef outEdge : outEdges)
+			graph_.connect(collector, graph_.target(outEdge));
 
-		if (iface -> direction() == rhdl::Interface::Direction::IN) {
-			for (EdgeRef outEdge : outEdges)
-				graph_.connect(collector, graph_.target(outEdge));
-		}
-
+		graph_[collector].ifaces_in.insert(iface);
 		ifaceMap_[iface] = collector;
 	}
 
-	removeVertex(vertex);
+	for (auto iface : graph_[vertex].ifaces_out) {
+		auto collector = graph_.addVertex();
+
+		for (EdgeRef inEdge : inEdges)
+			graph_.connect(graph_.source(inEdge), collector);
+
+		graph_[collector].ifaces_out.insert(iface);
+		ifaceMap_[iface] = collector;
+	}
+
+	graph_[vertex].ifaces_in.clear();
+	graph_[vertex].ifaces_out.clear();
+	graph_.clear(vertex);
 }
 
 void Netlist::removeVertex(VertexRef vertex)
@@ -259,6 +255,17 @@ void Netlist::eat(VertexRef eater, VertexRef eaten)
 		ifaceMap_[iface] = eater;
 
 	graph_.eat(eater, eaten);
+}
+
+void Netlist::horizontalSplitVertices(std::forward_list<VertexRef> toSplit)
+{
+	assert (!toSplit.empty());
+
+	for (const auto &vertex : toSplit) {
+		horizontalSplitVertex(vertex);
+	}
+
+	removeDisconnectedVertices();
 }
 
 void Netlist::dot(std::string extra) const

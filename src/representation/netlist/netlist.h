@@ -38,7 +38,9 @@ public:
 
 	bool isOpen(VertexRef vertex) const {return graph_.isInternal(vertex);}
 
-	void splitVertex(VertexRef vertex);
+	void horizontalSplitVertices(std::forward_list<VertexRef> toSplit);
+	void horizontalSplitVertex(VertexRef vertex);
+
 	void removeVertex(VertexRef vertex);
 
 	bool hasCycles() const {return graph_.hasCycles();}
