@@ -30,6 +30,7 @@ public:
 	std::pair<const_iterator, bool> insert(T element);
 
 	T& at(const std::string &name);
+	T& at(const char *name) const;
 	const T& at(const std::string &name) const;
 	const_iterator find(const std::string &name) const;
 	const_iterator begin() const;
@@ -64,11 +65,11 @@ inline std::pair<typename std::set<T>::const_iterator, bool> Dictionary<T>::inse
 }
 
 template<class T>
-const T& Dictionary<T>::at(const std::string& name) const
+const T& Dictionary<T>::at(const std::string &name) const
 {
 	const_iterator i;
 	if ((i = find(name)) == end())
-		throw std::out_of_range("Dictionary::at");
+		throw std::out_of_range("Dictionary::at(std::string &name)");
 
 	return *i;
 }
@@ -80,6 +81,17 @@ template<class T>
 T& Dictionary<T>::at(const std::string& name)
 {
 	return const_cast<T&>(static_cast<const Dictionary<T> *>(this) -> at(name));
+}
+
+/* speed boost for unique C strings */
+template<class T>
+T& Dictionary<T>::at(const char *name) const
+{
+	const_iterator i;
+	if ((i = find(name)) == end())
+		throw std::out_of_range("Dictionary::at(const char *)");
+
+	return *i;
 }
 
 template<class T>
@@ -119,6 +131,9 @@ public:
 	using is_transparent = void;
 
 	bool operator()(const T &lhs, const T &rhs) const {
+		if (lhs -> name().c_str() == rhs -> name().c_str())
+			return false;
+
 		return lhs -> name() < rhs -> name();
 	}
 
@@ -132,6 +147,20 @@ public:
 
 	bool operator()(const std::string &lhs, const std::string &rhs) const {
 		return lhs < rhs;
+	}
+
+	bool operator()(const T &lhs, const char *rhs) const {
+		if (lhs -> name().c_str() == rhs)
+			return false;
+
+		return lhs -> name() < rhs;
+	}
+
+	bool operator()(const char *lhs, const T &rhs) const {
+		if (lhs == rhs -> name().c_str())
+			return false;
+
+		return lhs < rhs -> name();
 	}
 };
 
