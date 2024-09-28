@@ -24,4 +24,12 @@ int rhdl_abort_structure(const rhdl_structure_t *structure);
 
 int rhdl_print_commands(const char *entity_name);
 
+const rhdl_object_t *rhdl_get(const rhdl_object_t *, const char *member);
+const rhdl_object_t *rhdl_getn(const rhdl_object_t *, unsigned int member);
+const char *rhdl_lso(const rhdl_object_t *, enum rhdl_type typefilter);
+void rhdl_print(const rhdl_object_t *, unsigned int depth);
+rhdl_iface_t rhdl_cast_iface(const rhdl_object_t *);
+const rhdl_object_t *rhdl_transform_to(const rhdl_object_t *, enum rhdl_reptype);
+/* const rhdl_transformation_instance const *rhdl_transform(const rhdl_object_t *, rhdl_transformation); */
+
 #endif /* INCLUDE_CONSTRUCTION_FUNCTIONS_H_ */

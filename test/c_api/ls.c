@@ -32,7 +32,7 @@ int libOnly()
 	rhdl_namespace_t *root = rhdl_namespace(0, 0);
 	REQUIRE(root);
 
-	const char *const *list = root -> entities;
+	const char *const *list = root -> members;
 	REQUIRE(list);
 
 	REQUIRE(checkLib(&list));
@@ -58,7 +58,7 @@ int libPlusNew()
 	rhdl_namespace_t *root = rhdl_namespace(0, 0);
 	REQUIRE(root);
 
-	const char *const *list = root -> entities;
+	const char *const *list = root -> members;
 	REQUIRE(list);
 
 	CHECK(&list, new);

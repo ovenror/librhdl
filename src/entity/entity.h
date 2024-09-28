@@ -21,12 +21,13 @@
 #include <list>
 #include <string>
 #include <functional>
+#include "../c_api/cobject.h"
 
 namespace rhdl {
 
 class Timing;
 
-class Entity
+class Entity : public TypedCObject<Entity, rhdl_entity_struct, RHDL_ENTITY>
 {
 public:
 	Entity(
@@ -34,7 +35,9 @@ public:
 			std::vector<const Interface *>, bool stateless = true);
 	virtual ~Entity();
 
-	const std::string &name() const {return name_;}
+	virtual Entity &cast() override {return *this;}
+	virtual void print() const override {};
+
 	const IComposite& interface() const;
 	bool isStateless() const {return stateless_;}
 
@@ -111,14 +114,6 @@ protected:
 private:
 	RepresentationIterator getRepresentationIterator(RepresentationContainer::iterator i) const;
 	TimingIterator getTimingIterator(TimingContainer::const_iterator i) const;
-
-public:
-	using C_Struct = rhdl_entity_struct;
-
-private:
-	friend class Wrapper<Entity>;
-	static constexpr unsigned long C_ID = 0xE97171;
-	Wrapper<Entity> c_;
 };
 
 inline const IComposite& Entity::interface() const

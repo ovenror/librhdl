@@ -185,7 +185,7 @@ rhdl_connector_t *rhdl_component(rhdl_structure_t *structure, rhdl_entity_t *ent
 {
 	auto f = [=]() {
 		auto &cpp_sh = recover<StructureHandle>(structure);
-		auto &cpp_entity = recover<rhdl::Entity>(entity);
+		auto &cpp_entity = rhdl::Entity::recover(entity);
 		auto &cpp_component = cpp_sh.makeComponent(cpp_entity);
 		return c_ptr(cpp_component);
 	};

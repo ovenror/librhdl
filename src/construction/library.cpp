@@ -11,7 +11,7 @@ Library defaultLib;
 Library::Library() : c_(*this)
 {
 	regist(std::make_unique<EInverter>());
-	c_.content().entities = entities_.c_strings();
+	c_.content().members = entities_.c_strings();
 	init::lib_ready();
 }
 
@@ -29,7 +29,7 @@ Entity &Library::regist(std::unique_ptr<Entity> &&entity)
 		throw ConstructionException(Errorcode::E_ENTITY_EXISTS);
 
 	Entity& result = regist_internal(std::move(entity));
-	c_.content().entities = entities_.c_strings();
+	c_.content().members = entities_.c_strings();
 	return result;
 }
 
