@@ -31,7 +31,7 @@ void Part::toStream(std::ostream &os) const
 
 ComplexPort& makeComponent(const std::string &entityName)
 {
-	return (new PartialStructureBuilder()) -> add(defaultLib.at(entityName));
+	return (new PartialStructureBuilder()) -> add(defaultLib -> at(entityName));
 }
 
 } /* namespace rhdl::structural::builder */

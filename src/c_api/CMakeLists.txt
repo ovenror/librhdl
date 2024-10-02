@@ -3,5 +3,6 @@ target_sources(rhdl_obj
 		c_api.cpp
 		context.cpp
 		handle.cpp
+		namespace.cpp
 		structurehandle.cpp
 )

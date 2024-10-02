@@ -21,7 +21,7 @@ namespace builder {
 NewEntityStructure::NewEntityStructure(std::string entityName, bool stateless)
 	: Structure(stateless), entityName_(entityName)
 {
-	if (defaultLib.contains(entityName)) {
+	if (defaultLib -> contains(entityName)) {
 		valid_ = false;
 		throw ConstructionException(Errorcode::E_ENTITY_EXISTS);
 	}
@@ -55,19 +55,19 @@ void NewEntityStructure::doFinalize()
 
 	auto entity = std::make_unique<Entity>(entityName_, std::move(ifaces), builder().stateless());
 
-	if (defaultLib.contains(entity -> name())) {
+	if (defaultLib -> contains(entity -> name())) {
 		abort();
 		throw ConstructionException(Errorcode::E_ENTITY_EXISTS);
 	}
 
-	defaultLib.regist(std::move(entity));
+	defaultLib -> regist(std::move(entity));
 	Structure::doFinalize();
 }
 
 const Entity& NewEntityStructure::entity() const
 {
-	assert (defaultLib.contains(entityName_));
-	return defaultLib.at(entityName_);
+	assert (defaultLib -> contains(entityName_));
+	return defaultLib -> at(entityName_);
 }
 
 void NewEntityStructure::replaceTopBuilder(std::unique_ptr<ComplexPort> &&e)

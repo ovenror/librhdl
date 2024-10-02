@@ -15,7 +15,7 @@ namespace structural {
 namespace builder {
 
 ExistingEntityStructure::ExistingEntityStructure(const std::string &entityName)
-	: ExistingEntityStructure(defaultLib.at(entityName))
+	: ExistingEntityStructure(defaultLib -> at(entityName))
 {}
 
 ExistingEntityStructure::ExistingEntityStructure(const Entity &entity)

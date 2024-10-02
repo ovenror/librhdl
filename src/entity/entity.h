@@ -17,17 +17,18 @@
 
 #include "boost/iterator/transform_iterator.hpp"
 
+#include "c_api/cobjectimpl.h"
+
 #include <map>
 #include <list>
 #include <string>
 #include <functional>
-#include "../c_api/cobject.h"
 
 namespace rhdl {
 
 class Timing;
 
-class Entity : public TypedCObject<Entity, rhdl_entity_struct, RHDL_ENTITY>
+class Entity : public CObjectImpl<Entity, rhdl_entity_struct, RHDL_ENTITY>
 {
 public:
 	Entity(
@@ -36,7 +37,6 @@ public:
 	virtual ~Entity();
 
 	virtual Entity &cast() override {return *this;}
-	virtual void print() const override {};
 
 	const IComposite& interface() const;
 	bool isStateless() const {return stateless_;}
@@ -120,9 +120,6 @@ inline const IComposite& Entity::interface() const
 {
 	return interface_;
 }
-
-
-
 
 }
 

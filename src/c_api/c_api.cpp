@@ -8,6 +8,8 @@
 #include "handle.h"
 #include "structurehandle.h"
 
+#include "c_api/namespace.h"
+
 #include "construction/library.h"
 #include "construction/interfacecompatexception.h"
 
@@ -102,7 +104,7 @@ rhdl_namespace_t *rhdl_namespace(rhdl_namespace_t* ns, const char *name)
 	assert (name == nullptr);
 
 	auto f = [=]() {
-		return c_ptr(rhdl::defaultLib);
+		return c_ptr(*rhdl::defaultLib);
 	};
 	return cerror<rhdl_namespace_t *, 0>(f, std::array<int, 0>{});
 }
@@ -113,7 +115,7 @@ rhdl_entity_t *rhdl_entity(rhdl_namespace_t* ns, const char *name)
 	assert (ns == nullptr);
 
 	auto f = [=]() {
-		return c_ptr(rhdl::defaultLib.at(name));
+		return c_ptr(rhdl::defaultLib -> at(name));
 	};
 	return cerror<rhdl_entity_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_ENTITY});
 }
@@ -237,7 +239,7 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 
 int rhdl_print_commands(const char *entity_name) {
 	auto f = [=]() {
-		auto &entity = rhdl::defaultLib.at(entity_name);
+		auto &entity = rhdl::defaultLib -> at(entity_name);
 		auto *commands = entity.getRepresentation<rhdl::txt::Commands>();
 		assert (commands);
 		std::cout << *commands;
@@ -245,4 +247,15 @@ int rhdl_print_commands(const char *entity_name) {
 	};
 
 	return cerror<int, 1>(f, std::array<int, 1>{E_NO_SUCH_ENTITY});
+}
+
+const rhdl_object * rhdl_get(const rhdl_object_t *o, const char *member) {
+	auto f = [=]() {
+		const rhdl::CObject &cobject = o ? recover<rhdl::CObject>(o) : rhdl::rootNamespace;
+		const rhdl::CObject &result = member ? cobject.at(member) : cobject;
+
+		return c_ptr(result);
+	};
+
+	return cerror<const rhdl_object *, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
 }

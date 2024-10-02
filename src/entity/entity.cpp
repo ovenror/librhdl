@@ -16,7 +16,7 @@ using namespace rhdl;
 Entity::Entity(
 	const std::string &name, std::vector<const Interface *> components,
 	bool stateless)
-: TypedCObject(name), interface_("", components), stateless_(stateless)
+: CObjectImpl(name), interface_("", components), stateless_(stateless)
 {
 	repIdx_timing_[nullptr];
 	c_.content().iface = c_ptr(static_cast<const Interface &>(interface_));

@@ -9,23 +9,7 @@
 #include "ls.h"
 #include "macros.h"
 #include "strlist.h"
-
-static int checkLib(const char *const **list)
-{
-	CHECK(list, "AND");
-	CHECK(list, "Clock3");
-	CHECK(list, "ClockDiv2");
-	CHECK(list, "D_Flipflop");
-	CHECK(list, "Demul2");
-	CHECK(list, "GRS_Latch");
-	CHECK(list, "Inverter");
-	CHECK(list, "NAND");
-	CHECK(list, "NOR");
-	CHECK(list, "Pulse1");
-	CHECK(list, "RS_Latch");
-
-	return SUCCESS;
-}
+#include "utils.h"
 
 int libOnly()
 {

@@ -1,5 +1,6 @@
 #include "init.h"
 #include "lib/lib.h"
+#include "c_api/namespace.h"
 
 namespace rhdl {
 namespace init {
@@ -19,8 +20,10 @@ void lib_ready()
 }
 
 void try_init() {
-	if (state == 3)
+	if (state == 3) {
+		Namespace::init();
 		lib_init();
+	}
 }
 
 }}

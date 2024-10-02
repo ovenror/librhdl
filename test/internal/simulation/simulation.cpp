@@ -12,7 +12,7 @@ using namespace rhdl;
 
 static void testEntity(const char *name)
 {
-    const auto &e = defaultLib.at(name);
+    const auto &e = defaultLib -> at(name);
     SimFuzzer fuzzer(e);
     EXPECT_TRUE(fuzzer.run())
     	<< "Failure testing Entity " << e.name() << std::endl

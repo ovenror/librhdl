@@ -6,30 +6,35 @@
 
 namespace rhdl {
 
-Library defaultLib;
+Library *defaultLib = new Library();
 
-Library::Library() : c_(*this)
+Library::Library() : TypedCObject("entities")
 {
 	regist(std::make_unique<EInverter>());
-	c_.content().members = entities_.c_strings();
+	setMembers(entities_.c_strings());
 	init::lib_ready();
 }
 
 Library::~Library()
-{
+{}
+
+bool Library::contains(const std::string& name) const {
+	try {
+		entities_.at(name);
+		return true;
+	}
+	catch (std::out_of_range &e) {
+		return false;
+	}
 }
 
-bool Library::contains(const std::string& name) {
-	return (entities_.find(name) != entities_.end());
-}
-
-Entity &Library::regist(std::unique_ptr<Entity> &&entity)
+const Entity &Library::regist(std::unique_ptr<Entity> &&entity)
 {
 	if (contains(entity -> name()))
 		throw ConstructionException(Errorcode::E_ENTITY_EXISTS);
 
-	Entity& result = regist_internal(std::move(entity));
-	c_.content().members = entities_.c_strings();
+	const Entity& result = regist_internal(std::move(entity));
+	setMembers(entities_.c_strings());
 	return result;
 }
 
@@ -37,15 +42,29 @@ Entity& Library::at(const std::string& name) {
 	if (!contains(name))
 		throw ConstructionException(Errorcode::E_NO_SUCH_ENTITY);
 
-	return *entities_.at(name);
+	return entities_.at(name);
 }
 
-Entity &Library::regist_internal(std::unique_ptr<Entity> &&entity)
+const Entity& Library::at(const char *name) const
 {
-	const auto [iter, inserted] = entities_.insert(std::move(entity));
-	assert (inserted);
+	if (!contains(name))
+		throw ConstructionException(Errorcode::E_NO_SUCH_ENTITY);
 
-	return **iter;
+	return entities_.at(name);
+}
+
+const Entity& Library::at(const std::string &name) const
+{
+	return entities_.at(name.c_str());
+}
+
+const Entity &Library::regist_internal(std::unique_ptr<Entity> &&entity)
+{
+	return *entities_.add(std::move(entity));
+}
+
+void Library::setMembers_internal(const std::vector<const char *> &members) {
+	c_.content().members = members.data();
 }
 
 }

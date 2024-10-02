@@ -21,6 +21,10 @@ EOF
 
 for csrc in *.c
 do
+	if [ "$csrc" == "utils.c" ]; then
+		continue
+	fi
+
 	name=$(echo $csrc | sed 's/\.c//')
 	grep '^int .*()' $csrc | sed 's/$/;/' > $name.h
 	
