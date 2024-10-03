@@ -30,14 +30,14 @@ public:
 	using size_type = typename std::set<T>::size_type;
 
 	LexicalDictionary();
+	virtual ~LexicalDictionary() {}
 
 	std::pair<const_iterator, bool> insert(T element);
 
-	T& at(const std::string &name) override;
 	const T& at(const char *name) const override;
 	const T& at(const std::string &name) const override;
 
-	const T* add(T element);
+	const T &add(T element);
 
 	const_iterator find(const std::string& name) const;
 	const_iterator begin() const;
@@ -85,11 +85,13 @@ const T& LexicalDictionary<T>::at(const std::string &name) const
 /*
  * ok, since names used for comparison are const
  */
+/*
 template<class T>
 T& LexicalDictionary<T>::at(const std::string& name)
 {
 	return const_cast<T&>(static_cast<const LexicalDictionary<T> *>(this) -> at(name));
 }
+*/
 
 /* speed boost for unique C strings */
 template<class T>
@@ -97,7 +99,7 @@ const T& LexicalDictionary<T>::at(const char *name) const
 {
 	const_iterator i;
 	if ((i = find(name)) == end())
-		throw std::out_of_range("Dictionary::at(const char *)");
+		throw std::out_of_range("LexicalDictionary::at(const char *)");
 
 	return *i;
 }
@@ -125,13 +127,14 @@ inline typename std::set<T>::size_type LexicalDictionary<T>::size() const {
 }
 
 template<class T>
-inline const T* LexicalDictionary<T>::add(T element) {
+inline const T &LexicalDictionary<T>::add(T element) {
 	auto [i, success] = insert(std::move(element));
 
-	if (!success)
-		return nullptr;
+	if (!success) {
+		throw std::out_of_range("Element exists.");
+	}
 
-	return &*i;
+	return *i;
 }
 
 template<class T>

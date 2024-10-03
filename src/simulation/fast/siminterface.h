@@ -19,7 +19,7 @@ public:
 	SimInterface(const Interface *i)
 	{
 		auto chrs = NAME::chars();
-		std::string static_name = chrs.empty()?"":chrs.data();
+		std::string static_name = chrs.data();
 
 		if (static_name != i -> name())
 			throw ConstructionException(Errorcode::E_WRONG_NAME, std::string("is '" + static_name + ", should be " + i -> name()));

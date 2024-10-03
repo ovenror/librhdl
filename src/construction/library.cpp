@@ -38,12 +38,14 @@ const Entity &Library::regist(std::unique_ptr<Entity> &&entity)
 	return result;
 }
 
+/*
 Entity& Library::at(const std::string& name) {
 	if (!contains(name))
 		throw ConstructionException(Errorcode::E_NO_SUCH_ENTITY);
 
 	return entities_.at(name);
 }
+*/
 
 const Entity& Library::at(const char *name) const
 {
@@ -55,6 +57,9 @@ const Entity& Library::at(const char *name) const
 
 const Entity& Library::at(const std::string &name) const
 {
+	if (!contains(name))
+		throw ConstructionException(Errorcode::E_NO_SUCH_ENTITY);
+
 	return entities_.at(name.c_str());
 }
 

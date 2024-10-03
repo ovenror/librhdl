@@ -16,7 +16,7 @@
 namespace rhdl {
 
 Interface::Interface(const std::string &name)
-	: name_ (name), c_(*this)
+	: CObjectImpl(name), name_ (name)
 {}
 
 Interface::~Interface()

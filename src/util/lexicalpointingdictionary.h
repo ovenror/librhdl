@@ -12,19 +12,19 @@
 
 namespace rhdl {
 
-template<class T>
+template<class T, bool OWNING = true>
 class LexicalPointingDictionary : public Dictionary<T> {
-	using PT = std::unique_ptr<T>;
+	using PT = typename std::conditional<OWNING, std::unique_ptr<const T>, const T*>::type;
 
 public:
 	LexicalPointingDictionary() {}
 	virtual ~LexicalPointingDictionary() {}
 
-	T& at(const std::string &name) override {return *impl_.at(name);}
+	//T& at(const std::string &name) override {return *impl_.at(name);}
 	const T& at(const char *name) const override {return *impl_.at(name);}
 	const T& at(const std::string &name) const override {return *impl_.at(name);}
 
-	const T* add(PT element) {return impl_.add(std::move(element)) -> get();}
+	const T* add(PT element) {return &*impl_.add(std::move(element));}
 
 	std::size_t size() const override {return impl_.size();}
 

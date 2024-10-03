@@ -13,9 +13,10 @@
 
 namespace rhdl {
 
-template <class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID>
+template <class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING=true>
 class CObjectImpl : public TypedCObject<CRTP, Typed_C_Struct, TYPE_ID> {
 	using Super = TypedCObject<CRTP, Typed_C_Struct, TYPE_ID>;
+	using PT = typename std::conditional<OWNING, std::unique_ptr<const CObject>, const CObject*>::type;
 
 public:
 	CObjectImpl(std::string name) : TypedCObject<CRTP, Typed_C_Struct, TYPE_ID>(name)
@@ -25,11 +26,11 @@ public:
 
 	virtual ~CObjectImpl() {};
 
-	CObject &at(const std::string &name) override;
+	//CObject &at(const std::string &name) override;
 	const CObject& at(const std::string &name) const override;
 	const CObject &at(const char *name) const override;
 
-	const CObject &add(std::unique_ptr<CObject> member)
+	const CObject &add(PT member)
 	{
 		auto ptr = dict_.add(std::move(member));
 
@@ -46,11 +47,12 @@ public:
 	const std::vector<const char*> &c_strings() const override {return dict_.c_strings();}
 
 private:
-	LexicalPointingDictionary<CObject> dict_;
+	LexicalPointingDictionary<CObject, OWNING> dict_;
 };
 
-template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID>
-inline CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID>::at(
+/*
+template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING>
+inline CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
 		const std::string &name)
 {
 	try {
@@ -60,9 +62,10 @@ inline CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID>::at(
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
 	}
 }
+*/
 
-template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID>
-inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID>::at(
+template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING>
+inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
 		const std::string &name) const
 {
 	try {
@@ -73,8 +76,8 @@ inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID>::at(
 	}
 }
 
-template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID>
-inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID>::at(
+template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING>
+inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
 		const char *name) const
 {
 	try {

@@ -28,7 +28,7 @@ namespace rhdl {
 
 class Timing;
 
-class Entity : public CObjectImpl<Entity, rhdl_entity_struct, RHDL_ENTITY>
+class Entity : public CObjectImpl<Entity, rhdl_entity_struct, RHDL_ENTITY, false>
 {
 public:
 	Entity(

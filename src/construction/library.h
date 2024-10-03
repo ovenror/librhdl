@@ -27,7 +27,6 @@ public:
 	const Entity &regist(std::unique_ptr<Entity> &&e);
 	bool contains(const std::string &name) const;
 
-	Entity &at(const std::string& name) override;
 	const Entity& at(const char *name) const override;
 	const Entity& at(const std::string &name) const override;
 

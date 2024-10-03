@@ -11,6 +11,7 @@ class ISingle : public Interface::VisitableChild<ISingle>
 {
 public:
 	ISingle (const std::string &name, Direction dir);
+	virtual ~ISingle();
 
 	Direction direction() const {return static_cast<Direction>(c_.content().single.dir);}
 	CompositeDirection compositeDirection() const override {return CompositeDirection(direction());}

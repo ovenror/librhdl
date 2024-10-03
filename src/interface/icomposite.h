@@ -22,13 +22,11 @@ public:
 	IComposite(const std::string &name, std::vector<const Interface *> components);
 	IComposite(const IComposite &tmpl);
 
-	~IComposite();
+	virtual ~IComposite();
 
 	CompositeDirection compositeDirection() const override {return direction_;}
 	SingleDirection preferredDirection() const override;
 	IComposite *clone(const std::string &newName) const;
-
-	void add (const Interface *comp);
 
 	bool eq_inner_names (const Interface &other) const;
 
@@ -48,11 +46,8 @@ public:
 private:
 	const Interface *get(const std::string &name) const override;
 
-	using CStrings = std::vector<const char *>;
-
 	InterfaceContainer components_;
 	CompositeDirection direction_;
-	CStrings c_strings_;
 };
 
 } // namespace rhdl

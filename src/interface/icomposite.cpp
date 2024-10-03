@@ -17,11 +17,11 @@ IComposite::IComposite(
 	for (auto *comp : components)
 	{
 		direction_ |= comp -> compositeDirection();
-		c_strings_.push_back(comp -> name().data());
+		add(comp);
 	}
 
-	c_strings_.push_back(nullptr);
-	c_.content().composite.interfaces = c_strings_.data();
+	c_.content().composite.interfaces = c_strings().data();
+	setMembers(c_strings());
 }
 
 static std::vector<const Interface *> cloneComponents(

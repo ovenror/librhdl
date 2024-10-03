@@ -10,7 +10,7 @@
 #define SINGLE(name) ::rhdl::behavioral::SISingle<TOSTRING(name)>
 #define COMPOSITE(name, ...) ::rhdl::behavioral::SIComposite<TOSTRING(name), __VA_ARGS__>
 
-#define INTERFACE(...) COMPOSITE(, __VA_ARGS__)
+#define INTERFACE(...) COMPOSITE(interface, __VA_ARGS__)
 
 #define SIMSTATE(sim, qname) sim.iface<Split<TOSTRING(qname)>::RESULT>()
 #define SIMGET(qname) SIMSTATE(sim_instance, qname)

@@ -19,7 +19,6 @@ public:
 	Dictionary() {};
 	virtual ~Dictionary() {};
 
-	virtual T& at(const std::string &name) = 0;
 	virtual const T& at(const std::string &name) const = 0;
 	virtual const T& at(const char *name) const = 0;
 

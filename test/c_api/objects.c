@@ -39,6 +39,24 @@ int entities()
 	return SUCCESS;
 }
 
+int entity()
+{
+	rhdl_object_t *entities = rhdl_get(0, "entities");
+	rhdl_object_t *inverter = rhdl_get(entities, "Inverter");
+
+	REQUIRE(inverter);
+
+	rhdl_object_t *iface = rhdl_get(inverter, "interface");
+
+	REQUIRE(iface);
+
+	rhdl_object_t *in = rhdl_get(iface, "in");
+
+	REQUIRE(in);
+
+	return SUCCESS;
+}
+
 int wrong()
 {
 	rhdl_object_t *bananas = rhdl_get(0, "bananas");

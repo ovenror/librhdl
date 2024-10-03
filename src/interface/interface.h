@@ -11,7 +11,7 @@
 
 #include "util/visitable.h"
 
-#include "c_api/wrapper.h"
+#include "c_api/cobjectimpl.h"
 
 #include <string>
 #include <functional>
@@ -29,7 +29,9 @@ class Predicate_2nd;
 
 bool operator>=(const Interface &super, const Interface &sub);
 
-class Interface : public AbstractVisitable<Interface, InterfaceVisitor>
+class Interface :
+		public CObjectImpl<Interface, rhdl_iface_struct, RHDL_INTERFACE, false>,
+		public AbstractVisitable<Interface, InterfaceVisitor>
 {
 public:
 	using Direction = SingleDirection;
@@ -40,6 +42,8 @@ public:
 
 	Interface(const std::string &name = "");
 	virtual ~Interface();
+
+	Interface &cast() override {return *this;};
 
 	virtual Interface *clone(const std::string &newName) const = 0;
 	Interface *clone() const {return clone(name());}
@@ -80,14 +84,7 @@ protected:
 	std::string name_;
 
 public:
-	using C_Struct = rhdl_iface_struct;
 	static constexpr const char *anon_name = "<anonymous>";
-
-protected:
-	friend class Wrapper<Interface>;
-	//friend class Wropper<rhdl_iface_struct>;
-	static constexpr unsigned long C_ID = 0x197E5FACE;
-	Wrapper<Interface> c_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Interface &i);
