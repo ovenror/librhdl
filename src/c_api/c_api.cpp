@@ -115,7 +115,8 @@ rhdl_entity_t *rhdl_entity(rhdl_namespace_t* ns, const char *name)
 	assert (ns == nullptr);
 
 	auto f = [=]() {
-		return c_ptr(rhdl::defaultLib -> at(name));
+		auto &entity = const_cast<const rhdl::Library *>(rhdl::defaultLib) -> at(name);
+		return c_ptr(entity);
 	};
 	return cerror<rhdl_entity_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_ENTITY});
 }
@@ -239,7 +240,7 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 
 int rhdl_print_commands(const char *entity_name) {
 	auto f = [=]() {
-		auto &entity = rhdl::defaultLib -> at(entity_name);
+		auto &entity = const_cast<const rhdl::Library *>(rhdl::defaultLib) -> at(entity_name);
 		auto *commands = entity.getRepresentation<rhdl::txt::Commands>();
 		assert (commands);
 		std::cout << *commands;
