@@ -9,6 +9,7 @@
 #include "structurehandle.h"
 
 #include "c_api/namespace.h"
+#include "c_api/typedcvalue.h"
 
 #include "construction/library.h"
 #include "construction/interfacecompatexception.h"
@@ -49,6 +50,24 @@ template <class RTYPE>
 inline RTYPE cerror_return(int ec)
 {
 	return nullptr;
+}
+
+template <>
+inline int64_t cerror_return<int64_t>(int)
+{
+	return -1;
+}
+
+template <>
+inline uint64_t cerror_return<uint64_t>(int)
+{
+	return -1;
+}
+
+template <>
+inline rhdl_direction cerror_return<rhdl_direction>(int)
+{
+	return RHDL_INVALID_DIRECTION;
 }
 
 template <>
@@ -258,5 +277,42 @@ const rhdl_object * rhdl_get(const rhdl_object_t *o, const char *member) {
 		return c_ptr(result);
 	};
 
-	return cerror<const rhdl_object *, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
+	return cerror<const rhdl_object *, 2>(f, std::array<int, 2>
+			{E_NO_SUCH_MEMBER, E_NO_SUCH_ENTITY});
+}
+
+template <class VALUE_TYPE>
+static VALUE_TYPE rhdl_read_value(const rhdl_object_t *o) {
+	auto f = [=]() {
+		const auto &co = rhdl::recover<rhdl::CObject>(o);
+		return static_cast<const VALUE_TYPE>(co);
+	};
+
+	return cerror<VALUE_TYPE, 1>(f, std::array<int, 1>{E_WRONG_VALUE_TYPE});
+}
+
+int rhdl_has_value(const rhdl_object_t *o) {
+	auto f = [=]() {
+		const auto &co = rhdl::recover<rhdl::CObject>(o);
+		return co.isValue();
+	};
+
+	return cerror<int, 0>(f, std::array<int, 0>{});
+}
+
+const char* rhdl_read_cstring(const rhdl_object_t *o)
+{
+	return rhdl_read_value<const char *>(o);
+}
+
+int64_t rhdl_read_i64(const rhdl_object_t *o) {
+	return rhdl_read_value<int64_t>(o);
+}
+
+uint64_t rhdl_read_u64(const rhdl_object_t *o) {
+	return rhdl_read_value<uint64_t>(o);
+}
+
+rhdl_direction rhdl_read_direction(const rhdl_object_t *o) {
+	return rhdl_read_value<rhdl_direction>(o);
 }

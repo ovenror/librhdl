@@ -25,6 +25,13 @@ int rhdl_abort_structure(const rhdl_structure_t *structure);
 int rhdl_print_commands(const char *entity_name);
 
 const rhdl_object_t *rhdl_get(const rhdl_object_t *, const char *member);
+
+int rhdl_has_value(const rhdl_object_t *);
+const char *rhdl_read_cstring(const rhdl_object_t *);
+int64_t rhdl_read_i64(const rhdl_object_t *);
+uint64_t rhdl_read_u64(const rhdl_object_t *);
+enum rhdl_direction rhdl_read_direction(const rhdl_object_t *);
+
 const rhdl_object_t *rhdl_getn(const rhdl_object_t *, unsigned int member);
 const char *rhdl_lso(const rhdl_object_t *, enum rhdl_type typefilter);
 void rhdl_print(const rhdl_object_t *, unsigned int depth);

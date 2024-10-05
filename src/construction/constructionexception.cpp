@@ -23,6 +23,9 @@ const char *ConstructionException::whatcode() const noexcept
 	switch (code_) {
 	case Errorcode::E_NO_ERROR: return "(no error)";
 
+	case Errorcode::E_WRONG_OBJECT_TYPE: return "Wrong object type.";
+	case Errorcode::E_WRONG_VALUE_TYPE: return "Wrong value type.";
+
 	case Errorcode::E_CANNOT_GET_ANONYMOUS_INTERFACE: return "Cannot look a possibly existing anonymous interface up by name";
 	case Errorcode::E_NO_SUCH_INTERFACE: return "Interface does not exist.";
 

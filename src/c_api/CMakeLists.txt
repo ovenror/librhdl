@@ -1,8 +1,10 @@
 target_sources(rhdl_obj
 	PRIVATE
 		c_api.cpp
+		cvalue.cpp
 		context.cpp
 		handle.cpp
 		namespace.cpp
 		structurehandle.cpp
+		typedcvalue.cpp
 )

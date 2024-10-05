@@ -13,13 +13,17 @@
 
 namespace rhdl {
 
-template <class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING=true>
-class CObjectImpl : public TypedCObject<CRTP, Typed_C_Struct, TYPE_ID> {
-	using Super = TypedCObject<CRTP, Typed_C_Struct, TYPE_ID>;
-	using PT = typename std::conditional<OWNING, std::unique_ptr<const CObject>, const CObject*>::type;
+template <
+		class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING=true,
+		class TYPED_BASE = CObject>
+class CObjectImpl : public TypedCObject<
+		CRTP, Typed_C_Struct, TYPE_ID, TYPED_BASE> {
+	using Super = TypedCObject<CRTP, Typed_C_Struct, TYPE_ID, TYPED_BASE>;
+	using PT = typename std::conditional<
+			OWNING, std::unique_ptr<const CObject>, const CObject*>::type;
 
 public:
-	CObjectImpl(std::string name) : TypedCObject<CRTP, Typed_C_Struct, TYPE_ID>(name)
+	CObjectImpl(std::string name) : Super(name)
 	{
 		Super::setMembers(c_strings());
 	}
@@ -64,9 +68,12 @@ inline CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
 }
 */
 
-template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING>
-inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
-		const std::string &name) const
+template<
+		class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING,
+		class TYPED_BASE>
+inline const CObject& CObjectImpl<
+		CRTP, Typed_C_Struct, TYPE_ID, OWNING, TYPED_BASE>::at(
+				const std::string &name) const
 {
 	try {
 		return dict_.at(name);
@@ -76,9 +83,12 @@ inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
 	}
 }
 
-template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING>
-inline const CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
-		const char *name) const
+template<
+		class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING,
+		class TYPED_BASE>
+inline const CObject& CObjectImpl<
+		CRTP, Typed_C_Struct, TYPE_ID, OWNING, TYPED_BASE>::at(
+				const char *name) const
 {
 	try {
 		return dict_.at(name);

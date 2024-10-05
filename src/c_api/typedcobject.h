@@ -15,12 +15,13 @@
 
 namespace rhdl {
 
-template <class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID>
-class TypedCObject : public CObject {
+template <class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, class BASE = CObject>
+class TypedCObject : public BASE {
 public:
 	using C_Struct = Typed_C_Struct;
 
-	TypedCObject(std::string name) : CObject(TYPE_ID, name), c_(*this) {}
+	TypedCObject(std::string name) : BASE(TYPE_ID, name), c_(*this) {}
+
 	virtual ~TypedCObject() {}
 
 	static CRTP &recover(const C_Struct *c) {
@@ -31,7 +32,7 @@ public:
 	void setMembers(const std::vector<const char *> &members) {
 		auto lol = members.data();
 		setMembers_internal(members);
-		CObject::setMembers(members);
+		BASE::setMembers(members);
 	}
 
 private:

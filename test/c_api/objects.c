@@ -11,12 +11,15 @@
 #include "strlist.h"
 #include "utils.h"
 
+#include <stdio.h>
+
 int rootNamespace()
 {
 	rhdl_object_t *root = rhdl_get(0, 0);
 
 	REQUIRE(root);
 	REQUIRE(rhdl_get(root, 0) == root);
+	REQUIRE(!rhdl_has_value(root));
 
 	const char *const *list = root -> members;
 
@@ -36,6 +39,10 @@ int entities()
 	const char *const *list = entities -> members;
 	REQUIRE(checkLib(&list));
 
+	rhdl_object_t *none = rhdl_get(entities, "bananananana");
+	REQUIRE(!none);
+	REQUIRE_ERR(rhdl_errno(), E_NO_SUCH_ENTITY);
+
 	return SUCCESS;
 }
 
@@ -51,8 +58,22 @@ int entity()
 	REQUIRE(iface);
 
 	rhdl_object_t *in = rhdl_get(iface, "in");
+	rhdl_object_t *out = rhdl_get(iface, "out");
 
 	REQUIRE(in);
+	REQUIRE(out);
+
+	rhdl_object_t *direction_in = rhdl_get(in, "direction");
+	rhdl_object_t *direction_out = rhdl_get(out, "direction");
+
+	REQUIRE(direction_in);
+	REQUIRE(direction_out);
+
+	enum rhdl_direction in_value = rhdl_read_direction(direction_in);
+	enum rhdl_direction out_value = rhdl_read_direction(direction_out);
+
+	REQUIRE(in_value == RHDL_IN);
+	REQUIRE(out_value == RHDL_OUT);
 
 	return SUCCESS;
 }

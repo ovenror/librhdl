@@ -25,6 +25,6 @@ void Namespace::init()
 	rootNamespace.add(std::move(lib));
 }
 
-Namespace rootNamespace("");
+Namespace rootNamespace("root");
 
 }

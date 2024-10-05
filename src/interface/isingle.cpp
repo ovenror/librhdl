@@ -2,6 +2,7 @@
 #include "predicate.h"
 #include "cresult/csingle.h"
 #include "c_api/namespace.h"
+#include "c_api/typedcvalue.h"
 
 #include <cassert>
 #include <iostream>
@@ -18,7 +19,8 @@ ISingle::ISingle(const std::string &name, Direction dir) :
 	c.type = RHDL_SINGLE;
 	c.single.dir = static_cast<enum rhdl_direction>(dir);
 
-	add(new Namespace("direction"));
+	auto tcv = new TypedCValue<rhdl_direction>("direction", c.single.dir);
+	add(tcv);
 }
 
 rhdl::ISingle::~ISingle() {}
