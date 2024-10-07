@@ -8,7 +8,7 @@
 #include "handle.h"
 #include "structurehandle.h"
 
-#include "c_api/namespace.h"
+#include "c_api/rootnamespace.h"
 #include "c_api/typedcvalue.h"
 
 #include "construction/library.h"

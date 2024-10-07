@@ -5,6 +5,7 @@ target_sources(rhdl_obj
 		context.cpp
 		handle.cpp
 		namespace.cpp
+		rootnamespace.cpp
 		structurehandle.cpp
 		typedcvalue.cpp
 )

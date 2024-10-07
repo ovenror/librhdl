@@ -20,8 +20,6 @@ public:
 	Namespace(std::string);
 	virtual ~Namespace();
 
-	static void init();
-
 	Namespace &cast() override {return *this;};
 
 private:
@@ -29,8 +27,6 @@ private:
 		c_.content().members = members.data();
 	}
 };
-
-extern Namespace rootNamespace;
 
 } /* namespace rhdl */
 

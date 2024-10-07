@@ -1,6 +1,6 @@
 #include "init.h"
 #include "lib/lib.h"
-#include "c_api/namespace.h"
+#include "c_api/rootnamespace.h"
 
 namespace rhdl {
 namespace init {
@@ -19,11 +19,19 @@ void lib_ready()
 	try_init();
 }
 
+void root_ready()
+{
+	state |= 4;
+	try_init();
+}
+
 void try_init() {
-	if (state == 3) {
-		Namespace::init();
+	if (state == 7) {
+		RootNamespace::init();
 		lib_init();
 	}
 }
 
-}}
+}
+
+}

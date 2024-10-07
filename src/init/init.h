@@ -15,6 +15,7 @@ namespace init
 
 	void transformer_ready();
 	void lib_ready();
+	void root_ready();
 	void try_init();
 };
 

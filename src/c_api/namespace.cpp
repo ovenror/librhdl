@@ -19,12 +19,5 @@ Namespace::Namespace(std::string name) : CObjectImpl(name)
 
 Namespace::~Namespace() {}
 
-void Namespace::init()
-{
-	auto lib = std::unique_ptr<Library>(defaultLib);
-	rootNamespace.add(std::move(lib));
-}
-
-Namespace rootNamespace("root");
 
 }
