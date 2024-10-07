@@ -1,10 +1,20 @@
 use std::str::SplitWhitespace;
 use std::marker::PhantomData;
 
-type CommandFn<T> = fn(&mut T, &mut SplitWhitespace) -> bool;
-pub struct Command<T> (pub &'static str, pub CommandFn<T>);
+use rustyline::Context;
+use rustyline::completion::{Completer,Pair};
+use rustyline::error::ReadlineError;
 
-pub trait Interpreter {
+
+pub trait CommandCompleter {
+    fn complete(&self, text: &str) -> Result<Vec<String>, ()>;
+}
+
+type CommandFn<T> = fn(&mut T, &mut SplitWhitespace) -> bool;
+pub struct Command<T> (
+    pub &'static str, pub CommandFn<T>, pub &'static dyn CommandCompleter);
+
+pub trait Interpreter : Completer {
     fn eat(self : &mut Self, line : &String) -> bool {
         let mut args = line.trim().split_whitespace();
         let command = args.next().unwrap_or("");
@@ -23,16 +33,80 @@ pub trait Commands<'a> : Sized where Self:'a {
         -> bool 
     {
         let mut cmditer = Self::COMMANDS.into_iter();
-        let optcmd = cmditer.find(|Command(n,_a)| n == &command); 
+        let optcmd = cmditer.find(|Command(n,_a, _c)| n == &command); 
         
         match optcmd {
             None => false,
-            Some(Command(_n, action)) => action(self, args)
+            Some(Command(_n, action, completer)) => action(self, args)
         }
     }
     
     fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &str)
         -> bool {false}
+
+    fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
+            -> Result<(usize, Vec<Pair>), ReadlineError>
+    {
+        let line_trimmed = line.trim();
+        let (command, args) = match line_trimmed.split_once(' ') {
+            Some((c, a)) => (c,a),
+            None => {
+                if line.ends_with(' ') {
+                    (line_trimmed, "")
+                }
+                else {
+                    let mut cmditer2 = Self::COMMANDS.into_iter();
+                    let cmds : Vec<Pair> = cmditer2.
+                            map(|Command(n,_a, _c)| n).
+                            filter(|cmd| cmd.starts_with(&line)).
+                            map(|cmd| {let (first, last) = cmd.split_at(pos); last}).
+                            //map(|cmd| cmd.to_string()).
+                            map(|cmd| Pair{
+                                display: cmd.to_string(),
+                                replacement: cmd.to_string()})
+                            .collect();
+ 
+                    return Ok((0, cmds.to_vec()))
+                }
+            }
+        };
+
+        let mut cmditer = Self::COMMANDS.into_iter();
+        let optcmd = cmditer.find(|Command(n,_a, _c)| n == &command); 
+        
+        match optcmd {
+            Some(Command(n, _action, completer)) => {
+                let vec = match completer.complete(args.trim()) {
+                    Ok(vec) => {
+                        let mut veciter = vec.into_iter();
+                        let result : Vec<Pair> = veciter.
+                                map(|arg| {
+                                    let (_, new) = arg.split_at(args.len());
+                                    new.to_string()}).
+                                map(|rep| Pair {
+                                        display: rep.to_string(),
+                                        replacement: rep.to_string()}).
+                                collect();
+                     /* 
+                        for c in result.into_iter() {
+                            print!("cand: {} -- {}", c.display, c.replacement)
+                        }
+
+                        panic!("");
+                    */
+                        return Ok((pos, result));
+                    },
+                    Err(_) => ()
+                };
+            }
+            _ => ()
+        }
+
+        return Ok((pos, Vec::<Pair>::new()))
+    }
+    
+    fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
+            -> Result<(usize, Vec<Pair>), ReadlineError>;
 }
 
 pub trait CommandsFB<'a> : Commands<'a> {
@@ -65,3 +139,23 @@ impl<'a, C : Commands<'a>> Interpreter for SimpleInterpreter<'a, C> {
     }
 }
 
+impl<'a, C : Commands<'a>> Completer for SimpleInterpreter<'a, C> {
+    type Candidate = Pair;
+
+    fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
+            -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
+    {
+        let mut vec = match self.commands.complete(line, pos, ctx) {
+            Ok((_, v)) => v,
+            _ => Vec::<Pair>::new()
+        };
+        
+        let mut vec2 = match self.commands.complete_fb(line, pos, ctx) {
+            Ok((_, v)) => v,
+            _ => Vec::<Pair>::new()
+        };
+
+        vec.append(&mut vec2);
+        return Ok((pos, vec))
+    }
+}

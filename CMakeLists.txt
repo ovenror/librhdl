@@ -19,7 +19,7 @@ add_library(rhdl_obj OBJECT "")
 target_include_directories(rhdl_obj PRIVATE ${Boost_INCLUDE_DIRS})
 target_include_directories(rhdl_obj PRIVATE src)
 target_include_directories(rhdl_obj PUBLIC include)
-target_compile_features(rhdl_obj PRIVATE cxx_std_17)
+target_compile_features(rhdl_obj PRIVATE cxx_std_20)
 
 if(MSVC)
     add_definitions(/FI"${PROJECT_SOURCE_DIR}/src/util/debug.h")
