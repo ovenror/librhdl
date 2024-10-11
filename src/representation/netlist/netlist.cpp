@@ -304,7 +304,7 @@ void Netlist::dot(std::string extra) const
 {
 	if (logLevel >= LOG_REP) {
 		std::stringstream filename;
-		filename << canonicalName() << extra << ".dot";
+		filename << name() << extra << ".dot";
 		std::ofstream dotfile(filename.str());
 		dotfile << graph_;
 	}

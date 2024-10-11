@@ -25,6 +25,11 @@ using rhdl::netlist::Netlist;
 using rhdl::netlist::VertexRef;
 namespace blocks = rhdl::blocks;
 
+
+const ISingle *in_ = new ISingle("in", Interface::Direction::IN);
+const ISingle *out_ = new ISingle("out", Interface::Direction::OUT);
+rhdl::Entity dummy_("DUMMY", {in_, out_});
+
 class TestModel : public TreeModel {
 public:
 	TestModel();
@@ -32,18 +37,10 @@ public:
 	Wire *in, *out;
 	Node *inv;
 	Wire *c0_0;
-
-	const ISingle *in_;
-	const ISingle *out_;
-	rhdl::Entity dummy_;
 };
 
 TestModel::TestModel()
-	:
-	  TreeModel(dummy_, nullptr, nullptr),
-	  in_(new ISingle("in", Interface::Direction::IN)),
-	  out_(new ISingle("out", Interface::Direction::OUT)),
-	  dummy_("DUMMY", {in_, out_})
+	: TreeModel(dummy_, nullptr, nullptr)
 {
 	const IComposite &iface = dummy_.interface();
 

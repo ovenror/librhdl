@@ -71,6 +71,12 @@ inline rhdl_direction cerror_return<rhdl_direction>(int)
 }
 
 template <>
+inline rhdl_reptype cerror_return<rhdl_reptype>(int)
+{
+	return RHDL_INVALID_REPTYPE;
+}
+
+template <>
 inline int cerror_return<int>(int ec)
 {
 	return static_cast<int>(ec);
@@ -288,7 +294,8 @@ static VALUE_TYPE rhdl_read_value(const rhdl_object_t *o) {
 		return static_cast<const VALUE_TYPE>(co);
 	};
 
-	return cerror<VALUE_TYPE, 1>(f, std::array<int, 1>{E_WRONG_VALUE_TYPE});
+	auto result = cerror<VALUE_TYPE, 1>(f, std::array<int, 1>{E_WRONG_VALUE_TYPE});
+	return result;
 }
 
 int rhdl_has_value(const rhdl_object_t *o) {
@@ -315,4 +322,8 @@ uint64_t rhdl_read_u64(const rhdl_object_t *o) {
 
 rhdl_direction rhdl_read_direction(const rhdl_object_t *o) {
 	return rhdl_read_value<rhdl_direction>(o);
+}
+
+enum rhdl_reptype rhdl_read_reptype(const rhdl_object_t *o) {
+	return rhdl_read_value<rhdl_reptype>(o);
 }

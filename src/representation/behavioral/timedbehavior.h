@@ -36,7 +36,6 @@ public:
 	TimedBehavior(
 			const Entity &entity, const Timing *timing,
 			std::unique_ptr<SimFactory> &&);
-	TimedBehavior(const TimedBehavior &&) = delete;
 	TimedBehavior(TimedBehavior &&) = default;
 
 	virtual ~TimedBehavior();

@@ -2,6 +2,8 @@
 #define ENTITY_H
 
 #include <rhdl/construction/c/types.h>
+
+#include "representationcontainer.h"
 #include "timing.h"
 
 #include "interface/icomposite.h"
@@ -54,8 +56,11 @@ public:
 
 	template <class RepType>
 	const RepType &addRepresentation(std::unique_ptr<RepType> &&rep) const {
+		const RepType &derivedrep = *rep;
 		std::unique_ptr<Representation> baserep = std::move(rep);
-		return static_cast<const RepType &>(addRepresentation(std::move(baserep)));
+		assert(baserep.get() != nullptr);
+		addRepresentation(std::move(baserep));
+		return derivedrep;
 	}
 
 	const Representation *getRepresentation(
@@ -71,7 +76,6 @@ public:
 
 	Representations::TypeSet representationTypes() const;
 
-	using RepresentationContainer = std::vector<std::unique_ptr<const Representation>>;
 	using TimingContainer = std::vector<std::unique_ptr<Timing>>;
 
 	template <class Index>

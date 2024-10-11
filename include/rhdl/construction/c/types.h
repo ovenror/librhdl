@@ -19,7 +19,7 @@ enum rhdl_type {RHDL_ENTITY, RHDL_REPTYPE, RHDL_REPRESENTATION,
 		RHDL_DIRECTION,
 		RHDL_CSTRING, RHDL_I64, RHDL_U64};
 
-enum rhdl_reptype {STRUCURAL, NETLIST, BLOCKS};
+enum rhdl_reptype {RHDL_INVALID_REPTYPE = -1, RHDL_STRUCURAL, RHDL_NETLIST, RHDL_BLOCKS};
 enum rhdl_member {RHDL_ENTITY_INTERFACE, RHDL_ENTITY_REPRESENTATIONS};
 
 typedef const struct rhdl_object {
@@ -30,6 +30,10 @@ typedef const struct rhdl_object {
 typedef const struct rhdl_namespace_struct {
 	const char *const *members;
 } rhdl_namespace_t;
+
+typedef const struct rhdl_representation {
+	enum rhdl_reptype type;
+} rhdl_representation_t;
 
 struct rhdl_isingle {
 	enum rhdl_direction dir;

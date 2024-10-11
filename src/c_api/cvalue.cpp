@@ -15,6 +15,10 @@ CValue::CValue(rhdl_type typeId, std::string name)
 		: CObject(typeId, name)
 {}
 
+CValue::CValue(CValue &&moved) : CObject(std::move(moved))
+{}
+
+
 CValue::~CValue() {}
 
 } /* namespace rhdl */

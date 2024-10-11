@@ -1,7 +1,12 @@
 #ifndef REPRESENTATION_H
 #define REPRESENTATION_H
 
+#include <c_api/valueobject.h>
+#include <rhdl/construction/c/types.h>
+
 #include "representationtypeid.h"
+#include "c_api/typedcvalue.h"
+#include "c_api/valueobject.h"
 
 #include <vector>
 #include <map>
@@ -14,12 +19,17 @@ class Simulator;
 class Timing;
 class Entity;
 
-class Representation
+class Representation : public ValueObject<rhdl_representation, RHDL_REPRESENTATION>
 {
+	using Super = ValueObject<rhdl_representation, RHDL_REPRESENTATION>;
+
 public:
 	using TypeID = RepresentationTypeID;
 
+	Representation(Representation &&);
 	virtual ~Representation();
+
+	Representation &cast() override {return *this;}
 
 	TypeID typeID() const {return typeID_;}
 	const Entity& entity() const {return entity_;}
@@ -33,7 +43,9 @@ public:
 
 	void breakTiming();
 
-	std::string canonicalName() const;
+	std::string canonicalName(
+			const Entity &entity, TypeID type,
+			const Representation *parent) const;
 
 protected:
 	Representation(
@@ -51,6 +63,7 @@ private:
 	const Timing *timing_;
 	const size_t sibling_index_;
 	mutable size_t num_descendants_ = 0;
+	TypedCValue<rhdl_reptype> reptype;
 };
 
 }

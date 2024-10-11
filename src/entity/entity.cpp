@@ -1,3 +1,4 @@
+#include <entity/representationcontainer.h>
 #include "entity.h"
 #include "timing.h"
 
@@ -24,6 +25,7 @@ Entity::Entity(
 {
 	repIdx_timing_[nullptr];
 	add(&interface_);
+	add(&representations_);
 	c_.content().iface = c_ptr(static_cast<const Interface &>(interface_));
 }
 
@@ -128,6 +130,8 @@ Representations::TypeSet Entity::representationTypes() const
 
 Entity::RepresentationIterator Entity::getRepresentationIterator(RepresentationContainer::iterator i) const
 {
+	using function = const Representation &(std::unique_ptr<const Representation> &);
+	using src = RepresentationContainer::iterator;
 	return boost::make_transform_iterator(i, [](std::unique_ptr<const Representation> &pr) -> const Representation & {return *pr;});
 }
 

@@ -22,6 +22,7 @@ struct RepresentationBase : public Representation {
 	{
 		static_assert(RepType::ID == ID, "CRTP!");
 	}
+	RepresentationBase(RepresentationBase &&moved) = default;
 
 	virtual bool typeCheck() const override {return typeID() == ID;}
 

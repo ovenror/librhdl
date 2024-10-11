@@ -21,6 +21,7 @@ public:
 	using C_Struct = Typed_C_Struct;
 
 	TypedCObject(std::string name) : BASE(TYPE_ID, name), c_(*this) {}
+	TypedCObject(TypedCObject &&moved) : BASE(TYPE_ID, moved.name()), c_(*this) {}
 
 	virtual ~TypedCObject() {}
 

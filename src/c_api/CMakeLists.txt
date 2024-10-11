@@ -8,4 +8,5 @@ target_sources(rhdl_obj
 		rootnamespace.cpp
 		structurehandle.cpp
 		typedcvalue.cpp
+		valueobject.cpp
 )

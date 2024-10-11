@@ -15,23 +15,23 @@ namespace rhdl {
 
 template <
 		class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING=true,
-		class TYPED_BASE = CObject>
+		class TYPED_BASE = CObject, class VALUE=CObject>
 class CObjectImpl : public TypedCObject<
 		CRTP, Typed_C_Struct, TYPE_ID, TYPED_BASE> {
 	using Super = TypedCObject<CRTP, Typed_C_Struct, TYPE_ID, TYPED_BASE>;
 	using PT = typename std::conditional<
-			OWNING, std::unique_ptr<const CObject>, const CObject*>::type;
+			OWNING, std::unique_ptr<const VALUE>, const VALUE*>::type;
 
 public:
 	CObjectImpl(std::string name) : Super(name)
 	{
 		Super::setMembers(c_strings());
 	}
+	CObjectImpl(CObjectImpl &&);
 
 	virtual ~CObjectImpl() {};
 
-	//CObject &at(const std::string &name) override;
-	const CObject& at(const std::string &name) const override;
+	const CObject &at(const std::string &name) const override;
 	const CObject &at(const char *name) const override;
 
 	const CObject &add(PT member)
@@ -50,29 +50,20 @@ public:
 
 	const std::vector<const char*> &c_strings() const override {return dict_.c_strings();}
 
-private:
-	LexicalPointingDictionary<CObject, OWNING> dict_;
-};
+protected:
+	void clearDict() {dict_.clear();}
 
-/*
-template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING>
-inline CObject& CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING>::at(
-		const std::string &name)
-{
-	try {
-		return dict_.at(name);
-	}
-	catch (std::out_of_range &e) {
-		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
-	}
-}
-*/
+	auto begin() {dict_.begin();}
+	auto end() {dict_.end();}
+
+	LexicalPointingDictionary<VALUE, OWNING> dict_;
+};
 
 template<
 		class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING,
-		class TYPED_BASE>
+		class TYPED_BASE, class VALUE>
 inline const CObject& CObjectImpl<
-		CRTP, Typed_C_Struct, TYPE_ID, OWNING, TYPED_BASE>::at(
+		CRTP, Typed_C_Struct, TYPE_ID, OWNING, TYPED_BASE, VALUE>::at(
 				const std::string &name) const
 {
 	try {
@@ -83,11 +74,19 @@ inline const CObject& CObjectImpl<
 	}
 }
 
+template<class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID,
+		bool OWNING, class TYPED_BASE, class VALUE>
+inline CObjectImpl<CRTP, Typed_C_Struct, TYPE_ID, OWNING, TYPED_BASE, VALUE>::CObjectImpl(
+		CObjectImpl &&moved) :
+				Super(std::move(moved)),
+				dict_(std::move(moved.dict_))
+{}
+
 template<
 		class CRTP, class Typed_C_Struct, rhdl_type TYPE_ID, bool OWNING,
-		class TYPED_BASE>
+		class TYPED_BASE, class VALUE>
 inline const CObject& CObjectImpl<
-		CRTP, Typed_C_Struct, TYPE_ID, OWNING, TYPED_BASE>::at(
+		CRTP, Typed_C_Struct, TYPE_ID, OWNING, TYPED_BASE, VALUE>::at(
 				const char *name) const
 {
 	try {

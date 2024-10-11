@@ -22,6 +22,7 @@ public:
 		std::vector<const Entity *> elements,
 		std::vector<Connection> connections,
 		const Timing *timing, const Representation *parent);
+	Structure(Structure &&) = default;
 
 	virtual std::unique_ptr<Simulator> makeSimulator(bool use_behavior) const override;
 

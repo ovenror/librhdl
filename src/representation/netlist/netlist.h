@@ -28,6 +28,7 @@ public:
 			const Timing *timing);
 
 	Netlist(const Netlist &, std::forward_list<VertexRef> toSplit);
+	Netlist(Netlist &&) = default;
 
 	virtual ~Netlist() {}
 

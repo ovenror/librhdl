@@ -20,6 +20,8 @@ public:
 		c_.content_.type = typeId;
 	}
 
+	CObject(CObject &&moved) : c_(*this), name_(std::move(moved.name_)) {}
+
 	virtual ~CObject() {}
 
 	const std::string &name() const {return name_;}
@@ -39,6 +41,10 @@ public:
 	}
 
 	virtual explicit operator rhdl_direction() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual explicit operator rhdl_reptype() const {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
 	}
 
@@ -63,6 +69,8 @@ private:
 	friend class Wrapper<CObject>;
 
 	static constexpr unsigned long C_ID = 0x0813C7;
+
+public:
 	Wrapper<CObject> c_;
 };
 

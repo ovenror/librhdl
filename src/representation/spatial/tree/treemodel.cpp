@@ -216,7 +216,7 @@ std::unique_ptr<TreeModel> TreeModel::make(
 		if (unsynthesizableVertices.empty())
 			break;
 
-		LOG(DEBUG) << source.get().canonicalName() << " has unsynthesizable vertices" << std::endl;
+		LOG(DEBUG) << source.get().name() << " has unsynthesizable vertices" << std::endl;
 
 		for (auto v : unsynthesizableVertices)
 			LOG(DEBUG) << "split " << v << std::endl;

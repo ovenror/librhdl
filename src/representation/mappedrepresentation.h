@@ -28,6 +28,7 @@ public:
 	MappedRepresentation(
 			const Entity &, const Representation *parent, const Timing *,
 			InterfaceMap);
+	MappedRepresentation(MappedRepresentation &&) = default;
 
 	using Super::Super;
 	virtual ~MappedRepresentation() {}

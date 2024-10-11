@@ -75,6 +75,24 @@ int entity()
 	REQUIRE(in_value == RHDL_IN);
 	REQUIRE(out_value == RHDL_OUT);
 
+	rhdl_object_t *reps = rhdl_get(inverter, "representations");
+	REQUIRE(reps);
+
+	rhdl_object_t *r = rhdl_get(reps, "Inverter_0_1");
+	REQUIRE(r);
+
+	const char *const *list = r -> members;
+
+	REQUIRE(list);
+	CHECK(&list, "type");
+	END(list);
+
+	rhdl_object_t *rtype = rhdl_get(r, "type");
+	REQUIRE(rtype);
+
+	enum rhdl_reptype rt = rhdl_read_reptype(rtype);
+	REQUIRE(rt == RHDL_STRUCURAL);
+
 	return SUCCESS;
 }
 

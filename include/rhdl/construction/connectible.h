@@ -22,6 +22,7 @@ class Connectible
 {
 public:
 	Connectible();
+	virtual ~Connectible() {}
 
 	const Connectible &operator>>(const Connectible &to) const;
 	const Connectible &operator<<(const Connectible &from) const;

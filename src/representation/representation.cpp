@@ -4,11 +4,41 @@
 #include "entity/entity.h"
 #include "entity/timing.h"
 
+#include "c_api/typedcvalue.h"
+
 #include "simulation/simulator.h"
 
 #include <cassert>
 
+extern "C" {
+#include <rhdl/construction/c/functions.h>
+}
+
 namespace rhdl {
+
+Representation::Representation(
+		const Entity &entity, TypeID id, const Representation *parent,
+		const Timing *timing)
+	:
+	  Super(canonicalName(entity, id, parent)),
+	  typeID_(id), entity_(entity), parent_(parent), timing_(timing),
+	  sibling_index_(parent ? parent -> num_descendants_ : 0),
+	  reptype("type", c_.content().type)
+{
+	assert (!timing || &timing -> entity() == &entity);
+
+	c_.content().type = (rhdl_reptype) id;
+	add(&reptype);
+}
+
+Representation::Representation(Representation &&moved)
+	: Super(std::move(moved)), typeID_(moved.typeID_),
+	  entity_(moved.entity_), parent_(moved.parent_), timing_(moved.timing_),
+	  sibling_index_(moved.sibling_index_), reptype("type", c_.content().type)
+{
+	c_.content().type = (rhdl_reptype) typeID_;
+	add(&reptype);
+}
 
 Representation::~Representation() {
 }
@@ -42,26 +72,24 @@ void Representation::breakTiming()
 	timing_ = &entity_.addTiming();
 }
 
-Representation::Representation(
-		const Entity &entity, TypeID id, const Representation *parent,
-		const Timing *timing)
-	:
-	  typeID_(id), entity_(entity), parent_(parent), timing_(timing),
-	  sibling_index_(parent_ ? parent_ -> register_descendant() : 0)
-{
-	assert (!timing || &timing -> entity() == &entity);
-}
-
-std::string Representation::canonicalName() const
+std::string Representation::canonicalName(
+		const Entity &entity, TypeID type,
+		const Representation *parent) const
 {
 	std::stringstream name;
+	auto sibling_index = 0;
 
-	if (parent_)
-		name << parent_ -> canonicalName();
-	else
-		name << entity_.name();
+	if (parent) {
+		name << parent -> name();
+		sibling_index = parent -> register_descendant();
 
-	name << "_" << typeID() << sibling_index_;
+	}
+	else {
+		name << entity.name();
+		sibling_index = entity.representations().size();
+	}
+
+	name << "_" << type << "_" << sibling_index;
 
 	return name.str();
 }

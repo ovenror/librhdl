@@ -18,6 +18,7 @@ namespace rhdl {
 class InternalStructure : public Structure {
 public:
 	InternalStructure(const std::string &name, Mode mode = CREATE_STATELESS);
+	virtual ~InternalStructure() {};
 
 	template<class siface_class, class internal_state_class>
 	void addTimedBehavior(

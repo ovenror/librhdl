@@ -26,10 +26,12 @@ private:
 	using CStrings = std::vector<const char *>;
 
 public:
+	using iterator = typename std::set<T>::iterator;
 	using const_iterator = typename std::set<T>::const_iterator;
 	using size_type = typename std::set<T>::size_type;
 
 	LexicalDictionary();
+	LexicalDictionary(LexicalDictionary &&);
 	virtual ~LexicalDictionary() {}
 
 	std::pair<const_iterator, bool> insert(T element);
@@ -49,8 +51,11 @@ public:
 
 	const std::vector<const char*> &c_strings() const override {return c_strings_();}
 
-private:
+	iterator begin() {return set_.begin();}
+	iterator end() {return set_.end();}
+	void clear() {set_.clear(); c_strings_.invalidate();}
 
+private:
 	void compute_cstrings(CStrings &cs) const;
 
 	Cached<CStrings, LexicalDictionary> c_strings_;
@@ -58,8 +63,8 @@ private:
 };
 
 template<class T>
-LexicalDictionary<T>::LexicalDictionary() : c_strings_(*this, &LexicalDictionary<T>::compute_cstrings)
-{}
+LexicalDictionary<T>::LexicalDictionary() :
+		c_strings_(*this, &LexicalDictionary<T>::compute_cstrings) {}
 
 template<class T>
 inline std::pair<typename std::set<T>::const_iterator, bool> LexicalDictionary<T>::insert(T element)
@@ -136,6 +141,12 @@ inline const T &LexicalDictionary<T>::add(T element) {
 
 	return *i;
 }
+
+template<class T>
+inline LexicalDictionary<T>::LexicalDictionary(LexicalDictionary &&moved)
+		: set_(std::move(moved.set_)),
+		  c_strings_(*this, &LexicalDictionary<T>::compute_cstrings)
+{}
 
 template<class T>
 void LexicalDictionary<T>::compute_cstrings(CStrings& cs) const {

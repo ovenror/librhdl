@@ -15,12 +15,14 @@ namespace rhdl {
 template<class T, bool OWNING = true>
 class LexicalPointingDictionary : public Dictionary<T> {
 	using PT = typename std::conditional<OWNING, std::unique_ptr<const T>, const T*>::type;
+	using Dict = LexicalDictionary<PT>;
 
 public:
 	LexicalPointingDictionary() {}
+	LexicalPointingDictionary(LexicalPointingDictionary &&moved)
+			: impl_(std::move(moved.impl_)) {}
 	virtual ~LexicalPointingDictionary() {}
 
-	//T& at(const std::string &name) override {return *impl_.at(name);}
 	const T& at(const char *name) const override {return *impl_.at(name);}
 	const T& at(const std::string &name) const override {return *impl_.at(name);}
 
@@ -30,9 +32,14 @@ public:
 
 	const std::vector<const char*> &c_strings() const override {return impl_.c_strings();}
 
+	void clear() {impl_.clear();}
+	typename Dict::iterator begin() {return impl_.begin();}
+	typename Dict::iterator end() {return impl_.end();}
+
 private:
-	LexicalDictionary<PT> impl_;
+	Dict impl_;
 };
+
 } /* namespace rhdl */
 
 #endif /* SRC_UTIL_LEXICALPOINTINGDICTIONARY_H_ */

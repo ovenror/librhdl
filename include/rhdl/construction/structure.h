@@ -33,7 +33,7 @@ public:
 	};
 
 	Structure(const std::string &name, Mode mode = CREATE_STATELESS);
-	~Structure();
+	virtual ~Structure();
 
 	StructureConnector operator[] (const std::string &iname) const;
 

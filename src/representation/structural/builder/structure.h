@@ -27,6 +27,7 @@ class Structure : public Element {
 
 public:
 	Structure(bool stateless);
+	Structure(Structure &&) = default;
 	virtual ~Structure();
 
 	ComplexPort &add(const Entity &partEntity);

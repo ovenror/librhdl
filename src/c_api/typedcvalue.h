@@ -38,6 +38,11 @@ struct CValueTypeToTypeID<rhdl_direction> {
 	constexpr static rhdl_type id = RHDL_DIRECTION;
 };
 
+template <>
+struct CValueTypeToTypeID<rhdl_reptype> {
+	constexpr static rhdl_type id = RHDL_REPTYPE;
+};
+
 template <class VALUE_TYPE>
 class TypedCValue :
 		public CObjectImpl<
@@ -52,6 +57,8 @@ public:
 	using ValueType = VALUE_TYPE;
 
 	TypedCValue(std::string name, const ValueType &value);
+	TypedCValue(const TypedCValue &);
+	TypedCValue(TypedCValue &&);
 	virtual ~TypedCValue();
 
 	TypedCValue &cast() override {return *this;}
@@ -67,5 +74,6 @@ private:
 };
 
 } /* namespace rhdl */
+
 
 #endif /* SRC_C_API_TYPEDCVALUE_H_ */
