@@ -19,7 +19,8 @@ class Simulator;
 class Timing;
 class Entity;
 
-class Representation : public ValueObject<rhdl_representation, RHDL_REPRESENTATION>
+class Representation
+		: public ValueObject<rhdl_representation, RHDL_REPRESENTATION>
 {
 	using Super = ValueObject<rhdl_representation, RHDL_REPRESENTATION>;
 
@@ -56,6 +57,7 @@ protected:
 
 private:
 	size_t register_descendant() const;
+	void compute_content(std::string&) const;
 
 	const TypeID typeID_;
 	const Entity &entity_;
@@ -63,7 +65,9 @@ private:
 	const Timing *timing_;
 	const size_t sibling_index_;
 	mutable size_t num_descendants_ = 0;
-	TypedCValue<rhdl_reptype> reptype;
+	TypedCValue<rhdl_reptype> reptype_;
+	Cached<std::string, Representation> content_cache_;
+	TypedCValue<const char *> content_;
 };
 
 }

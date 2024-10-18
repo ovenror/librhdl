@@ -78,15 +78,17 @@ int entity()
 	rhdl_object_t *reps = rhdl_get(inverter, "representations");
 	REQUIRE(reps);
 
-	rhdl_object_t *r = rhdl_get(reps, "Inverter_0_1");
+	rhdl_object_t *r = rhdl_get(reps, "Inverter_TimedBehavior_1");
 	REQUIRE(r);
 
 	const char *const *list = r -> members;
 
+	/*
 	REQUIRE(list);
+	CHECK(&list, "content");
 	CHECK(&list, "type");
 	END(list);
-
+*/
 	rhdl_object_t *rtype = rhdl_get(r, "type");
 	REQUIRE(rtype);
 

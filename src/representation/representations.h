@@ -1,11 +1,14 @@
 #ifndef REPRESENTATIONS_H
 #define REPRESENTATIONS_H
 
+#include "representationtype.h"
 #include "representationtypeid.h"
 #include "util/list.h"
 
 #include <array>
 #include <bitset>
+#include <memory>
+#include <vector>
 
 namespace rhdl {
 
@@ -42,7 +45,7 @@ class Representations
 public:
 	using Types = List<
 			behavioral::TimedBehavior, behavioral::FunctionalBehavior,
-			structural::CompressedStructure, structural::Structure,
+			/* structural::CompressedStructure,*/ structural::Structure,
 			netlist::Netlist,
 			spatial::TreeModel,
 			blocks::Blocks,
@@ -58,6 +61,9 @@ private:
 
 	template <class typelist, RepTypeID startID = 0, RepTypeID... typeIDs>
 	struct MkValidIDLIst;
+
+	template <RepTypeID id, class Types>
+	struct RepTypeIDToType;
 
 	template <class Want, RepTypeID id, class... types>
 	struct TypeToIDHelper;
@@ -93,16 +99,24 @@ private:
 		static constexpr Type array = {validTypeIDs...};
 	};
 
+	template <class Types>
+	struct MkObjects;
+
 	using IDGenerator = MkValidIDLIst<Types>;
 	using ArrayGenerator = MkArray<IDGenerator::count, typename IDGenerator::list>;
 
 public:
+	const std::vector<RepresentationType> &objects() const {return objects_;}
+
 	template <class type>
 	using TypeToID = TypeToIDHelper<type, 0, Types>;
 	static constexpr auto validTypeIDs = ArrayGenerator::array;
 	using TypeSet = std::bitset<validTypeIDs.size()>;
 	static constexpr RepTypeID INVALID = TypeToID<InvalidRepresentation>::value;
+	std::vector<RepresentationType> objects_;
 };
+
+extern Representations representations;
 
 }
 

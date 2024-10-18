@@ -1,5 +1,6 @@
 #include "representation.h"
 #include "representations.h"
+#include "representationtype.h"
 
 #include "entity/entity.h"
 #include "entity/timing.h"
@@ -23,21 +24,27 @@ Representation::Representation(
 	  Super(canonicalName(entity, id, parent)),
 	  typeID_(id), entity_(entity), parent_(parent), timing_(timing),
 	  sibling_index_(parent ? parent -> num_descendants_ : 0),
-	  reptype("type", c_.content().type)
+	  reptype_("type", c_.content().type),
+	  content_cache_(*this, &Representation::compute_content),
+	  content_("content", static_cast<const std::string &>(content_cache_()).c_str())
 {
 	assert (!timing || &timing -> entity() == &entity);
 
 	c_.content().type = (rhdl_reptype) id;
-	add(&reptype);
+	add(&reptype_);
+	add(&content_);
 }
 
 Representation::Representation(Representation &&moved)
 	: Super(std::move(moved)), typeID_(moved.typeID_),
 	  entity_(moved.entity_), parent_(moved.parent_), timing_(moved.timing_),
-	  sibling_index_(moved.sibling_index_), reptype("type", c_.content().type)
+	  sibling_index_(moved.sibling_index_), reptype_("type", c_.content().type),
+	  content_cache_(*this, &Representation::compute_content),
+	  content_("content", static_cast<const std::string &>(content_cache_()).c_str())
 {
 	c_.content().type = (rhdl_reptype) typeID_;
-	add(&reptype);
+	add(&reptype_);
+	add(&content_);
 }
 
 Representation::~Representation() {
@@ -89,7 +96,8 @@ std::string Representation::canonicalName(
 		sibling_index = entity.representations().size();
 	}
 
-	name << "_" << type << "_" << sibling_index;
+	const auto &objs = representations.objects();
+	name << "_" << objs[type].name() << "_" << sibling_index;
 
 	return name.str();
 }
@@ -107,6 +115,13 @@ std::unique_ptr<Simulator> Representation::makeSimulator(
 size_t Representation::register_descendant() const
 {
 	return num_descendants_++;
+}
+
+void Representation::compute_content(std::string &result) const
+{
+	std::stringstream ss;
+	ss << *this;
+	result = ss.str();
 }
 
 }

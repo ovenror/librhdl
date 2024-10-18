@@ -5,6 +5,7 @@
 #include "representations.h"
 #include "transformation/transformer.h"
 #include "transformation/typedtransformation.h"
+#include "c_api/valueobject.h"
 
 namespace rhdl {
 

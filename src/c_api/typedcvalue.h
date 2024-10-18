@@ -24,6 +24,11 @@ struct CValueTypeToTypeID<const char *> {
 };
 
 template <>
+struct CValueTypeToTypeID<std::string> {
+	constexpr static rhdl_type id = RHDL_CSTRING;
+};
+
+template <>
 struct CValueTypeToTypeID<int64_t> {
 	constexpr static rhdl_type id = RHDL_I64;
 };

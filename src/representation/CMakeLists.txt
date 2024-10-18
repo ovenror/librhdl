@@ -3,6 +3,7 @@ target_sources(rhdl_obj
 		representation.cpp
 		representationbase.cpp
 		representations.cpp
+		representationtype.cpp
 )
 
 add_subdirectory(behavioral)

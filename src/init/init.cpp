@@ -25,8 +25,15 @@ void root_ready()
 	try_init();
 }
 
+void reps_ready()
+{
+	state |= 8;
+	defaultLib = new Library();
+	try_init();
+}
+
 void try_init() {
-	if (state == 7) {
+	if (state == 15) {
 		RootNamespace::init();
 		lib_init();
 	}

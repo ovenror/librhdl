@@ -6,7 +6,7 @@
 
 namespace rhdl {
 
-Library *defaultLib = new Library();
+Library *defaultLib; // = new Library();
 
 Library::Library() : TypedCObject("entities")
 {
