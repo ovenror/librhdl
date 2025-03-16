@@ -4,6 +4,8 @@
 #include "representation/representationtypeid.h"
 #include "transformation.h"
 
+#include "c_api/valueobject.h"
+
 #include <memory>
 #include <cassert>
 
@@ -20,7 +22,7 @@ class TypedTransformation : public Transformation
 public:
 	inline static constexpr TypeID ID{FromRep::ID, ToRep::ID};
 
-	TypedTransformation() : Transformation(ID) {}
+	TypedTransformation(std::string name) : Transformation(ID, name) {}
 
 	virtual bool typeCheck() const override {return typeID() == ID;}
 

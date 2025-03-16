@@ -25,6 +25,7 @@ int rootNamespace()
 
 	REQUIRE(list);
 	CHECK(&list, "entities");
+	CHECK(&list, "transformations");
 	END(list);
 
 	return SUCCESS;

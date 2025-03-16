@@ -21,6 +21,8 @@ public:
 	StructureToNetlist();
 	virtual ~StructureToNetlist();
 
+	StructureToNetlist &cast() override {return *this;}
+
 	virtual std::unique_ptr<netlist::Netlist> execute(
 			const structural::Structure &source) const override;
 

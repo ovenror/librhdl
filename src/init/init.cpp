@@ -5,7 +5,7 @@
 namespace rhdl {
 namespace init {
 
-int state;
+int state = 0;
 
 void transformer_ready()
 {
@@ -27,8 +27,9 @@ void root_ready()
 
 void reps_ready()
 {
-	state |= 8;
 	defaultLib = new Library();
+	transformer = new Transformer();
+	state |= 8;
 	try_init();
 }
 

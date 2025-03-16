@@ -15,8 +15,12 @@ namespace rhdl {
 template <class FromRep, class ToRep>
 class DefaultTransformation : public TypedTransformation<FromRep, ToRep> {
 public:
-	DefaultTransformation() {}
+	DefaultTransformation() : TypedTransformation<FromRep, ToRep>(
+			std::string("Default") + representations.objects()[FromRep::ID].name() + "_" +
+					representations.objects()[ToRep::ID].name()) {}
 	virtual ~DefaultTransformation() {}
+
+	DefaultTransformation &cast() override {return *this;}
 
 	std::unique_ptr<ToRep> execute(const FromRep &source) const override;
 };

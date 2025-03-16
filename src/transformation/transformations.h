@@ -3,6 +3,7 @@
 
 #include "transformationtypeid.h"
 #include "representation/representations.h"
+#include "c_api/namespace.h"
 
 #include <vector>
 #include <memory>

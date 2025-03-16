@@ -25,5 +25,6 @@ template <class C_Struct, enum rhdl_type TYPE>
 ValueObject<C_Struct, TYPE>::~ValueObject() {}
 
 template class ValueObject<rhdl_representation, RHDL_REPRESENTATION>;
+template class ValueObject<rhdl_transformation, RHDL_TRANSFORMATION>;
 
 } /* namespace rhdl */

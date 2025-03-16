@@ -3,21 +3,23 @@
 
 #include "transformationtypeid.h"
 #include "util/list.h"
+#include "c_api/valueobject.h"
+#include "c_api/typedcvalue.h"
 #include <memory>
 
 namespace rhdl {
 
 class Representation;
 
-class Transformation
+class Transformation : public ValueObject<rhdl_transformation, RHDL_TRANSFORMATION>
 {
 public:
 	using TypeID = TransformationTypeID;
 
-	Transformation(TypeID id);
+	Transformation(TypeID id, std::string name);
 	Transformation();
 
-	TypeID typeID() const {return typeID_;}
+	TypeID typeID() const;
 
 	virtual bool typeCheck() const = 0;
 
@@ -25,6 +27,9 @@ public:
 
 private:
 	TypeID typeID_;
+	TypedCValue<rhdl_reptype> srctype_;
+	TypedCValue<rhdl_reptype> dsttype_;
+
 };
 
 }

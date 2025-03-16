@@ -12,7 +12,7 @@
 
 namespace rhdl {
 
-Transformer::Transformer()
+Transformer::Transformer() : Namespace("transformations")
 {
 	registerTransformations();
 	calculateTransformationPaths();
@@ -21,7 +21,9 @@ Transformer::Transformer()
 
 void Transformer::addTransformation(std::unique_ptr<const Transformation> &&transformation)
 {
-	transformations_[transformation -> typeID()].push_back(std::move(transformation));
+	auto ptr = transformation.get();
+	auto &obj = add(std::move(transformation));
+	transformations_[ptr -> typeID()].push_back(ptr);
 }
 
 std::unique_ptr<Representation> Transformer::transform(const Representation &source, TransformationTypeID ttype)
@@ -153,7 +155,7 @@ const Transformation *Transformer::select(TransformationTypeID t) const
 	if (list.empty())
 		return nullptr;
 	else
-		return list.back().get();
+		return list.back();
 }
 
 void Transformer::registerTransformations()
@@ -165,7 +167,7 @@ void Transformer::registerTransformations()
 	}
 }
 
-Transformer transformer;
+Transformer *transformer;
 
 }
 

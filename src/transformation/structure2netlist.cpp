@@ -14,7 +14,7 @@ using structural::Structure;
 using structural::ElementIdx;
 using structural::Port;
 
-StructureToNetlist::StructureToNetlist() {}
+StructureToNetlist::StructureToNetlist() : TypedTransformation("Structure2Netlist") {}
 StructureToNetlist::~StructureToNetlist() {}
 
 std::unique_ptr<Netlist> StructureToNetlist::execute(const Structure &source) const

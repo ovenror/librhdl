@@ -4,6 +4,8 @@
 #include "transformation/transformationtypeid.h"
 #include "representation/representations.h"
 
+#include "c_api/namespace.h"
+
 #include <map>
 #include <memory>
 #include <vector>
@@ -13,7 +15,7 @@ namespace rhdl {
 class Transformation;
 class Representation;
 
-class Transformer
+class Transformer : public Namespace
 {
 public:
 	using Path = std::vector<RepresentationTypeID>;
@@ -36,11 +38,11 @@ private:
 	void registerTransformations();
 	void calculateTransformationPaths();
 
-	std::map<TransformationTypeID, std::vector<std::unique_ptr<const Transformation>>> transformations_;
+	std::map<TransformationTypeID, std::vector<const Transformation *>> transformations_;
 	PathMap transformationPaths_;
 };
 
-extern Transformer transformer;
+extern Transformer *transformer;
 
 }
 

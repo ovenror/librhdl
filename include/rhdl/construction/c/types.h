@@ -35,6 +35,11 @@ typedef const struct rhdl_representation {
 	enum rhdl_reptype type;
 } rhdl_representation_t;
 
+typedef const struct rhdl_transformation {
+	enum rhdl_reptype srctype;
+	enum rhdl_reptype dsttype;
+} rhdl_transformation_t;
+
 struct rhdl_isingle {
 	enum rhdl_direction dir;
 };

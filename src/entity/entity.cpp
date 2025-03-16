@@ -177,9 +177,9 @@ const Representation *Entity::generate(Representation::TypeID dstType, const Rep
 	const Transformer::PathResult *pathResult = nullptr;
 
 	if (source)
-		pathResult = transformer.getTransformationPath(dstType, source -> typeID());
+		pathResult = transformer -> getTransformationPath(dstType, source -> typeID());
 	else
-		pathResult = transformer.getTransformationPath(dstType, representationTypes());
+		pathResult = transformer -> getTransformationPath(dstType, representationTypes());
 
 	if (!pathResult)
 		return nullptr;
@@ -192,7 +192,7 @@ const Representation *Entity::generate(Representation::TypeID dstType, const Rep
 
 	for (Representation::TypeID vertexType : path) {
 		assert (result);
-		result = &addRepresentation_internal(transformer.transform(*result, {existingType, vertexType}));
+		result = &addRepresentation_internal(transformer -> transform(*result, {existingType, vertexType}));
 		existingType = vertexType;
 	}
 

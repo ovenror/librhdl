@@ -19,7 +19,7 @@ using blocks::Blocks;
 using blocks::Block;
 using spatial::TreeModel;
 
-BGTree::BGTree() {}
+BGTree::BGTree() : TypedTransformation("BGTree") {}
 
 std::unique_ptr<Blocks> BGTree::execute(const TreeModel &source) const
 {

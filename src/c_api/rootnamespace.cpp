@@ -23,6 +23,8 @@ void RootNamespace::init()
 {
 	auto lib = std::unique_ptr<Library>(defaultLib);
 	rootNamespace.add(std::move(lib));
+	auto trans = std::unique_ptr<Transformer>(transformer);
+	rootNamespace.add(std::move(trans));
 }
 
 RootNamespace rootNamespace;
