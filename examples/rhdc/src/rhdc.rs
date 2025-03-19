@@ -1,12 +1,8 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-//#![allow(non_snake_case)]
-
 extern crate regex;
 extern crate lazy_static;
 extern crate const_format;
 
+use crate::librhdl::*;
 use crate::util::split_qn;
 use crate::interpreter;
 use crate::interpreter::Command;
@@ -22,7 +18,6 @@ use std::str::SplitWhitespace;
 use std::str::Split;
 use std::io::Write;
 use std::process::exit;
-use std::os::raw::c_char;
 use std::ffi::CString;
 use std::ffi::CStr;
 use std::ptr;
@@ -612,7 +607,7 @@ static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
 struct NoCompleter {}
 
 impl CommandCompleter for NoCompleter {
-    fn complete(&self, text: &str) -> Result<Vec<String>, ()>
+    fn complete(&self, _text: &str) -> Result<Vec<String>, ()>
     {
         return Err(());
     }
@@ -630,9 +625,10 @@ impl CommandCompleter for ObjectCompleter {
         let (mut accu, mut curbase) = match basename {
             "" => ("", unsafe{rhdl_get(std::ptr::null(), std::ptr::null())}),
             _ => {
-                let probe = unsafe{rhdl_get(
-                        std::ptr::null(),
-                        CString::new(basename).unwrap().as_ptr())};
+                let basename_cstr = CString::new(basename).unwrap();
+                let probe = unsafe{
+                    rhdl_get(std::ptr::null(), basename_cstr.as_ptr())};
+
                 if probe.is_null() {
                     ("", unsafe{rhdl_get(std::ptr::null(), std::ptr::null())})
                 }
@@ -646,18 +642,14 @@ impl CommandCompleter for ObjectCompleter {
         let mut tmp: String;
 
         for component in components {
-            //let o = self.get(&curbase, component);
             last = component.to_string();
-            let c = unsafe {
-                rhdl_get(
-                        curbase,
-                        CString::new(component).unwrap().as_ptr())
-            };
+
+            let component_cstr = CString::new(component).unwrap();
+            let c = unsafe {rhdl_get(curbase, component_cstr.as_ptr())};
 
             if c.is_null() {
                 break;
             }
-
 
             accu = if accu.is_empty() {
                 component

@@ -1,7 +1,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-//#![allow(non_snake_case)]
 
 extern crate regex;
 extern crate lazy_static;
@@ -13,9 +12,9 @@ mod stdemerg;
 mod wod;
 mod console;
 mod util;
-mod RHDC;
+mod rhdc;
+mod librhdl;
 
-use crate::console::Commands;
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 
@@ -29,7 +28,7 @@ fn main(){
     }
 
     let cons = console::Console::new(istty);
-    let mut rhdc = SimpleConsoleInterpreter::new(RHDC::RHDC::new(Outputs::new(istty)));
+    let rhdc = SimpleConsoleInterpreter::new(rhdc::RHDC::new(Outputs::new(istty)));
 
     cons.run(rhdc);
 }

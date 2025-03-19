@@ -9,10 +9,30 @@ fn main() {
 	println!("cargo:rustc-link-lib=dylib=stdc++");
 
     println!("cargo:rerun-if-changed=wrapper.h");
-    let bindings = bindgen::Builder::default()
+    let mut builder = bindgen::Builder::default()
         .header("wrapper.h")
         .clang_arg("-I../../include")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
+
+    let items = [
+        "rhdl_entity", "rhdl_iface",
+        "rhdl_begin_structure",
+        "rhdl_component", "rhdl_select", "rhdl_connect",
+        "rhdl_finish_structure",
+        "rhdl_print_commands",
+        "rhdl_get",
+        "rhdl_read_cstring", "rhdl_has_value",
+        "rhdl_errno", "rhdl_errstr",
+
+//        "Flags::F_CREATE_STATELESS", "Flags::F_CREATE_STATEFUL",
+        "Flags",
+        ];
+
+    for i in items {
+        builder = builder.allowlist_item(i);
+    }
+
+    let bindings = builder
         .generate()
         .expect("Unable to generate bindings");
 

@@ -5,7 +5,6 @@ use std::process::exit;
 
 use crate::interpreter;
 use crate::interpreter::Interpreter;
-use crate::RHDC::RHDC;
 use crate::interpreter::SimpleInterpreter;
 use crate::wod::WriteOrDie;
 use crate::stdemerg::StdEmerg;
@@ -52,9 +51,11 @@ pub trait Commands<'a> : interpreter::Commands<'a> {
     }
 }
 
+/*
 pub trait AutoCommands<'a> : Commands<'a> {
     fn auto_new(outputs: Outputs) -> Self; 
 }
+*/
 
 pub trait ConsoleInterpreter : interpreter::Interpreter {
     fn prompt_info(&self) -> &str;
@@ -121,7 +122,7 @@ struct MyHelper<I: Interpreter> {
     validator: MatchingBracketValidator,
     #[rustyline(Hinter)]
     hinter: HistoryHinter,
-    colored_prompt: String,
+    //colored_prompt: String,
 }
     
 //impl Console where for <'a'> &'a mut I: Completer {   
@@ -140,11 +141,11 @@ impl Console {
             completer: interpreter,
             highlighter: MatchingBracketHighlighter::new(),
             hinter: HistoryHinter::new(),
-            colored_prompt: "".to_owned(),
+            //colored_prompt: "".to_owned(),
             validator: MatchingBracketValidator::new()
         };
         rl.set_helper(Some(h));
-        //#[cfg(feature = "with-file-history")]
+        
         if rl.load_history("history.txt").is_err() {
             println!("No previous history.");
         }
@@ -197,8 +198,7 @@ impl Console {
             }
         }
 
-        #[cfg(feature = "with-file-history")]
-        rl.save_history("history.txt");
+        _ = rl.save_history("history.txt");
     }
 }
 

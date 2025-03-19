@@ -37,14 +37,14 @@ pub trait Commands<'a> : Sized where Self:'a {
         
         match optcmd {
             None => false,
-            Some(Command(_n, action, completer)) => action(self, args)
+            Some(Command(_n, action, _completer)) => action(self, args)
         }
     }
     
     fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &str)
         -> bool {false}
 
-    fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
+    fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
         let line_trimmed = line.trim();
@@ -55,11 +55,11 @@ pub trait Commands<'a> : Sized where Self:'a {
                     (line_trimmed, "")
                 }
                 else {
-                    let mut cmditer2 = Self::COMMANDS.into_iter();
+                    let cmditer2 = Self::COMMANDS.into_iter();
                     let cmds : Vec<Pair> = cmditer2.
                             map(|Command(n,_a, _c)| n).
                             filter(|cmd| cmd.starts_with(&line)).
-                            map(|cmd| {let (first, last) = cmd.split_at(pos); last}).
+                            map(|cmd| {let (_, last) = cmd.split_at(pos); last}).
                             //map(|cmd| cmd.to_string()).
                             map(|cmd| Pair{
                                 display: cmd.to_string(),
@@ -75,10 +75,10 @@ pub trait Commands<'a> : Sized where Self:'a {
         let optcmd = cmditer.find(|Command(n,_a, _c)| n == &command); 
         
         match optcmd {
-            Some(Command(n, _action, completer)) => {
-                let vec = match completer.complete(args.trim()) {
+            Some(Command(_n, _action, completer)) => {
+                match completer.complete(args.trim()) {
                     Ok(vec) => {
-                        let mut veciter = vec.into_iter();
+                        let veciter = vec.into_iter();
                         let result : Vec<Pair> = veciter.
                                 map(|arg| {
                                     let (_, new) = arg.split_at(args.len());
@@ -107,9 +107,6 @@ pub trait Commands<'a> : Sized where Self:'a {
     
     fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>;
-}
-
-pub trait CommandsFB<'a> : Commands<'a> {
 }
 
 pub struct SimpleInterpreter<'a, C : Commands<'a>> {
