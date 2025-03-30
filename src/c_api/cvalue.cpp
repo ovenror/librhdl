@@ -21,4 +21,14 @@ CValue::CValue(CValue &&moved) : CObject(std::move(moved))
 
 CValue::~CValue() {}
 
+const CObject& CValue::at(const std::string &name) const
+{
+	throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
+}
+
+const CObject& CValue::at(const char *name) const
+{
+	throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
+}
+
 } /* namespace rhdl */

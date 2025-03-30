@@ -47,6 +47,7 @@ using TopIFaceData = IFaceData;
 
 class TreeModel : public RepresentationBase<TreeModel>, public Container
 {
+	static_assert(ID == RHDL_TREE);
 public:
 	TreeModel(const Entity &);
 

@@ -7,6 +7,7 @@
 
 #include "c_api/typedcvalue.h"
 #include "interface/direction.h"
+#include "representation/representations.h"
 
 namespace rhdl {
 
@@ -38,6 +39,12 @@ template<>
 const char* TypedCValue<rhdl_direction>::to_cstring() const
 {
 	return (std::stringstream() << SingleDirection(value_)).str().c_str();
+}
+
+template<>
+const char* TypedCValue<rhdl_reptype>::to_cstring() const
+{
+	return (std::stringstream() << representations.objects()[value_].name()).str().c_str();
 }
 
 template class TypedCValue<const char *>;

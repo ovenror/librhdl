@@ -9,10 +9,13 @@
 #define SRC_C_API_COBJECT_H_
 
 #include <rhdl/construction/c/types.h>
-#include "../util/dictionary.h"
+#include "util/dictionary.h"
+#include "util/cached.h"
 #include "c_api/wrapper.h"
 
 namespace rhdl {
+
+class Representation;
 
 class CObject : public Dictionary<CObject> {
 public:
@@ -49,6 +52,10 @@ public:
 	}
 
 	virtual explicit operator const rhdl_iface_struct *const() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual explicit operator const std::string&() const {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
 	}
 

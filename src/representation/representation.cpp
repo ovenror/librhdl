@@ -25,8 +25,7 @@ Representation::Representation(
 	  typeID_(id), entity_(entity), parent_(parent), timing_(timing),
 	  sibling_index_(parent ? parent -> num_descendants_ : 0),
 	  reptype_("type", c_.content().type),
-	  content_cache_(*this, &Representation::compute_content),
-	  content_("content", static_cast<const std::string &>(content_cache_()).c_str())
+	  content_("content", *this, &Representation::compute_content)
 {
 	assert (!timing || &timing -> entity() == &entity);
 
@@ -39,8 +38,7 @@ Representation::Representation(Representation &&moved)
 	: Super(std::move(moved)), typeID_(moved.typeID_),
 	  entity_(moved.entity_), parent_(moved.parent_), timing_(moved.timing_),
 	  sibling_index_(moved.sibling_index_), reptype_("type", c_.content().type),
-	  content_cache_(*this, &Representation::compute_content),
-	  content_("content", static_cast<const std::string &>(content_cache_()).c_str())
+	  content_("content", *this, &Representation::compute_content)
 {
 	c_.content().type = (rhdl_reptype) typeID_;
 	add(&reptype_);
@@ -120,7 +118,7 @@ size_t Representation::register_descendant() const
 void Representation::compute_content(std::string &result) const
 {
 	std::stringstream ss;
-	ss << *this;
+	ss << to_string();
 	result = ss.str();
 }
 

@@ -22,6 +22,7 @@ namespace blocks {
 
 class Blocks : public MappedRepresentation<Blocks, BlockRef>
 {
+	static_assert(ID == RHDL_BLOCKS);
 public:
 	Blocks(
 			const Entity &entity, const Representation *parent,

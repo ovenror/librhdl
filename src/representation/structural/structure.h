@@ -17,6 +17,7 @@
 namespace rhdl::structural {
 
 class Structure : public RepresentationBase<Structure> {
+	static_assert(ID == RHDL_STRUCTURE);
 public:
 	Structure(const Entity &entity,
 		std::vector<const Entity *> elements,

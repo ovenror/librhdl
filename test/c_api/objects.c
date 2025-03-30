@@ -79,7 +79,7 @@ int entity()
 	rhdl_object_t *reps = rhdl_get(inverter, "representations");
 	REQUIRE(reps);
 
-	rhdl_object_t *r = rhdl_get(reps, "Inverter_TimedBehavior_1");
+	rhdl_object_t *r = rhdl_get(reps, "Inverter_Netlist_0");
 	REQUIRE(r);
 
 	const char *const *list = r -> members;
@@ -94,7 +94,12 @@ int entity()
 	REQUIRE(rtype);
 
 	enum rhdl_reptype rt = rhdl_read_reptype(rtype);
-	REQUIRE(rt == RHDL_STRUCURAL);
+	REQUIRE(rt == RHDL_NETLIST);
+
+	rhdl_object_t *rc = rhdl_get(r, "content");
+	REQUIRE(rc);
+
+	printf("%s\n", rhdl_read_cstring(rc));
 
 	return SUCCESS;
 }

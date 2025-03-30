@@ -13,6 +13,7 @@ namespace behavioral {
 
 class TimedBehavior : public RepresentationBase<TimedBehavior>
 {
+	static_assert(ID == RHDL_TIMEDBEHAVIOR);
 public:
 	template <class siface_class, class internal_state_class>
 	using SimFunc = std::function<void(FastSim<siface_class, internal_state_class> &)>;

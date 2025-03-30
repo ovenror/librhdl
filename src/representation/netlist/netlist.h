@@ -15,6 +15,8 @@ namespace netlist {
 
 class Netlist : public MappedRepresentation<Netlist, VertexRef>
 {
+	static_assert(ID == RHDL_NETLIST);
+
 public:
 	typedef Graph_Impl Graph;
 
@@ -75,9 +77,11 @@ private:
 
 	void dot(std::string extra = "") const;
 
+	std::string to_string() const override;
+
 	Graph graph_;
 };
 
 }}
-
 #endif // NETLIST_H
+

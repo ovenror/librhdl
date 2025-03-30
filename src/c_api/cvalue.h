@@ -21,6 +21,13 @@ public:
 
 	virtual ~CValue();
 
+	virtual const CObject& at(const std::string &name) const override;
+	virtual const CObject& at(const char *name) const override;
+
+	virtual std::size_t size() const {return 0;}
+
+	virtual const std::vector<const char*> &c_strings() const {return c_strings_;}
+
 	explicit operator const char*() const override {return to_cstring();}
 
 	explicit operator int64_t() const override {
@@ -39,10 +46,16 @@ public:
 		throw ConstructionException(Errorcode::E_WRONG_VALUE_TYPE);
 	}
 
+	explicit operator const std::string &() const override {
+		throw ConstructionException(Errorcode::E_WRONG_VALUE_TYPE);
+	}
+
 	bool isValue() const override {return true;}
 
 private:
 	virtual const char *to_cstring() const = 0;
+
+	std::vector<const char *> c_strings_;
 };
 
 } /* namespace rhdl */

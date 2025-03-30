@@ -6,6 +6,7 @@
 
 #include "representationtypeid.h"
 #include "c_api/typedcvalue.h"
+#include "c_api/cachednostructcvalue.h"
 #include "c_api/valueobject.h"
 
 #include <vector>
@@ -48,6 +49,9 @@ public:
 			const Entity &entity, TypeID type,
 			const Representation *parent) const;
 
+	virtual std::string to_string() const {return name();}
+	operator const std::string&() const {return content_;}
+
 protected:
 	Representation(
 			const Entity &entity, TypeID id, const Representation *parent,
@@ -66,8 +70,7 @@ private:
 	const size_t sibling_index_;
 	mutable size_t num_descendants_ = 0;
 	TypedCValue<rhdl_reptype> reptype_;
-	Cached<std::string, Representation> content_cache_;
-	TypedCValue<const char *> content_;
+	CachedNoStructCValue<Representation, std::string> content_;
 };
 
 }
