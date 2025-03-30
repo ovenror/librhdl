@@ -454,6 +454,10 @@ impl<'a> interpreter::Commands<'a> for OuterRHDL {
     fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
+        if !self.rhdd.is_active() {
+            return Ok((pos, Vec::<Pair>::new()))
+        }
+
         return self.rhdd.complete(line, pos, ctx)
     }
 }
