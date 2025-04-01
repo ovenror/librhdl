@@ -58,7 +58,7 @@ std::string Netlist::InterfaceToString(const InterfaceMap &ifaceMap)
 {
 	std::string result;
 	for (auto kv : ifaceMap)
-		result += std::string("    * ") + kv.first -> to_string() + "->" + std::to_string(kv.second) + "\n";
+		result += std::string("    * ") + (std::string) *kv.first + "->" + std::to_string(kv.second) + "\n";
 	return result;
 }
 

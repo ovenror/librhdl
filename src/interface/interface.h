@@ -76,7 +76,6 @@ public:
 	virtual void add_components_to_queue(std::queue<const Interface *> &bfs_backlog) const;
 
 	operator std::string() const;
-	std::string to_string() const;
 
 private:
 	virtual const Interface *get(const std::string &name) const = 0;

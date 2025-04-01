@@ -118,7 +118,7 @@ size_t Representation::register_descendant() const
 void Representation::compute_content(std::string &result) const
 {
 	std::stringstream ss;
-	ss << to_string();
+	ss << *this;
 	result = ss.str();
 }
 

@@ -77,11 +77,9 @@ private:
 
 	void dot(std::string extra = "") const;
 
-	std::string to_string() const override;
-
 	Graph graph_;
 };
 
 }}
-#endif // NETLIST_H
 
+#endif // NETLIST_H

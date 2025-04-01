@@ -62,14 +62,9 @@ bool Interface::compatibleTo(const Interface &i, const Predicate2 &p) const
 	return checkCompatTo<bool>(i, p);
 }
 
-std::string Interface::to_string() const
-{
-	return std::string("Interface '") + name_ + "' (" + typeid(*this).name() + ")";
-}
-
 Interface::operator std::string() const
 {
-	return to_string();
+	return std::string("Interface '") + name_ + "' (" + typeid(*this).name() + ")";
 }
 
 
@@ -90,7 +85,7 @@ bool operator>=(const Interface &super, const Interface &sub)
 
 std::ostream &operator<<(std::ostream &os, const Interface &i)
 {
-	os << i.to_string();
+	os << (std::string) i;
 	return os;
 }
 

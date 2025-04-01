@@ -49,7 +49,6 @@ public:
 			const Entity &entity, TypeID type,
 			const Representation *parent) const;
 
-	virtual std::string to_string() const {return name();}
 	operator const std::string&() const {return content_;}
 
 protected:

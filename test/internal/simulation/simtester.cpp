@@ -146,7 +146,7 @@ bool SimTester::correctWithinTiming(const ISingle *iface)
         return true;
 
     std::stringstream hdr;
-    hdr << "interface:" << iface -> to_string() << std::endl;
+    hdr << "interface:" << (std::string) *iface << std::endl;
     msgs_ += hdr.str() + timings_err.str();
 
     std::cerr << msgs_;
@@ -182,7 +182,7 @@ bool SimTester::correctBetweenTimings(const ISingle *iface)
         return true;
 
     std::stringstream hdr;
-    hdr << "interface:" << iface -> to_string() << std::endl;
+    hdr << "interface:" << (std::string) *iface << std::endl;
     msgs_ += hdr.str() + err.str();
 
     std::cerr << msgs_;
