@@ -1,7 +1,7 @@
 target_sources(rhdl_obj
 	PRIVATE
 		c_api.cpp
-		cachednostructcvalue.cpp
+		cacheddynamiccvalue.cpp
 		cvalue.cpp
 		context.cpp
 		handle.cpp

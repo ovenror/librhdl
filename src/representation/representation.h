@@ -1,12 +1,12 @@
 #ifndef REPRESENTATION_H
 #define REPRESENTATION_H
 
+#include <c_api/cacheddynamiccvalue.h>
 #include <c_api/valueobject.h>
 #include <rhdl/construction/c/types.h>
 
 #include "representationtypeid.h"
 #include "c_api/typedcvalue.h"
-#include "c_api/cachednostructcvalue.h"
 #include "c_api/valueobject.h"
 
 #include <vector>
@@ -69,7 +69,7 @@ private:
 	const size_t sibling_index_;
 	mutable size_t num_descendants_ = 0;
 	TypedCValue<rhdl_reptype> reptype_;
-	CachedNoStructCValue<Representation, std::string> content_;
+	CachedDynamicCValue<Representation, std::string> content_;
 };
 
 }
