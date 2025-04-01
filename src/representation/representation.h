@@ -60,7 +60,7 @@ protected:
 
 private:
 	size_t register_descendant() const;
-	void compute_content(std::string&) const;
+	virtual void compute_content(std::string&) const;
 
 	const TypeID typeID_;
 	const Entity &entity_;

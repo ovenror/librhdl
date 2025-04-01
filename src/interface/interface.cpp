@@ -85,7 +85,7 @@ bool operator>=(const Interface &super, const Interface &sub)
 
 std::ostream &operator<<(std::ostream &os, const Interface &i)
 {
-	os << (std::string) i;
+	os << static_cast<const std::string &>(i);
 	return os;
 }
 

@@ -58,7 +58,7 @@ std::string Netlist::InterfaceToString(const InterfaceMap &ifaceMap)
 {
 	std::string result;
 	for (auto kv : ifaceMap)
-		result += std::string("    * ") + (std::string) *kv.first + "->" + std::to_string(kv.second) + "\n";
+		result += std::string("    * ") + (std::string &) *kv.first + "->" + std::to_string(kv.second) + "\n";
 	return result;
 }
 
@@ -300,6 +300,13 @@ void Netlist::verticalSplitVertex(VertexRef vertex)
 	}
 }
 
+void Netlist::compute_content(std::string &result) const
+{
+	std::stringstream ss;
+	ss << graph_;
+	result = ss.str();
+}
+
 void Netlist::dot(std::string extra) const
 {
 	if (logLevel >= LOG_REP) {
@@ -308,13 +315,6 @@ void Netlist::dot(std::string extra) const
 		std::ofstream dotfile(filename.str());
 		dotfile << graph_;
 	}
-}
-
-std::string Netlist::to_string() const {
-
-	std::stringstream ss;
-	ss << graph_;
-	return ss.str();
 }
 
 }

@@ -54,6 +54,8 @@ public:
 	void removeDisconnectedVertices();
 	void remapInterface(const std::map<VertexRef, VertexRef> &vertexMap);
 
+	virtual void compute_content(std::string&) const override;
+
 private:
 	static Netlist make(
 			const Entity &entity,

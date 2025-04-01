@@ -117,9 +117,10 @@ size_t Representation::register_descendant() const
 
 void Representation::compute_content(std::string &result) const
 {
-	std::stringstream ss;
-	ss << *this;
-	result = ss.str();
+	/* TODO: Replace this with pure virtual. Representations should create
+	 * their own textual representation.
+	 */
+	result = name();
 }
 
 }
