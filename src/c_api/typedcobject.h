@@ -30,15 +30,6 @@ public:
 		return tco.cast();
 	}
 
-	void setMembers(const std::vector<const char *> &members) {
-		auto lol = members.data();
-		setMembers_internal(members);
-		BASE::setMembers(members);
-	}
-
-private:
-	virtual void setMembers_internal(const std::vector<const char *> &members) {};
-
 protected:
 	virtual CRTP &cast() = 0;
 

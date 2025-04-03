@@ -23,8 +23,8 @@ public:
 	Namespace &cast() override {return *this;};
 
 private:
-	void setMembers_internal(const std::vector<const char *> &members) override {
-		c_.content().members = members.data();
+	void setMembers_internal(const char *const *members) override {
+		c_.content().members = members;
 	}
 };
 

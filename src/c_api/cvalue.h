@@ -26,7 +26,7 @@ public:
 
 	virtual std::size_t size() const {return 0;}
 
-	virtual const std::vector<const char*> &c_strings() const {return c_strings_;}
+	const std::vector<const char*> &c_strings() const override {return c_strings_;}
 
 	explicit operator const char*() const override {return to_cstring();}
 

@@ -25,8 +25,9 @@ class CObjectImpl : public TypedCObject<
 public:
 	CObjectImpl(std::string name) : Super(name)
 	{
-		Super::setMembers(c_strings());
+		Super::setMembers();
 	}
+
 	CObjectImpl(CObjectImpl &&);
 
 	virtual ~CObjectImpl() {};
@@ -42,7 +43,7 @@ public:
 			throw ConstructionException(Errorcode::E_MEMBER_EXISTS, member -> name());
 		}
 
-		Super::setMembers(c_strings());
+		Super::setMembers();
 		return *ptr;
 	}
 

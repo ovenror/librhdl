@@ -21,6 +21,8 @@ public:
 	CachedDynamicCValue(
 			std::string name, Container &container,
 			void (Container::*compute)(ValueType &result) const);
+	CachedDynamicCValue(CachedDynamicCValue &&);
+
 	virtual ~CachedDynamicCValue();
 
 	operator const ValueType &() const override {

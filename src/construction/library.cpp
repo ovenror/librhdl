@@ -11,7 +11,7 @@ Library *defaultLib; // = new Library();
 Library::Library() : TypedCObject("entities")
 {
 	regist(std::make_unique<EInverter>());
-	setMembers(entities_.c_strings());
+	setMembers();
 	init::lib_ready();
 }
 
@@ -34,7 +34,7 @@ const Entity &Library::regist(std::unique_ptr<Entity> &&entity)
 		throw ConstructionException(Errorcode::E_ENTITY_EXISTS);
 
 	const Entity& result = regist_internal(std::move(entity));
-	setMembers(entities_.c_strings());
+	setMembers();
 	return result;
 }
 
@@ -68,8 +68,8 @@ const Entity &Library::regist_internal(std::unique_ptr<Entity> &&entity)
 	return *entities_.add(std::move(entity));
 }
 
-void Library::setMembers_internal(const std::vector<const char *> &members) {
-	c_.content().members = members.data();
+void Library::setMembers_internal(const char *const *members) {
+	c_.content().members = members;
 }
 
 }

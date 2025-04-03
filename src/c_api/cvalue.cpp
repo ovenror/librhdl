@@ -13,10 +13,16 @@ namespace rhdl {
 
 CValue::CValue(rhdl_type typeId, std::string name)
 		: CObject(typeId, name)
-{}
+{
+	c_strings_.push_back(0);
+	setMembers();
+}
 
 CValue::CValue(CValue &&moved) : CObject(std::move(moved))
-{}
+{
+	c_strings_.push_back(0);
+	setMembers();
+}
 
 
 CValue::~CValue() {}

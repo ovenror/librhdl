@@ -37,7 +37,7 @@ public:
 	const Dictionary<Entity> &entities() const {return entities_;}
 
 private:
-	void setMembers_internal(const std::vector<const char *> &members) override;
+	void setMembers_internal(const char *const *members) override;
 	const Entity &regist_internal(std::unique_ptr<Entity> &&entity);
 
 	LexicalPointingDictionary<Entity> entities_;

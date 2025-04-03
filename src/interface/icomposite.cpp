@@ -20,8 +20,10 @@ IComposite::IComposite(
 		add(comp);
 	}
 
+	//TODO: Use overriden setMembers_internal?
 	c_.content().composite.interfaces = c_strings().data();
-	setMembers(c_strings());
+
+	setMembers();
 }
 
 static std::vector<const Interface *> cloneComponents(

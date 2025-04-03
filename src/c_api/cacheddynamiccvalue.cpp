@@ -10,12 +10,21 @@
 
 namespace rhdl {
 
+class Representation;
+
 template <class Container, class ValueType>
 CachedDynamicCValue<Container, ValueType>::CachedDynamicCValue(
 		std::string name, Container &container,
 		void (Container::*compute)(ValueType &result) const)
 		: CValue(RHDL_CSTRING, name), cached_(container, compute)
 {}
+
+template<class Container, class ValueType>
+CachedDynamicCValue<Container, ValueType>::
+		CachedDynamicCValue(CachedDynamicCValue&& dying)
+	: CValue(std::move(dying)), cached_(std::move(dying.cached_))
+{}
+
 
 template <class Container, class ValueType>
 CachedDynamicCValue<Container, ValueType>::~CachedDynamicCValue() {}

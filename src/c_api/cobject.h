@@ -15,8 +15,6 @@
 
 namespace rhdl {
 
-class Representation;
-
 class CObject : public Dictionary<CObject> {
 public:
 	CObject(rhdl_type typeId, std::string name) : c_(*this), name_(name) {
@@ -62,11 +60,15 @@ public:
 	virtual bool isValue() const {return false;}
 
 protected:
-	void setMembers(const std::vector<const char *> &members) {
-		c_.content_.members = members.data();
+	void setMembers() {
+		auto members = c_strings().data();
+		c_.content_.members = members;
+		setMembers_internal(members);
 	}
 
 private:
+	virtual void setMembers_internal(const char *const *members) {};
+
 	const std::string name_;
 
 public:
