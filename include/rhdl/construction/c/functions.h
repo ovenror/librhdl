@@ -30,6 +30,7 @@ int rhdl_has_value(const rhdl_object_t *);
 const char *rhdl_read_cstring(const rhdl_object_t *);
 int64_t rhdl_read_i64(const rhdl_object_t *);
 uint64_t rhdl_read_u64(const rhdl_object_t *);
+rhdl_object_t *rhdl_read_objref(const rhdl_object_t *);
 enum rhdl_direction rhdl_read_direction(const rhdl_object_t *);
 enum rhdl_reptype rhdl_read_reptype(const rhdl_object_t *);
 

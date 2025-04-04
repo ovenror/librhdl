@@ -27,7 +27,7 @@ IComposite::IComposite(
 }
 
 static std::vector<const Interface *> cloneComponents(
-		const std::vector<const Interface *> &ifaces)
+		 const std::vector<const Interface *> &ifaces)
 {
 	std::vector<const Interface *> result;
 
@@ -38,9 +38,11 @@ static std::vector<const Interface *> cloneComponents(
 	return result;
 }
 
+/*
 IComposite::IComposite(const IComposite &tmpl)
-	: IComposite(tmpl.name_, cloneComponents(tmpl.components_))
+	: IComposite(tmpl.name_, tmpl.container_, cloneComponents(tmpl.components_))
 {}
+*/
 
 IComposite::~IComposite()
 {
@@ -50,7 +52,8 @@ IComposite::~IComposite()
 	}
 }
 
-IComposite *IComposite::clone(const std::string &newName) const
+IComposite *IComposite::clone(
+		const std::string &newName) const
 {
 	return new IComposite (newName, cloneComponents(components_));
 }

@@ -9,17 +9,15 @@
 #define SRC_ENTITY_REPRESENTATIONCONTAINER_H_
 
 #include <rhdl/construction/c/types.h>
-
-#include "c_api/cobjectimpl.h"
-
+#include "c_api/namespace.h"
 #include "representation/representation.h"
 
 namespace rhdl {
 
-class RepresentationContainer : public CObjectImpl<
-		RepresentationContainer, rhdl_namespace_struct, RHDL_REPRESENTATION, false> {
-
-using Container = std::vector<std::unique_ptr<const Representation>>;
+class RepresentationContainer: public TypedCObject<
+		RepresentationContainer, rhdl_namespace_struct, false>
+{
+	using Container = std::vector<std::unique_ptr<const Representation>>;
 
 public:
 	using iterator = Container::iterator;
@@ -29,7 +27,7 @@ public:
 
 	RepresentationContainer &cast() override {return *this;}
 
-	void push_back(std::unique_ptr<Representation> &&r);
+	void push_back(std::unique_ptr<const Representation> &&r);
 
 	const std::unique_ptr<const Representation> &back() const {return container_.back();}
 	iterator begin() {return container_.begin();}

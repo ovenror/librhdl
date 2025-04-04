@@ -14,10 +14,8 @@
 
 namespace rhdl {
 
-Namespace::Namespace(std::string name) : CObjectImpl(name)
-{}
+Namespace::Namespace(std::string name) : TypedCObject(name) {}
 
 Namespace::~Namespace() {}
-
 
 }

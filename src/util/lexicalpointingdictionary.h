@@ -27,6 +27,7 @@ public:
 	const T& at(const std::string &name) const override {return *impl_.at(name);}
 
 	const T* add(PT element) {return &*impl_.add(std::move(element));}
+	const T* replace(PT element) {return &*impl_.replace(std::move(element));}
 
 	std::size_t size() const override {return impl_.size();}
 

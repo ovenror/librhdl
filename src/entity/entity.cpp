@@ -1,10 +1,8 @@
-#include <entity/representationcontainer.h>
 #include "entity.h"
+#include "representationcontainer.h"
 #include "timing.h"
 
 #include <rhdl/construction/constructionexception.h>
-
-#include "c_api/namespace.h"
 
 #include "interface/predicate.h"
 
@@ -17,10 +15,10 @@
 using namespace rhdl;
 
 Entity::Entity(
-		const std::string &name, std::vector<const Interface *> components,
-		bool stateless
+		const std::string &name,
+		std::vector<const Interface *> components, bool stateless
 		)
-		: CObjectImpl(name), interface_("interface", components),
+		: TypedCObject(name), interface_("interface", components),
 		  stateless_(stateless)
 {
 	repIdx_timing_[nullptr];

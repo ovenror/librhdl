@@ -1,23 +1,29 @@
 #ifndef TRANSFORMATION_H
 #define TRANSFORMATION_H
 
+#include <c_api/referencedcvalue.h>
 #include "transformationtypeid.h"
+
 #include "util/list.h"
-#include "c_api/valueobject.h"
-#include "c_api/typedcvalue.h"
+
+#include "c_api/typedvalueobject.h"
 #include <memory>
 
 namespace rhdl {
 
+class Namespace;
 class Representation;
 
-class Transformation : public ValueObject<rhdl_transformation, RHDL_TRANSFORMATION>
+class Transformation : public TypedValueObject<Transformation, rhdl_transformation>
 {
+	using Super = TypedValueObject<Transformation, rhdl_transformation>;
+
 public:
 	using TypeID = TransformationTypeID;
 
 	Transformation(TypeID id, std::string name);
-	Transformation();
+	Transformation(Transformation &&);
+	//Transformation();
 
 	TypeID typeID() const;
 
@@ -27,8 +33,8 @@ public:
 
 private:
 	TypeID typeID_;
-	TypedCValue<rhdl_reptype> srctype_;
-	TypedCValue<rhdl_reptype> dsttype_;
+	ReferencedCValue<rhdl_reptype> srctype_;
+	ReferencedCValue<rhdl_reptype> dsttype_;
 
 };
 

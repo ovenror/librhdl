@@ -65,6 +65,7 @@ const Entity& Library::at(const std::string &name) const
 
 const Entity &Library::regist_internal(std::unique_ptr<Entity> &&entity)
 {
+	updateContainerFor(*entity, *this);
 	return *entities_.add(std::move(entity));
 }
 

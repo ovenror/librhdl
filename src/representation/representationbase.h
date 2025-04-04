@@ -1,11 +1,11 @@
 #ifndef REPRESENTATIONBASE_H
 #define REPRESENTATIONBASE_H
 
+#include <c_api/typedvalueobject.h>
 #include "representation.h"
 #include "representations.h"
 #include "transformation/transformer.h"
 #include "transformation/typedtransformation.h"
-#include "c_api/valueobject.h"
 
 namespace rhdl {
 

@@ -1,13 +1,15 @@
 #ifndef REPRESENTATION_H
 #define REPRESENTATION_H
 
-#include <c_api/cacheddynamiccvalue.h>
-#include <c_api/valueobject.h>
 #include <rhdl/construction/c/types.h>
 
 #include "representationtypeid.h"
-#include "c_api/typedcvalue.h"
-#include "c_api/valueobject.h"
+
+#include "c_api/typedvalueobject.h"
+#include "c_api/cacheddynamiccvalue.h"
+#include "c_api/referencedcvalue.h"
+#include "c_api/storedcvalue.h"
+#include "c_api/cobjectreference.h"
 
 #include <vector>
 #include <map>
@@ -21,9 +23,9 @@ class Timing;
 class Entity;
 
 class Representation
-		: public ValueObject<rhdl_representation, RHDL_REPRESENTATION>
+		: public TypedValueObject<Representation, rhdl_representation>
 {
-	using Super = ValueObject<rhdl_representation, RHDL_REPRESENTATION>;
+	using Super = TypedValueObject<Representation, rhdl_representation>;
 
 public:
 	using TypeID = RepresentationTypeID;
@@ -61,14 +63,16 @@ protected:
 private:
 	size_t register_descendant() const;
 	virtual void compute_content(std::string&) const;
+	const rhdl_representation *&cparent() {return c_.content().parent;}
+	const Representation *parent() const {return parent_;}
 
 	const TypeID typeID_;
 	const Entity &entity_;
-	const Representation *parent_;
 	const Timing *timing_;
 	const size_t sibling_index_;
 	mutable size_t num_descendants_ = 0;
-	TypedCValue<rhdl_reptype> reptype_;
+	ReferencedCValue<rhdl_reptype> reptype_;
+	CObjectReference<StoredCValue, const Representation *> parent_;
 	CachedDynamicCValue<Representation, std::string> content_;
 };
 

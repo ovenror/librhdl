@@ -17,7 +17,7 @@ namespace rhdl {
 
 class Entity;
 
-class Library : public TypedCObject<Library, rhdl_namespace_struct, RHDL_NAMESPACE> {
+class Library : public TypedCObject<Library, rhdl_namespace_struct> {
 public:
 	Library();
 	virtual ~Library();

@@ -12,7 +12,8 @@
 
 namespace rhdl {
 
-Transformer::Transformer() : Namespace("transformations")
+Transformer::Transformer()
+		: Namespace("transformations")
 {
 	registerTransformations();
 	calculateTransformationPaths();

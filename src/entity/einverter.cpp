@@ -9,6 +9,8 @@
 
 #include "construction/buildsim.h"
 
+#include "c_api/rootnamespace.h"
+
 #include <tuple>
 #include <memory>
 

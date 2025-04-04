@@ -1,13 +1,14 @@
 target_sources(rhdl_obj
 	PRIVATE
 		c_api.cpp
-		cacheddynamiccvalue.cpp
+		cobject.cpp
 		cvalue.cpp
+		cvaluecontainer.cpp
+		cvalueobject.cpp
 		context.cpp
 		handle.cpp
 		namespace.cpp
 		rootnamespace.cpp
+		stringconversion.cpp
 		structurehandle.cpp
-		typedcvalue.cpp
-		valueobject.cpp
 )

@@ -19,6 +19,11 @@ TEST(CApi_objectsTest,entity)
 	EXPECT_TRUE(::entity());
 }
 
+TEST(CApi_objectsTest,transformation)
+{
+	EXPECT_TRUE(::transformation());
+}
+
 TEST(CApi_objectsTest,wrong)
 {
 	EXPECT_TRUE(::wrong());

@@ -16,10 +16,9 @@
 #include "util/util.h"
 #include "util/iterable.h"
 #include "util/catiterator.h"
+#include "c_api/typedcobject.h"
 
 #include "boost/iterator/transform_iterator.hpp"
-
-#include "c_api/cobjectimpl.h"
 
 #include <map>
 #include <list>
@@ -30,7 +29,7 @@ namespace rhdl {
 
 class Timing;
 
-class Entity : public CObjectImpl<Entity, rhdl_entity_struct, RHDL_ENTITY, false>
+class Entity : public TypedCObject<Entity, rhdl_entity_struct, false>
 {
 public:
 	Entity(

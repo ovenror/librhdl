@@ -1,10 +1,9 @@
 #ifndef SYNTHESIZER_H
 #define SYNTHESIZER_H
 
+#include <c_api/typedvalueobject.h>
 #include "representation/representationtypeid.h"
 #include "transformation.h"
-
-#include "c_api/valueobject.h"
 
 #include <memory>
 #include <cassert>

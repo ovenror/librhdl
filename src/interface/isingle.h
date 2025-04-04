@@ -1,9 +1,10 @@
 #ifndef ISINGLE_H
 #define ISINGLE_H
 
+#include <c_api/referencedcvalue.h>
 #include "interface.h"
 #include "interface/cresult/csingle.h"
-#include "../util/visitable.h"
+#include "util/visitable.h"
 
 namespace rhdl {
 
@@ -29,6 +30,8 @@ public:
 
 private:
 	friend class CSingle;
+
+	ReferencedCValue<rhdl_direction> dir_;
 };
 
 }

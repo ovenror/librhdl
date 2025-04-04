@@ -19,7 +19,8 @@ public:
 	using InterfaceContainer =  std::vector<const Interface *>;
 	using const_iterator = InterfaceContainer::const_iterator;
 
-	IComposite(const std::string &name, std::vector<const Interface *> components);
+	IComposite(
+			const std::string &name, std::vector<const Interface *> components);
 	IComposite(const IComposite &tmpl);
 
 	virtual ~IComposite();

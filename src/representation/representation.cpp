@@ -22,27 +22,27 @@ Representation::Representation(
 		const Timing *timing)
 	:
 	  Super(canonicalName(entity, id, parent)),
-	  typeID_(id), entity_(entity), parent_(parent), timing_(timing),
+	  typeID_(id), entity_(entity), timing_(timing),
 	  sibling_index_(parent ? parent -> num_descendants_ : 0),
-	  reptype_("type", c_.content().type),
+	  reptype_("type", *this, c_.content().type),
+	  parent_("parent", *this, parent),
 	  content_("content", *this, &Representation::compute_content)
 {
 	assert (!timing || &timing -> entity() == &entity);
 
 	c_.content().type = (rhdl_reptype) id;
-	add(&reptype_);
-	add(&content_);
+	cparent() = c_ptr(parent);
 }
 
 Representation::Representation(Representation &&moved)
 	: Super(std::move(moved)), typeID_(moved.typeID_),
-	  entity_(moved.entity_), parent_(moved.parent_), timing_(moved.timing_),
-	  sibling_index_(moved.sibling_index_), reptype_("type", c_.content().type),
-	  content_("content", *this, &Representation::compute_content)
+	  entity_(moved.entity_), timing_(moved.timing_),
+	  sibling_index_(moved.sibling_index_),
+	  reptype_(std::move(moved.reptype_), *this, c_.content().type),
+	  parent_(std::move(moved.parent_), *this),
+	  content_(std::move(moved.content_), *this)
 {
 	c_.content().type = (rhdl_reptype) typeID_;
-	add(&reptype_);
-	add(&content_);
 }
 
 Representation::~Representation() {

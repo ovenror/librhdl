@@ -40,6 +40,7 @@ public:
 	const T& at(const std::string &name) const override;
 
 	const T &add(T element);
+	const T &replace(T element);
 
 	const_iterator find(const std::string& name) const;
 	const_iterator begin() const;
@@ -140,6 +141,19 @@ inline const T &LexicalDictionary<T>::add(T element) {
 	}
 
 	return *i;
+}
+
+template<class T>
+inline const T& LexicalDictionary<T>::replace(T element)
+{
+	auto i = find(element -> name());
+
+	if (i != set_.end()) {
+		throw std::out_of_range("No such element.");
+	}
+
+	set_.erase(i);
+	return add(std::move(element));
 }
 
 template<class T>

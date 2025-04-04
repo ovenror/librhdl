@@ -8,31 +8,39 @@
 #ifndef SRC_C_API_CACHEDDYNAMICCVALUE_H_
 #define SRC_C_API_CACHEDDYNAMICCVALUE_H_
 
-#include "c_api/cvalue.h"
+#include <c_api/referencedcvalue.h>
 #include "util/cached.h"
 
 #include <string>
 
 namespace rhdl {
 
-template <class Container, class ValueType = std::string>
-class CachedDynamicCValue : public CValue {
+template <class CONTAINER, class VALUE_TYPE>
+class CachedDynamicCValue : public TypedCValue<
+		VALUE_TYPE, !std::is_same<VALUE_TYPE, std::string>()>
+{
+	using Super = TypedCValue<
+			VALUE_TYPE, !std::is_same<VALUE_TYPE, std::string>()>;
+
 public:
 	CachedDynamicCValue(
-			std::string name, Container &container,
-			void (Container::*compute)(ValueType &result) const);
-	CachedDynamicCValue(CachedDynamicCValue &&);
+			std::string name, CONTAINER &container,
+			void (CONTAINER::*compute)(VALUE_TYPE &result) const)
+			: Super(name, container), cached_(container, compute) {}
 
-	virtual ~CachedDynamicCValue();
+	CachedDynamicCValue(CachedDynamicCValue &&moved, CONTAINER &newContainer)
+			: Super(std::move(moved), newContainer),
+			  cached_(std::move(moved.cached_), newContainer) {}
 
-	operator const ValueType &() const override {
-		return cached_();
-	}
+	virtual ~CachedDynamicCValue() {}
 
-	const char *to_cstring() const override;
+	operator typename Super::ReturnType() const override {return value();}
+
+protected:
+	const VALUE_TYPE &value() const {return cached_();}
 
 private:
-	Cached<ValueType, Container> cached_;
+	Cached<VALUE_TYPE, CONTAINER> cached_;
 };
 
 } /* namespace rhdl */

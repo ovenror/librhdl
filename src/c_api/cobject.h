@@ -19,27 +19,16 @@ namespace rhdl {
 
 class CObject : public Dictionary<CObject> {
 public:
-	CObject(rhdl_type typeId, std::string name) : c_(*this), name_(name) {
-		c_.content_.type = typeId;
-		c_.content_.name = name_.c_str();
-	}
+	CObject(rhdl_type typeId, std::string name);
+	CObject(CObject &&moved);
 
-	CObject(CObject &&moved) :
-			c_(*this, std::move(moved)),
-			name_(std::move(moved.name_))
-	{
-		assert(c_.content_.name == name_.c_str());
-	}
-
-	virtual ~CObject() {}
+	virtual ~CObject();
 
 	const std::string &name() const {return name_;}
+	const std::string fqn() const;
+	const CObject *container() const {return container_;}
 
 	operator const rhdl_object *const() const {return c_ptr(*this);}
-
-	virtual explicit operator const char*() const {
-		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
-	}
 
 	virtual explicit operator int64_t() const {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
@@ -65,19 +54,32 @@ public:
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
 	}
 
+	virtual explicit operator const CObject *() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual const CObject &getRef() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	explicit operator const char*() const;
+
 	virtual bool isValue() const {return false;}
 
 protected:
-	void setMembers() {
-		auto members = c_strings().data();
-		c_.content_.members = members;
-		setMembers_internal(members);
+	void setMembers();
+
+	static void updateContainerFor(const CObject &o, const CObject &c)
+	{
+		o.updateContainer(c);
 	}
 
 private:
+	void updateContainer(const CObject &c) const {container_ = &c;}
 	virtual void setMembers_internal(const char *const *members) {};
 
 	const std::string name_;
+	mutable const CObject *container_ = nullptr;
 
 public:
 	using C_Struct = rhdl_object;

@@ -14,10 +14,14 @@
 
 namespace rhdl {
 
+template <bool> class ComplexCObject;
+
+class CValueContainer;
+
 class CValue : public CObject {
 public:
-	CValue(rhdl_type typeId, std::string name);
-	CValue(CValue &&);
+	CValue(rhdl_type typeId, std::string name, CValueContainer &container);
+	CValue(CValue &&moved, CValueContainer &newContainer);
 
 	virtual ~CValue();
 
@@ -28,7 +32,7 @@ public:
 
 	const std::vector<const char*> &c_strings() const override {return c_strings_;}
 
-	explicit operator const char*() const override {return to_cstring();}
+	//explicit operator const char*() const override {return to_cstring();}
 
 	explicit operator int64_t() const override {
 		throw ConstructionException(Errorcode::E_WRONG_VALUE_TYPE);
@@ -50,12 +54,18 @@ public:
 		throw ConstructionException(Errorcode::E_WRONG_VALUE_TYPE);
 	}
 
+	explicit operator const CObject *() const override {
+		throw ConstructionException(Errorcode::E_WRONG_VALUE_TYPE);
+	}
+
+	const CObject &getRef() const override {
+		throw ConstructionException(Errorcode::E_WRONG_VALUE_TYPE);
+	}
+
 	bool isValue() const override {return true;}
 
 private:
-	virtual const char *to_cstring() const = 0;
-
-	std::vector<const char *> c_strings_;
+	std::vector<const char *> c_strings_ = {0};
 };
 
 } /* namespace rhdl */

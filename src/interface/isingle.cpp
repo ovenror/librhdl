@@ -11,16 +11,13 @@
 using namespace rhdl;
 
 ISingle::ISingle(const std::string &name, Direction dir) :
-	VisitableBase(name)
+	VisitableBase(name), dir_("direction", *this, c_.content().single.dir)
 
 {
 	auto &c = c_.content();
 
 	c.type = RHDL_SINGLE;
 	c.single.dir = static_cast<enum rhdl_direction>(dir);
-
-	auto tcv = new TypedCValue<rhdl_direction>("direction", c.single.dir);
-	add(tcv);
 }
 
 rhdl::ISingle::~ISingle() {}

@@ -15,18 +15,12 @@
 
 namespace rhdl {
 
-Interface::Interface(const std::string &name)
-	: CObjectImpl(name), name_ (name)
-{}
-
-Interface::~Interface()
-{
-
-}
+Interface::Interface(const std::string &name) : TypedCObject(name) {}
+Interface::~Interface() {}
 
 bool Interface::eq_name(const Interface &other) const
 {
-	return !(name_.compare (other.name_));
+	return !(name().compare (other.name()));
 }
 
 std::vector<const ISingle*> Interface::flat() const {
@@ -64,7 +58,7 @@ bool Interface::compatibleTo(const Interface &i, const Predicate2 &p) const
 
 Interface::operator std::string() const
 {
-	return std::string("Interface '") + name_ + "' (" + typeid(*this).name() + ")";
+	return std::string("Interface '") + name() + "' (" + typeid(*this).name() + ")";
 }
 
 

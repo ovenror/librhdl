@@ -9,7 +9,14 @@ class Cached_Base {
 public:
 	template <class... Args>
 	Cached_Base(COMPUTER compute, Args&&... args)
-		: compute_(compute), return_value_(std::forward<Args>(args)...), invalid_(true)
+		: compute_(compute), return_value_(std::forward<Args>(args)...),
+		  invalid_(true)
+	{}
+
+	Cached_Base(Cached_Base &&moved)
+		: compute_(moved.compute_),
+		  return_value_(std::move(moved.return_value_)),
+		  invalid_(moved.invalid_)
 	{}
 
 	void invalidate() const {
@@ -38,7 +45,13 @@ public:
 	using Super =  Cached_Base<RESULT_TYPE, void (CONTAINER::*)(RESULT_TYPE &result) const, ID>;
 
 	template <class... Args>
-	Cached(CONTAINER &container, Computer compute, Args&&... args) : container_(container), Super(compute, std::forward(args)...) {}
+	Cached(CONTAINER &container, Computer compute, Args&&... args)
+		: container_(container), Super(compute, std::forward(args)...) {}
+
+	Cached(Cached &&moved, CONTAINER &newContainer)
+		: Super(std::move(moved)), container_(newContainer) {}
+
+	operator const RESULT_TYPE&() const {return *this();}
 
 	const RESULT_TYPE &operator()() const {
 		if (Super::invalid()) {
@@ -59,6 +72,10 @@ class Cached<RESULT_TYPE, None, ID> : public Cached_Base<RESULT_TYPE, void (*)(R
 
 	template <class... Args>
 	Cached(Computer compute, Args&&... args) : Super(compute, std::forward(args)...) {}
+
+	Cached(Cached &&moved)	: Super(std::move(moved)) {}
+
+	operator const RESULT_TYPE&() const {return *this();}
 
 	const RESULT_TYPE &operator()() const {
 		if (Super::invalid()) {

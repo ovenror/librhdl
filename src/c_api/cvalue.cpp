@@ -5,25 +5,26 @@
  *      Author: ovenror
  */
 
-#include <rhdl/construction/c/types.h>
-#include "c_api/cvalue.h"
+#include "rhdl/construction/c/types.h"
+#include "cvalue.h"
+#include "complexcobject.h"
 #include <cassert>
 
 namespace rhdl {
 
-CValue::CValue(rhdl_type typeId, std::string name)
+CValue::CValue(rhdl_type typeId, std::string name, CValueContainer &container)
 		: CObject(typeId, name)
 {
-	c_strings_.push_back(0);
 	setMembers();
+	container.add(*this);
 }
 
-CValue::CValue(CValue &&moved) : CObject(std::move(moved))
+CValue::CValue(CValue &&moved, CValueContainer &newContainer)
+		: CObject(std::move(moved)), c_strings_(std::move(moved.c_strings_))
 {
-	c_strings_.push_back(0);
 	setMembers();
+	newContainer.add_after_move(*this);
 }
-
 
 CValue::~CValue() {}
 

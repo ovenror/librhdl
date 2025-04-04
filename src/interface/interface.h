@@ -3,6 +3,8 @@
 
 #include "interface/compositedirection.h"
 
+#include "c_api/typedcobject.h"
+
 #include "visitors/interfacevisitor.h"
 #include "visitors/interfacecaster.h"
 #include "cresult/compatibilityresult.h"
@@ -10,8 +12,6 @@
 #include "construction/connectionpredicate.h"
 
 #include "util/visitable.h"
-
-#include "c_api/cobjectimpl.h"
 
 #include <string>
 #include <functional>
@@ -22,6 +22,7 @@
 
 namespace rhdl {
 
+class Entity;
 class ISingle;
 class IComposite;
 class Interface;
@@ -30,7 +31,7 @@ class Predicate_2nd;
 bool operator>=(const Interface &super, const Interface &sub);
 
 class Interface :
-		public CObjectImpl<Interface, rhdl_iface_struct, RHDL_INTERFACE, false>,
+		public TypedCObject<Interface, rhdl_iface_struct, false>,
 		public AbstractVisitable<Interface, InterfaceVisitor>
 {
 public:
@@ -40,15 +41,16 @@ public:
 
 	enum class Type {SINGLE = RHDL_SINGLE, COMPOSITE = RHDL_COMPOSITE, PLACEHOLDER = RHDL_UNSPECIFIED};
 
-	Interface(const std::string &name = "");
+	Interface(const std::string &name);
 	virtual ~Interface();
 
 	Interface &cast() override {return *this;};
 
 	virtual Interface *clone(const std::string &newName) const = 0;
-	Interface *clone() const {return clone(name());}
+	Interface *clone() const {
+		return clone(name());
+	}
 
-	const std::string &name() const {return name_;}
 	Type type() const;
 	virtual CompositeDirection compositeDirection() const = 0;
 	virtual SingleDirection preferredDirection() const = 0;
@@ -79,9 +81,6 @@ public:
 
 private:
 	virtual const Interface *get(const std::string &name) const = 0;
-
-protected:
-	std::string name_;
 
 public:
 	static constexpr const char *anon_name = "<anonymous>";

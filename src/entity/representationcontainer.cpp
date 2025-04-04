@@ -5,17 +5,18 @@
  *      Author: js
  */
 
-#include <entity/representationcontainer.h>
+#include "representationcontainer.h"
+#include "entity.h"
 
 namespace rhdl {
 
 RepresentationContainer::RepresentationContainer()
-			: CObjectImpl("representations") {}
+			: TypedCObject("representations") {}
 
 RepresentationContainer::~RepresentationContainer() {}
 
 void rhdl::RepresentationContainer::push_back(
-		std::unique_ptr<Representation> &&r)
+		std::unique_ptr<const Representation> &&r)
 {
 	add(r.get());
 	container_.push_back(std::move(r));
