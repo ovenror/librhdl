@@ -26,6 +26,7 @@ enum rhdl_member {RHDL_ENTITY_INTERFACE, RHDL_ENTITY_REPRESENTATIONS};
 
 typedef const struct rhdl_object {
 	enum rhdl_type type;
+	const char *name;
 	const char *const *members;
 } rhdl_object_t;
 

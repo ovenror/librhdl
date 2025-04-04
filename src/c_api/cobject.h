@@ -13,15 +13,23 @@
 #include "util/cached.h"
 #include "c_api/wrapper.h"
 
+#include <cassert>
+
 namespace rhdl {
 
 class CObject : public Dictionary<CObject> {
 public:
 	CObject(rhdl_type typeId, std::string name) : c_(*this), name_(name) {
 		c_.content_.type = typeId;
+		c_.content_.name = name_.c_str();
 	}
 
-	CObject(CObject &&moved) : c_(*this), name_(std::move(moved.name_)) {}
+	CObject(CObject &&moved) :
+			c_(*this, std::move(moved)),
+			name_(std::move(moved.name_))
+	{
+		assert(c_.content_.name == name_.c_str());
+	}
 
 	virtual ~CObject() {}
 
