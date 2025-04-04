@@ -26,6 +26,7 @@ public:
 	using Super = Wropper<C_Struct>;
 
 	Wrapper(CPP_Class &cpp) : cpp_(cpp) {}
+	Wrapper(CPP_Class &cpp, CPP_Class &&moved);
 	~Wrapper() {magic_ = 0;}
 
 	C_Struct &content() {return Super::content_;}
@@ -85,6 +86,12 @@ typename CPP_Class::C_Struct *c_ptr(CPP_Class &cpp)
 	return Wrapper<CPP_Class>::c_ptr(cpp);
 }
 
+template<class CPP_Class>
+Wrapper<CPP_Class>::Wrapper(CPP_Class &cpp, CPP_Class &&moved)
+	: cpp_(cpp)
+{
+	cpp.c_.content_ = moved.c_.content_;
+}
 
 }
 
