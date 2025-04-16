@@ -81,14 +81,14 @@ void Structure::invalidate()
 }
 
 std::unique_ptr<Structure> makeStructure(
-		const std::string &entityName, Mode mode)
+		Namespace &ns, const std::string &entityName, Mode mode)
 {
 	if (mode == Mode::EXISTS) {
-		return std::make_unique<ExistingEntityStructure>(entityName);
+		return std::make_unique<ExistingEntityStructure>(ns, entityName);
 	}
 	else {
 		assert (mode == Mode::CREATE_STATEFUL || mode == Mode::CREATE_STATELESS);
-		return std::make_unique<NewEntityStructure>(entityName, mode == Mode::CREATE_STATELESS);
+		return std::make_unique<NewEntityStructure>(ns, entityName, mode == Mode::CREATE_STATELESS);
 	}
 }
 

@@ -1,8 +1,15 @@
 #include "lib.h"
+
+#include <rhdl/construction/component.h>
+#include "construction/internalstructure.h"
+
 #include "construction/library.h"
 #include "construction/buildsim.h"
 
 using namespace rhdl;
+
+using Part = Component;
+using Ent = InternalStructure;
 
 void lib_init()
 {

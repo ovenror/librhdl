@@ -38,4 +38,14 @@ const CObject& CValue::at(const char *name) const
 	throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
 }
 
+bool CValue::contains(const std::string &name) const
+{
+	return false;
+}
+
+bool CValue::contains(const char *name) const
+{
+	return false;
+}
+
 } /* namespace rhdl */

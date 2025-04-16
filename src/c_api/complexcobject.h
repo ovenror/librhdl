@@ -33,6 +33,9 @@ public:
 
 	virtual ~ComplexCObject() {};
 
+	bool contains(const std::string &name) const override;
+	bool contains(const char *name) const override;
+
 	const CObject &at(const std::string &name) const override;
 	const CObject &at(const char *name) const override;
 
@@ -89,12 +92,10 @@ private:
 template<bool OWNING>
 inline const CObject& ComplexCObject<OWNING>::at(const std::string &name) const
 {
-	try {
-		return dict_.at(name);
-	}
-	catch (std::out_of_range &e) {
+	if (!dict_.contains(name))
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
-	}
+
+	return dict_.at(name);
 }
 
 template<bool OWNING>
@@ -104,15 +105,27 @@ inline ComplexCObject<OWNING>::ComplexCObject(
 				dict_(std::move(moved.dict_))
 {}
 
+//TODO: These should go into a non-templated class
+template<bool OWNING>
+inline bool ComplexCObject<OWNING>::contains(
+		const std::string &name) const
+{
+	return dict_.contains(name);
+}
+
+template<bool OWNING>
+inline bool ComplexCObject<OWNING>::contains(const char *name) const
+{
+	return dict_.contains(name);
+}
+
 template<bool OWNING>
 inline const CObject& ComplexCObject<OWNING>::at(const char *name) const
 {
-	try {
-		return dict_.at(name);
-	}
-	catch (std::out_of_range &e) {
+	if (!dict_.contains(name))
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
-	}
+
+	return dict_.at(name);
 }
 
 }

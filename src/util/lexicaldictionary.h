@@ -36,6 +36,9 @@ public:
 
 	std::pair<const_iterator, bool> insert(T element);
 
+	bool contains(const std::string &name) const override;
+	bool contains(const char *name) const override;
+
 	const T& at(const char *name) const override;
 	const T& at(const std::string &name) const override;
 
@@ -161,6 +164,18 @@ inline LexicalDictionary<T>::LexicalDictionary(LexicalDictionary &&moved)
 		: set_(std::move(moved.set_)),
 		  c_strings_(*this, &LexicalDictionary<T>::compute_cstrings)
 {}
+
+template<class T>
+inline bool LexicalDictionary<T>::contains(const std::string &name) const
+{
+	return find(name) != end();
+}
+
+template<class T>
+inline bool LexicalDictionary<T>::contains(const char *name) const
+{
+	return find(name) != end();
+}
 
 template<class T>
 void LexicalDictionary<T>::compute_cstrings(CStrings& cs) const {

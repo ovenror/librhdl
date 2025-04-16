@@ -39,8 +39,6 @@ const char *ConstructionException::whatcode() const noexcept
 	case Errorcode::E_NETLIST_CONTAINS_CYCLES: return "The netlist (that was generated from the representation) you tried to add contains cycles, although the entity should be stateless";
 	case Errorcode::E_EMPTY_INTERFACE: return "The entities top interface or another composite interface is empty.";
 
-	case Errorcode::E_NO_SUCH_ENTITY: return "No entity with that name exists.";
-	case Errorcode::E_ENTITY_EXISTS: return "An entity with that name already exists.";
 	case Errorcode::E_NO_SUCH_MEMBER: return "No member with that name exists.";
 	case Errorcode::E_MEMBER_EXISTS: return "An member with that name already exists.";
 

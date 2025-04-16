@@ -14,17 +14,20 @@
 #include "handle.h"
 #include "wrapper.h"
 
+#include "representation/structural/builder/structure.h"
+
 #include <memory>
 
 namespace rhdl {
 
 class Entity;
+class Namespace;
 
 namespace structural { namespace builder { class Structure; }}
 
 class StructureHandle {
 public:
-	StructureHandle(const std::string name, int mode);
+	StructureHandle(Namespace &ns, const std::string name, int mode);
 
 	Handle &makeComponent(const Entity &entity);
 	void finalize();

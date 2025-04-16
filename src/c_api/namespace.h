@@ -22,6 +22,9 @@ public:
 	Namespace &cast() override {return *this;};
 
 private:
+	virtual operator Namespace &() override {return *this;}
+	virtual operator const Namespace &() const override {return *this;}
+
 	void setMembers_internal(const char *const *members) override {
 		c_.content().members = members;
 	}

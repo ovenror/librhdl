@@ -20,9 +20,12 @@ namespace rhdl {
 namespace s = structural;
 namespace sb = s::builder;
 
-Structure::Structure(const std::string &name, Mode mode)
+Structure::Structure(const std::string &name, Mode mode, Namespace *ns)
 {
-	impl_ = sb::makeStructure(name, mode);
+	if (!ns)
+		ns = defaultLib;
+
+	impl_ = sb::makeStructure(*ns, name, mode);
 }
 
 Structure::~Structure() {}

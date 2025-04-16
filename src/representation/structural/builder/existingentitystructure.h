@@ -17,7 +17,7 @@ namespace builder {
 
 class ExistingEntityStructure : public Structure {
 public:
-	ExistingEntityStructure(const std::string &entityName);
+	ExistingEntityStructure(Namespace &ns, const std::string &entityName);
 	virtual ~ExistingEntityStructure();
 
 	PortContainer &top() override {return top_;}

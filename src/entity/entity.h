@@ -35,6 +35,7 @@ public:
 	Entity(
 			const std::string &name,
 			std::vector<const Interface *>, bool stateless = true);
+
 	virtual ~Entity();
 
 	virtual Entity &cast() override {return *this;}
@@ -115,6 +116,9 @@ protected:
 	mutable RepresentationIndex<const Timing *> repIdx_timing_;
 
 private:
+	virtual operator Entity &() override {return *this;}
+	virtual operator const Entity &() const override {return *this;}
+
 	RepresentationIterator getRepresentationIterator(RepresentationContainer::iterator i) const;
 	TimingIterator getTimingIterator(TimingContainer::const_iterator i) const;
 };

@@ -14,8 +14,12 @@
 #include "c_api/wrapper.h"
 
 #include <cassert>
+#include <memory>
 
 namespace rhdl {
+
+class Entity;
+class Namespace;
 
 class CObject : public Dictionary<CObject> {
 public:
@@ -59,6 +63,22 @@ public:
 	}
 
 	virtual const CObject &getRef() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual operator Entity &() {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual operator const Entity &() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual operator Namespace &() {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual operator const Namespace &() const {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
 	}
 

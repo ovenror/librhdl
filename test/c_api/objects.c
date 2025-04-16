@@ -42,7 +42,7 @@ int entities()
 
 	rhdl_object_t *none = rhdl_get(entities, "bananananana");
 	REQUIRE(!none);
-	REQUIRE_ERR(rhdl_errno(), E_NO_SUCH_ENTITY);
+	REQUIRE_ERR(rhdl_errno(), E_NO_SUCH_MEMBER);
 
 	return SUCCESS;
 }

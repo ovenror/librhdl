@@ -125,14 +125,14 @@ TEST(ApiMisconstruction, introduceCycle)
 
 TEST(ApiMisconstruction, noSuchEntity)
 {
-    test(Errorcode::E_NO_SUCH_ENTITY, []() {
+    test(Errorcode::E_NO_SUCH_MEMBER, []() {
         Component nope("fsdhfjkljshdfklasjshdfkljashkldfjh");
     });
 }
 
 TEST(ApiMisconstruction, entityExists)
 {
-    test(Errorcode::E_ENTITY_EXISTS, []() {
+    test(Errorcode::E_MEMBER_EXISTS, []() {
         Structure nope("Inverter");
     });
 }

@@ -21,7 +21,7 @@ class BuilderPort;
 
 class NewEntityStructure : public Structure {
 public:
-	NewEntityStructure(std::string entityName, bool stateless);
+	NewEntityStructure(Namespace &ns, std::string entityName, bool stateless);
 	virtual ~NewEntityStructure();
 
 	PortContainer &top() override {return *top_;}
@@ -39,6 +39,7 @@ private:
 	std::string entityName_;
 	std::unique_ptr<PortContainer> top_ = nullptr;
 	BuilderPort *topBuilder = nullptr;
+	Namespace &ns_;
 };
 
 } /* namespace builder */

@@ -5,6 +5,8 @@
  *      Author: ovenror
  */
 
+#include <rhdl/construction/connectible.h>
+
 #include "handle.h"
 #include "structurehandle.h"
 
@@ -122,16 +124,28 @@ const char *rhdl_errstr()
 	return lastException.what();
 }
 
+static rhdl::Namespace &recover_namespace(rhdl_namespace_t *ns)
+{
+	return ns ? rhdl::Namespace::recover(ns) : rhdl::rootNamespace;
+}
+
+static rhdl::Namespace &recover_namespace_for_entity(rhdl_namespace_t *ns)
+{
+	return ns ?	rhdl::Namespace::recover(ns) : *rhdl::defaultLib;
+}
+
 rhdl_namespace_t *rhdl_namespace(rhdl_namespace_t* ns, const char *name)
 {
-	//namespaces are not implemented yet
-	assert (ns == nullptr);
-	assert (name == nullptr);
-
 	auto f = [=]() {
-		return c_ptr(*rhdl::defaultLib);
+		const rhdl::Namespace &base = recover_namespace(ns);
+
+		if (!name)
+			return base.c_ptr();
+
+		const rhdl::Namespace &result = base.at(name);
+		return result.c_ptr();
 	};
-	return cerror<rhdl_namespace_t *, 0>(f, std::array<int, 0>{});
+	return cerror<rhdl_namespace_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
 }
 
 rhdl_entity_t *rhdl_entity(rhdl_namespace_t* ns, const char *name)
@@ -140,10 +154,10 @@ rhdl_entity_t *rhdl_entity(rhdl_namespace_t* ns, const char *name)
 	assert (ns == nullptr);
 
 	auto f = [=]() {
-		auto &entity = const_cast<const rhdl::Library *>(rhdl::defaultLib) -> at(name);
-		return c_ptr(entity);
+		const rhdl::Entity &entity = recover_namespace_for_entity(ns).at(name);
+		return entity.c_ptr();
 	};
-	return cerror<rhdl_entity_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_ENTITY});
+	return cerror<rhdl_entity_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
 }
 
 rhdl_iface_t *rhdl_iface(rhdl_iface_t *iface, const char *name)
@@ -164,16 +178,14 @@ rhdl_iface_t *rhdl_iface(rhdl_iface_t *iface, const char *name)
 
 rhdl_structure_t *rhdl_begin_structure(rhdl_namespace_t *nspace, const char *entity_name, unsigned int mode)
 {
-	//namespaces are not implemented yet
-	assert (nspace == nullptr);
-
 	try {
-		return c_ptr(*new StructureHandle(entity_name, mode));
+		rhdl::Namespace &ns = recover_namespace_for_entity(nspace);
+		return c_ptr(*new StructureHandle(ns, entity_name, mode));
 	}
 	catch (const ConstructionException &e) {
 		switch (e.errorcode()) {
-		case rhdl::Errorcode::E_ENTITY_EXISTS:
-		case rhdl::Errorcode::E_NO_SUCH_ENTITY:
+		case rhdl::Errorcode::E_MEMBER_EXISTS:
+		case rhdl::Errorcode::E_NO_SUCH_MEMBER:
 			except(e);
 			return nullptr;
 		default:
@@ -265,14 +277,14 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 
 int rhdl_print_commands(const char *entity_name) {
 	auto f = [=]() {
-		auto &entity = const_cast<const rhdl::Library *>(rhdl::defaultLib) -> at(entity_name);
+		const rhdl::Entity &entity = rhdl::defaultLib -> at(entity_name);
 		auto *commands = entity.getRepresentation<rhdl::txt::Commands>();
 		assert (commands);
 		std::cout << *commands;
 		return 0;
 	};
 
-	return cerror<int, 1>(f, std::array<int, 1>{E_NO_SUCH_ENTITY});
+	return cerror<int, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
 }
 
 const rhdl_object * rhdl_get(const rhdl_object_t *o, const char *member) {
@@ -283,8 +295,8 @@ const rhdl_object * rhdl_get(const rhdl_object_t *o, const char *member) {
 		return c_ptr(result);
 	};
 
-	return cerror<const rhdl_object *, 2>(f, std::array<int, 2>
-			{E_NO_SUCH_MEMBER, E_NO_SUCH_ENTITY});
+	return cerror<const rhdl_object *, 1>(f, std::array<int, 1>
+			{E_NO_SUCH_MEMBER});
 }
 
 template <class VALUE_TYPE>

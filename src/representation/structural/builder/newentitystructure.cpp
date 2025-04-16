@@ -18,12 +18,13 @@ namespace rhdl {
 namespace structural {
 namespace builder {
 
-NewEntityStructure::NewEntityStructure(std::string entityName, bool stateless)
-	: Structure(stateless), entityName_(entityName)
+NewEntityStructure::NewEntityStructure(
+		Namespace &ns, std::string entityName, bool stateless)
+		: Structure(stateless), entityName_(entityName), ns_(ns)
 {
-	if (defaultLib -> contains(entityName)) {
+	if (ns.contains(entityName)) {
 		valid_ = false;
-		throw ConstructionException(Errorcode::E_ENTITY_EXISTS);
+		throw ConstructionException(Errorcode::E_MEMBER_EXISTS);
 	}
 
 	auto top = std::make_unique<BuilderPort>(*this, nullptr, 0, "");
@@ -55,19 +56,19 @@ void NewEntityStructure::doFinalize()
 
 	auto entity = std::make_unique<Entity>(entityName_, std::move(ifaces), builder().stateless());
 
-	if (defaultLib -> contains(entity -> name())) {
+	if (ns_.contains(entity -> name())) {
 		abort();
-		throw ConstructionException(Errorcode::E_ENTITY_EXISTS);
+		throw ConstructionException(Errorcode::E_MEMBER_EXISTS);
 	}
 
-	defaultLib -> regist(std::move(entity));
+	ns_.add(std::move(entity));
 	Structure::doFinalize();
 }
 
 const Entity& NewEntityStructure::entity() const
 {
-	assert (defaultLib -> contains(entityName_));
-	return defaultLib -> at(entityName_);
+	assert (ns_.contains(entityName_));
+	return ns_.at(entityName_);
 }
 
 void NewEntityStructure::replaceTopBuilder(std::unique_ptr<ComplexPort> &&e)

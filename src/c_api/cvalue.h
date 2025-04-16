@@ -25,8 +25,11 @@ public:
 
 	virtual ~CValue();
 
-	virtual const CObject& at(const std::string &name) const override;
-	virtual const CObject& at(const char *name) const override;
+	bool contains(const std::string &name) const override;
+	bool contains(const char *name) const override;
+
+	const CObject& at(const std::string &name) const override;
+	const CObject& at(const char *name) const override;
 
 	virtual std::size_t size() const {return 0;}
 

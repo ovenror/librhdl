@@ -23,6 +23,9 @@ public:
 			: impl_(std::move(moved.impl_)) {}
 	virtual ~LexicalPointingDictionary() {}
 
+	bool contains(const char *name) const override {return impl_.contains(name);}
+	bool contains(const std::string &name) const override {return impl_.contains(name);}
+
 	const T& at(const char *name) const override {return *impl_.at(name);}
 	const T& at(const std::string &name) const override {return *impl_.at(name);}
 

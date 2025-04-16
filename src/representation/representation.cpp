@@ -31,7 +31,7 @@ Representation::Representation(
 	assert (!timing || &timing -> entity() == &entity);
 
 	c_.content().type = (rhdl_reptype) id;
-	cparent() = c_ptr(parent);
+	cparent() = rhdl::c_ptr(parent);
 }
 
 Representation::Representation(Representation &&moved)

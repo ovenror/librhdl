@@ -13,8 +13,8 @@ namespace rhdl {
 
 namespace sb = structural::builder;
 
-StructureHandle::StructureHandle(const std::string name, int mode)
-	: structure_(sb::makeStructure(name, static_cast<Structure::Mode>(mode))), c_(*this)
+StructureHandle::StructureHandle(Namespace &ns, const std::string name, int mode)
+	: structure_(sb::makeStructure(ns, name, static_cast<Structure::Mode>(mode))), c_(*this)
 {
 	auto &port = structure_ -> topPort();
 	c_.content().connector = c_ptr(context_.make(port));

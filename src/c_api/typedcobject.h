@@ -42,6 +42,8 @@ public:
 		return tco.cast();
 	}
 
+	const C_Struct *c_ptr() const {return rhdl::c_ptr(*this);}
+
 protected:
 	virtual CRTP &cast() = 0;
 

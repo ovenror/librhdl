@@ -14,8 +14,8 @@ namespace rhdl {
 namespace structural {
 namespace builder {
 
-ExistingEntityStructure::ExistingEntityStructure(const std::string &entityName)
-	: ExistingEntityStructure(defaultLib -> at(entityName))
+ExistingEntityStructure::ExistingEntityStructure(Namespace &ns, const std::string &entityName)
+	: ExistingEntityStructure(ns.at(entityName))
 {}
 
 ExistingEntityStructure::ExistingEntityStructure(const Entity &entity)

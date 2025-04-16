@@ -10,14 +10,19 @@
 
 #include <rhdl/construction/structure.h>
 #include "construction/buildsim.h"
+#include "construction/library.h"
 #include "representation/structural/builder/structure.h"
 #include <functional>
+
 
 namespace rhdl {
 
 class InternalStructure : public Structure {
 public:
-	InternalStructure(const std::string &name, Mode mode = CREATE_STATELESS);
+	InternalStructure(
+			const std::string &name,
+			Mode mode = CREATE_STATELESS,
+			Namespace &ns = *defaultLib);
 	virtual ~InternalStructure() {};
 
 	template<class siface_class, class internal_state_class>

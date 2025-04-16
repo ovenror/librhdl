@@ -24,7 +24,7 @@ Entity::Entity(
 	repIdx_timing_[nullptr];
 	add(&interface_);
 	add(&representations_);
-	c_.content().iface = c_ptr(static_cast<const Interface &>(interface_));
+	c_.content().iface = interface_.c_ptr();
 }
 
 Entity::~Entity() {}

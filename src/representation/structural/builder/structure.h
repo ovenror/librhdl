@@ -92,7 +92,9 @@ private:
 	std::vector<Behavior> behavior_;
 };
 
-std::unique_ptr<Structure> makeStructure(const std::string &entityName, ::rhdl::Structure::Mode mode);
+std::unique_ptr<Structure> makeStructure(
+		Namespace &ns, const std::string &entityName,
+		::rhdl::Structure::Mode mode);
 
 } /* namespace rhdl::structural::builder */
 

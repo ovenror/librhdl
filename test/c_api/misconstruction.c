@@ -129,7 +129,7 @@ int noSuchInterface()
 int noSuchEntity()
 {
 	REQUIRE( ! rhdl_entity(0, "fsdhfjkljshdfklasjshdfkljashkldfjh"));
-	return ACCEPT(rhdl_errno() == E_NO_SUCH_ENTITY);
+	return ACCEPT(rhdl_errno() == E_NO_SUCH_MEMBER);
 }
 
 int entityExists()

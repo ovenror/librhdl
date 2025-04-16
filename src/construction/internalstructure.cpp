@@ -9,8 +9,8 @@
 
 namespace rhdl {
 
-InternalStructure::InternalStructure(const std::string &name, Mode mode)
-	: Structure(name, mode)
+InternalStructure::InternalStructure(const std::string &name, Mode mode, Namespace &ns)
+	: Structure(name, mode, &ns)
 {}
 
 } /* namespace rhdl */

@@ -17,6 +17,7 @@
 namespace rhdl {
 
 class Entity;
+class Namespace;
 
 namespace structural { namespace builder { class Structure; }}
 
@@ -32,7 +33,9 @@ public:
 		EXISTS = static_cast<int>(Hidden::F_EXISTS)
 	};
 
-	Structure(const std::string &name, Mode mode = CREATE_STATELESS);
+	Structure(
+			const std::string &name,
+			Mode mode = CREATE_STATELESS, Namespace *ns = nullptr);
 	virtual ~Structure();
 
 	StructureConnector operator[] (const std::string &iname) const;
