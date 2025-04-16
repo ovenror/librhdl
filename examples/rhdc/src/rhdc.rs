@@ -705,3 +705,66 @@ impl CommandCompleter for ObjectCompleter {
     }
 }
 
+fn resolve_object(qn : &str) -> *const rhdl_object_t
+{
+    resolve_object_with_base(ptr::null(), qn)
+}
+
+fn resolve_object_with_base(base : *const rhdl_object_t, qn : &str) -> *const rhdl_object_t
+{
+    let mut components = qn.split('.');
+
+    let mut curbase = base;
+    let mut component_str : String;
+
+    for component in components {
+        component_str = component.trim().to_string();
+
+        let component_cstr = CString::new(component_str).unwrap();
+        curbase = unsafe {rhdl_get(curbase, component_cstr.as_ptr())};
+
+        if curbase.is_null() {
+            return ptr::null()
+        }
+    }
+
+    return curbase
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn failed_resolve() {
+        assert!(resolve_object("doesnotexist") == ptr::null());
+        assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
+    }
+
+    #[test]
+    fn toplevel_resolve() {
+        assert!(resolve_object("entities") != ptr::null());
+    }
+
+    #[test]
+    fn secondlevel_resolve() {
+        assert!(resolve_object("entities.Inverter") != ptr::null());
+    }
+
+    #[test]
+    fn complex_resolve() {
+        assert!(resolve_object("entities.AND.representations.AND_Structure_0.content") != ptr::null());
+    }
+
+    #[test]
+    fn spaced_resolve() {
+        assert!(resolve_object("   entities .AND.      representations .   AND_Structure_0. content  ") != ptr::null());
+    }
+
+    fn based_resolve() {
+        let entities = resolve_object("entities");
+        assert!(entities != ptr::null());
+        assert!(resolve_object_with_base(entities, "ClockDiv2") != ptr::null());
+    }
+
+}
