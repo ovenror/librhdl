@@ -712,7 +712,11 @@ fn resolve_object(qn : &str) -> *const rhdl_object_t
 
 fn resolve_object_with_base(base : *const rhdl_object_t, qn : &str) -> *const rhdl_object_t
 {
-    let mut components = qn.split('.');
+    if qn.trim().is_empty() {
+        return unsafe {rhdl_get(base, ptr::null())}
+    }
+
+    let components = qn.split('.');
 
     let mut curbase = base;
     let mut component_str : String;
@@ -739,6 +743,11 @@ mod tests {
     fn failed_resolve() {
         assert!(resolve_object("doesnotexist") == ptr::null());
         assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
+    }
+
+    #[test]
+    fn root_resolve() {
+        assert!(resolve_object("") != ptr::null());
     }
 
     #[test]
