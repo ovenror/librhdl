@@ -622,51 +622,20 @@ struct ObjectCompleter {}
 impl CommandCompleter for ObjectCompleter {
     fn complete(&self, text: &str) -> Result<Vec<String>, ()>
     {
-        let (basename, components) = split_qn(&text);
-     
-        //panic!("{}", components.fold("".to_string(), |gu, ga| format!("{},{}",&gu,&ga)));
+        let split = text.rsplit_once('.');
 
-        let (mut accu, mut curbase) = match basename {
-            "" => ("", unsafe{rhdl_get(std::ptr::null(), std::ptr::null())}),
-            _ => {
-                let basename_cstr = CString::new(basename).unwrap();
-                let probe = unsafe{
-                    rhdl_get(std::ptr::null(), basename_cstr.as_ptr())};
-
-                if probe.is_null() {
-                    ("", unsafe{rhdl_get(std::ptr::null(), std::ptr::null())})
-                }
-                else {
-                    (basename, probe)
-                }
-            }       
+        let (most, last) = match split {
+            None => ("", text),
+            Some((m, l)) => (m,l)
         };
 
-        let mut last : String = basename.to_string();
-        let mut tmp: String;
+        let base = resolve_object(most);
 
-        for component in components {
-            last = component.to_string();
-
-            let component_cstr = CString::new(component).unwrap();
-            let c = unsafe {rhdl_get(curbase, component_cstr.as_ptr())};
-
-            if c.is_null() {
-                break;
-            }
-
-            accu = if accu.is_empty() {
-                component
-            }
-            else {
-                tmp = format!("{}.{}", accu, component);
-                &tmp
-            };
-
-            curbase = c;
+        if base.is_null() {
+            return Err(());
         }
 
-        let cs = CStrings::new(unsafe{*curbase}.members);
+        let cs = CStrings::new(unsafe{*base}.members);
 
         if cs.ptr.is_null() {
             panic!("NUUULL");
@@ -688,10 +657,10 @@ impl CommandCompleter for ObjectCompleter {
             match unsafe {CStr::from_ptr(*ename)}.to_str() {
                 Ok(name) => {
                     if name.starts_with(&last) {
-                        let cand = if accu.is_empty() {
+                        let cand = if most.is_empty() {
                             String::from(name)
                         } else {
-                            format!("{}.{}", accu, name)
+                            format!("{}.{}", most, name)
                         };
 
                         vec.push(cand);
