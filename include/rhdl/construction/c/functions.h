@@ -8,7 +8,9 @@
 #ifndef INCLUDE_CONSTRUCTION_FUNCTIONS_H_
 #define INCLUDE_CONSTRUCTION_FUNCTIONS_H_
 
-int rhdl_errno();
+#include <rhdl/construction/c/error.h>
+
+enum Errorcode rhdl_errno();
 const char *rhdl_errstr();
 
 const rhdl_namespace_t *rhdl_namespace(const rhdl_namespace_t* ns, const char *name);

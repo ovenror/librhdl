@@ -112,9 +112,9 @@ static inline RTYPE cerror(std::function<RTYPE()> f, std::array<int, NEXPECTED> 
 	return cerror_return<RTYPE>(-1);
 }
 
-int rhdl_errno()
+enum Errorcode rhdl_errno()
 {
-	return static_cast<int>(lastException.errorcode());
+	return static_cast<Errorcode>(lastException.errorcode());
 }
 
 const char *rhdl_errstr()
