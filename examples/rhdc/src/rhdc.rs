@@ -308,7 +308,7 @@ impl InnerRHDL {
             return;
         }
         else {
-            writeln!(self.outputs.out, "sucessfully instantiated entity {} as component {}", ename, name).unwrap();
+            writeln!(self.outputs.out, "successfully instantiated entity {} as component {}", ename, name).unwrap();
         }
         
         self.components.insert(name.to_string(), component);
