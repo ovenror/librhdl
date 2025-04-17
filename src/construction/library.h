@@ -24,7 +24,6 @@ public:
 	const Entity &regist(std::unique_ptr<Entity> &&e);
 
 private:
-	void setMembers_internal(const char *const *members) override;
 	const Entity &regist_internal(std::unique_ptr<Entity> &&entity);
 };
 

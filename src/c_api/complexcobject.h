@@ -26,7 +26,7 @@ class ComplexCObject : public CValueContainer {
 public:
 	ComplexCObject(rhdl_type typeId, std::string name) : Super(typeId, name)
 	{
-		Super::setMembers();
+		c_.content().members = c_strings().data();
 	}
 
 	ComplexCObject(ComplexCObject &&);
@@ -49,7 +49,7 @@ public:
 			throw ConstructionException(Errorcode::E_MEMBER_EXISTS, member -> name());
 		}
 
-		Super::setMembers();
+		setMembers();
 		return *ptr;
 	}
 
@@ -63,7 +63,7 @@ public:
 			throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER, member -> name());
 		}
 
-		Super::setMembers();
+		setMembers();
 		return *ptr;
 	}
 

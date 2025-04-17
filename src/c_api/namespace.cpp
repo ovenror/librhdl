@@ -14,8 +14,22 @@
 
 namespace rhdl {
 
-Namespace::Namespace(std::string name) : TypedCObject(name) {}
+Namespace::Namespace(std::string name) : TypedCObject(name)
+{
+	setTypedMembers();
+}
 
 Namespace::~Namespace() {}
+
+void Namespace::setMembers()
+{
+	Super::setMembers();
+	setTypedMembers();
+}
+
+void Namespace::setTypedMembers()
+{
+	c_ptr() -> members = c_strings().data();
+}
 
 }

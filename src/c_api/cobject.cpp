@@ -50,9 +50,7 @@ CObject::operator const char*() const
 
 void CObject::setMembers()
 {
-	auto members = c_strings().data();
-	c_.content_.members = members;
-	setMembers_internal(members);
+	c_.content_.members = c_strings().data();
 }
 
 }

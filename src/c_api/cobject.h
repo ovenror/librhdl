@@ -87,7 +87,7 @@ public:
 	virtual bool isValue() const {return false;}
 
 protected:
-	void setMembers();
+	virtual void setMembers();
 
 	static void updateContainerFor(const CObject &o, const CObject &c)
 	{
@@ -96,7 +96,6 @@ protected:
 
 private:
 	void updateContainer(const CObject &c) const {container_ = &c;}
-	virtual void setMembers_internal(const char *const *members) {};
 
 	const std::string name_;
 	mutable const CObject *container_ = nullptr;

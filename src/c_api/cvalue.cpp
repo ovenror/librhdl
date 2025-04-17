@@ -15,14 +15,14 @@ namespace rhdl {
 CValue::CValue(rhdl_type typeId, std::string name, CValueContainer &container)
 		: CObject(typeId, name)
 {
-	setMembers();
+	c_.content().members = c_strings().data();
 	container.add(*this);
 }
 
 CValue::CValue(CValue &&moved, CValueContainer &newContainer)
 		: CObject(std::move(moved)), c_strings_(std::move(moved.c_strings_))
 {
-	setMembers();
+	c_.content().members = c_strings().data();
 	newContainer.add_after_move(*this);
 }
 
