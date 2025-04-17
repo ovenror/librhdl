@@ -148,6 +148,19 @@ rhdl_namespace_t *rhdl_namespace(rhdl_namespace_t* ns, const char *name)
 	return cerror<rhdl_namespace_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
 }
 
+rhdl_namespace_t *rhdl_create_namespace(rhdl_namespace_t* ns, const char *name)
+{
+	auto f = [=]() {
+		rhdl::Namespace &base = recover_namespace(ns);
+
+		const rhdl::Namespace &result =
+				base.add(std::make_unique<rhdl::Namespace>(name));
+
+		return result.c_ptr();
+	};
+	return cerror<rhdl_namespace_t *, 2>(f, std::array<int, 2>{E_NO_SUCH_MEMBER, E_MEMBER_EXISTS});
+}
+
 rhdl_entity_t *rhdl_entity(rhdl_namespace_t* ns, const char *name)
 {
 	//namespaces are not implemented yet

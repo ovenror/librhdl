@@ -14,6 +14,7 @@ enum Errorcode rhdl_errno();
 const char *rhdl_errstr();
 
 const rhdl_namespace_t *rhdl_namespace(const rhdl_namespace_t* ns, const char *name);
+const rhdl_namespace_t *rhdl_create_namespace(const rhdl_namespace_t* ns, const char *name);
 const rhdl_entity_t *rhdl_entity(const rhdl_namespace_t* ns, const char *name);
 const rhdl_iface_t *rhdl_iface(const rhdl_iface_t *iface, const char *name);
 

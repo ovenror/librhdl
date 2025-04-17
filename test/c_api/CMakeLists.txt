@@ -1,6 +1,7 @@
 add_executable(c_apitests
 	construction.c construction.cpp utils.c
 	misconstruction.c misconstruction.cpp
+	namespaces.c namespaces.cpp
 )
 
 add_executable(lstest

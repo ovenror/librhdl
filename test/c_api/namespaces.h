@@ -1,0 +1,2 @@
+int createToplevelNamespace();
+int createNamespace();
