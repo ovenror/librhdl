@@ -15,7 +15,7 @@ CObject::CObject(rhdl_type typeId, std::string name)
 		: c_(*this), name_(name) {
 	c_.content_.type = typeId;
 	c_.content_.name = name_.c_str();
-	c_.content_.container = &container_-> c_.content();
+	c_.content_.container = c_ptr(container_);
 }
 
 CObject::CObject(CObject &&moved) :
@@ -24,7 +24,7 @@ CObject::CObject(CObject &&moved) :
 {
 	c_.content_.name = name_.c_str();
 
-	assert(c_.content_.container == c_ptr(*container()));
+	assert(c_.content_.container == c_ptr(container()));
 }
 
 CObject::~CObject() {}
