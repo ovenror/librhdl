@@ -8,7 +8,7 @@
 #ifndef SRC_UTIL_LEXICALPOINTINGDICTIONARY_H_
 #define SRC_UTIL_LEXICALPOINTINGDICTIONARY_H_
 
-#include "lexicaldictionary.h"
+#include <util/lexicaldictionary.h>
 
 namespace rhdl {
 
