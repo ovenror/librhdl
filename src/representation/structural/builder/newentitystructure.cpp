@@ -27,7 +27,7 @@ NewEntityStructure::NewEntityStructure(
 		throw ConstructionException(Errorcode::E_MEMBER_EXISTS);
 	}
 
-	auto top = std::make_unique<BuilderPort>(*this, nullptr, 0, "");
+	auto top = std::make_unique<BuilderPort>(*this, nullptr, 0, entityName);
 	topBuilder = top.get();
 	top_ = std::move(top);
 }
