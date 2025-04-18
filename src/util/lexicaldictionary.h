@@ -14,34 +14,40 @@ namespace rhdl {
 
 template <class T>
 class LexicalDictionary : public DictionaryBase<T> {
-	static_assert(!std::is_same_v<T, CObject>);
-
 	using Super = DictionaryBase<T>;
 	using typename Super::const_iterator;
 	using typename Super::CStrings;
 
 public:
-	LexicalDictionary() = default;
-	LexicalDictionary(LexicalDictionary &&) = default;
+	LexicalDictionary();
+	LexicalDictionary(LexicalDictionary &&);
 
 	virtual ~LexicalDictionary() {}
 
-	std::pair<const_iterator, bool> insert(T element) override;
+	virtual const CStrings &c_strings() const override {return c_stringcache_();}
+
+	const T &add(T element) override;
+	const T &replace(T element) override;
+
+	void clear() override;
 
 private:
-	void compute_cstrings(CStrings &cs) const override;
+	void compute_cstrings(CStrings &cs) const;
+
+	Cached<CStrings &, LexicalDictionary> c_stringcache_;
 };
 
-template <class T>
-std::pair<typename LexicalDictionary<T>::const_iterator, bool> LexicalDictionary<T>::insert(T element)
+template<class T>
+inline LexicalDictionary<T>::LexicalDictionary()
+		: c_stringcache_(*this, &LexicalDictionary::compute_cstrings,
+				Super::c_strings())
 {
-	auto result = Super::insert(std::move(element));
-
-	if (result.second)
-		Super::invalidate_c_strings();
-
-	return result;
 }
+
+template<class T>
+inline LexicalDictionary<T>::LexicalDictionary(LexicalDictionary &&moved)
+		: c_stringcache_(
+				std::move(moved.c_stringcache_), *this, Super::c_strings()) {}
 
 template<class T>
 void LexicalDictionary<T>::compute_cstrings(LexicalDictionary<T>::CStrings& cs) const {
@@ -50,6 +56,27 @@ void LexicalDictionary<T>::compute_cstrings(LexicalDictionary<T>::CStrings& cs) 
 		cs.push_back(element -> name().c_str());
 	}
 	cs.push_back(nullptr);
+}
+
+template<class T>
+inline void LexicalDictionary<T>::clear()
+{
+	Super::clear();
+	c_stringcache_.invalidate();
+}
+
+template<class T>
+inline const T& LexicalDictionary<T>::add(T element)
+{
+	c_stringcache_.invalidate();
+	return Super::add(std::move(element));
+}
+
+template<class T>
+inline const T& LexicalDictionary<T>::replace(T element)
+{
+	c_stringcache_.invalidate();
+	return Super::replace(std::move(element));
 }
 
 }

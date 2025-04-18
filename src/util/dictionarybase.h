@@ -9,9 +9,8 @@
 #define UTIL_LEXICALDICTIONARY_H_
 
 #include "cached.h"
-#include "mutabledictionary.h"
-
 #include <rhdl/construction/constructionexception.h>
+#include <util/extensibledictionary.h>
 
 #include <set>
 #include <tuple>
@@ -20,9 +19,9 @@
 namespace rhdl {
 
 template <class T>
-class DictionaryBase : public MutableDictionary<T> {
+class DictionaryBase : public ExtensibleDictionary<T> {
 private:
-	using Super = MutableDictionary<T>;
+	using Super = ExtensibleDictionary<T>;
 
 public:
 	class Less;
@@ -32,9 +31,11 @@ public:
 	using iterator = typename std::set<T>::iterator;
 	using const_iterator = typename std::set<T>::const_iterator;
 
-	DictionaryBase();
-	DictionaryBase(DictionaryBase &&);
+	DictionaryBase() = default;
+	DictionaryBase(DictionaryBase &&) = default;
 	virtual ~DictionaryBase() {}
+
+	virtual const CStrings &c_strings() const override {return c_strings_;}
 
 	bool contains(const std::string &name) const override;
 	bool contains(const char *name) const override;
@@ -43,7 +44,12 @@ public:
 	const T& at(const std::string &name) const override;
 
 	const T &add(T element) override;
-	const T &replace(T element) override;
+	virtual const T &replace(T element);
+
+	iterator begin() {return set_.begin();}
+	iterator end() {return set_.end();}
+	const_iterator begin() const {return set_.begin();}
+	const_iterator end() const {return set_.end();}
 
 	template <class ArgT>
 	iterator find(ArgT nameOrT);
@@ -51,34 +57,24 @@ public:
 	template <class ArgT>
 	const_iterator find(ArgT nameOrT) const;
 
-	iterator begin() {return set_.begin();}
-	iterator end() {return set_.end();}
-	iterator begin() const {return set_.begin();}
-	iterator end() const {return set_.end();}
-	const_iterator cbegin() const {return begin();}
-	const_iterator cend() const {return end();}
-
-	virtual std::pair<const_iterator, bool> insert(T element);
-
 	size_type size() const override;
 
-	const CStrings &c_strings() const override {return c_strings_();}
-
-	void clear() {set_.clear(); invalidate_c_strings();}
+	virtual void clear();
 
 protected:
-	void invalidate_c_strings() {c_strings_.invalidate();}
+	std::pair<const_iterator, bool> insert(T element);
+	CStrings &c_strings() override {return c_strings_;}
 
 private:
-	virtual void compute_cstrings(CStrings &cs) const = 0;
-
-	Cached<CStrings, DictionaryBase> c_strings_;
+	CStrings c_strings_;
 	std::set<T, Less> set_;
 };
 
 template<class T>
-DictionaryBase<T>::DictionaryBase() :
-		c_strings_(*this, &DictionaryBase<T>::compute_cstrings) {}
+inline void DictionaryBase<T>::clear()
+{
+	set_.clear();
+}
 
 template<class T>
 inline std::pair<typename std::set<T>::const_iterator, bool> DictionaryBase<T>::insert(T element)
@@ -90,7 +86,7 @@ template<class T>
 const T& DictionaryBase<T>::at(const std::string &name) const
 {
 	const_iterator i;
-	if ((i = find(name)) == cend())
+	if ((i = find(name)) == end())
 		throw std::out_of_range("Dictionary::at(std::string &name)");
 
 	return *i;
@@ -112,7 +108,7 @@ template<class T>
 const T& DictionaryBase<T>::at(const char *name) const
 {
 	const_iterator i;
-	if ((i = find(name)) == cend())
+	if ((i = find(name)) == end())
 		throw std::out_of_range("LexicalDictionary::at(const char *)");
 
 	return *i;
@@ -135,7 +131,7 @@ inline const T &DictionaryBase<T>::add(T element) {
 }
 
 template<class T>
-inline const T& DictionaryBase<T>::replace(T element)
+inline const T &DictionaryBase<T>::replace(T element)
 {
 	auto i = find(element -> name());
 
@@ -148,21 +144,15 @@ inline const T& DictionaryBase<T>::replace(T element)
 }
 
 template<class T>
-inline DictionaryBase<T>::DictionaryBase(DictionaryBase &&moved)
-		: set_(std::move(moved.set_)),
-		  c_strings_(std::move(moved.c_strings_), *this)
-{}
-
-template<class T>
 inline bool DictionaryBase<T>::contains(const std::string &name) const
 {
-	return find(name) != cend();
+	return find(name) != end();
 }
 
 template<class T>
 inline bool DictionaryBase<T>::contains(const char *name) const
 {
-	return find(name) != cend();
+	return find(name) != end();
 }
 
 template <class T>
