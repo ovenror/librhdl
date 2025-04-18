@@ -14,6 +14,8 @@
 #include "handle.h"
 #include "wrapper.h"
 
+#include "c_api/typedcobject.h"
+
 #include "representation/structural/builder/structure.h"
 
 #include <memory>
@@ -23,11 +25,12 @@ namespace rhdl {
 class Entity;
 class Namespace;
 
-namespace structural { namespace builder { class Structure; }}
-
-class StructureHandle {
+class StructureHandle : public TypedCObject<StructureHandle, rhdl_structure, false> {
 public:
 	StructureHandle(Namespace &ns, const std::string name, int mode);
+	virtual ~StructureHandle();
+
+	StructureHandle &cast() override {return *this;}
 
 	Handle &makeComponent(const Entity &entity);
 	void finalize();
@@ -36,14 +39,6 @@ public:
 private:
 	Context context_;
 	std::unique_ptr<structural::builder::Structure> structure_;
-
-public:
-	using C_Struct = rhdl_structure;
-
-private:
-	friend Wrapper<StructureHandle>;
-	static constexpr unsigned long C_ID = 0x57300C7003E;
-	Wrapper<StructureHandle> c_;
 };
 
 } /* namespace rhdl */

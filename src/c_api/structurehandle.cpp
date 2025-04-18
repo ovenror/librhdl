@@ -14,11 +14,15 @@ namespace rhdl {
 namespace sb = structural::builder;
 
 StructureHandle::StructureHandle(Namespace &ns, const std::string name, int mode)
-	: structure_(sb::makeStructure(ns, name, static_cast<Structure::Mode>(mode))), c_(*this)
+	: TypedCObject(name),
+	  structure_(sb::makeStructure(
+			  ns, name, static_cast<Structure::Mode>(mode)))
 {
 	auto &port = structure_ -> topPort();
-	c_.content().connector = c_ptr(context_.make(port));
+	c_.content().connector = rhdl::c_ptr(context_.make(port));
 }
+
+StructureHandle::~StructureHandle() {}
 
 Handle &StructureHandle::makeComponent(const Entity &entity)
 {
