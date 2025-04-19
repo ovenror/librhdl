@@ -23,9 +23,6 @@ public:
 	virtual ~ExtensibleDictionary() {}
 
 	virtual const T &add(T element) = 0;
-
-protected:
-	virtual CStrings &c_strings() = 0;
 };
 
 } /* namespace rhdl */

@@ -15,8 +15,8 @@ namespace rhdl {
 template <class T>
 class LexicalDictionary : public DictionaryBase<T> {
 	using Super = DictionaryBase<T>;
-	using typename Super::const_iterator;
 	using typename Super::CStrings;
+	using typename Super::SetElement;
 
 public:
 	LexicalDictionary();
@@ -26,8 +26,8 @@ public:
 
 	virtual const CStrings &c_strings() const override {return c_stringcache_();}
 
-	const T &add(T element) override;
 	const T &replace(T element) override;
+	const T &add(T element) override;
 
 	void clear() override;
 
@@ -52,8 +52,10 @@ inline LexicalDictionary<T>::LexicalDictionary(LexicalDictionary &&moved)
 template<class T>
 void LexicalDictionary<T>::compute_cstrings(LexicalDictionary<T>::CStrings& cs) const {
 	cs.clear();
-	for (const T &element : *this) {
-		cs.push_back(element -> name().c_str());
+	typename CStrings::size_type index = 0;
+	for (const SetElement &element : *this) {
+		cs.push_back(element.c_str());
+		element.index() = index++;
 	}
 	cs.push_back(nullptr);
 }
@@ -61,8 +63,8 @@ void LexicalDictionary<T>::compute_cstrings(LexicalDictionary<T>::CStrings& cs) 
 template<class T>
 inline void LexicalDictionary<T>::clear()
 {
-	Super::clear();
 	c_stringcache_.invalidate();
+	Super::clear();
 }
 
 template<class T>
@@ -72,10 +74,11 @@ inline const T& LexicalDictionary<T>::add(T element)
 	return Super::add(std::move(element));
 }
 
+
 template<class T>
 inline const T& LexicalDictionary<T>::replace(T element)
 {
-	c_stringcache_.invalidate();
+	c_stringcache_.compute();
 	return Super::replace(std::move(element));
 }
 

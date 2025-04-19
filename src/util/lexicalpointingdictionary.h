@@ -37,8 +37,6 @@ public:
 	const std::vector<const char*> &c_strings() const override {return impl_.c_strings();}
 
 	void clear() {impl_.clear();}
-	typename Dict::iterator begin() {return impl_.begin();}
-	typename Dict::iterator end() {return impl_.end();}
 
 private:
 	Dict impl_;

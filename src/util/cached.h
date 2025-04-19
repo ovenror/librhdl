@@ -56,12 +56,7 @@ public:
 	}
 
 	bool invalid() const {
-		if (invalid_) {
-			invalid_ = false;
-			return true;
-		}
-
-		return false;
+		return invalid_;
 	}
 
 protected:
@@ -89,9 +84,14 @@ public:
 
 	operator const RESULT_TYPE&() const {return *this();}
 
+	void compute() const {
+		(container_.*Super::compute_)(Super::return_value_);
+		Super::invalid_ = false;
+	}
+
 	const RESULT_TYPE &operator()() const {
 		if (Super::invalid()) {
-			(container_.*Super::compute_)(Super::return_value_);
+			compute();
 		}
 		return Super::return_value_;
 	}
@@ -116,6 +116,7 @@ class Cached<RESULT_TYPE, None, ID> : public detail::Cached_Base<RESULT_TYPE, vo
 	const RESULT_TYPE &operator()() const {
 		if (Super::invalid()) {
 			Super::compute_(Super::return_value_);
+			Super::invalid_ = false;
 		}
 		return Super::return_value_;
 	}
