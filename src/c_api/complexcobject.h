@@ -11,7 +11,7 @@
 #include "cvaluecontainer.h"
 #include "cvalue.h"
 
-#include "util/lexicalpointingdictionary.h"
+#include "util/lexicaldictionary.h"
 
 namespace rhdl {
 
@@ -24,7 +24,12 @@ class ComplexCObject : public CValueContainer {
 			OWNING, std::unique_ptr<const CObject>, const CObject*>::type;
 
 public:
-	ComplexCObject(rhdl_type typeId, std::string name) : Super(typeId, name)
+	using Dict = std::unique_ptr<MutableDictionary<PT>>;
+
+	ComplexCObject(
+			rhdl_type typeId, std::string name,
+			Dict dict = std::make_unique<LexicalDictionary<PT>>())
+			: Super(typeId, name), dict_(std::move(dict))
 	{
 		c_.content().members = c_strings().data();
 	}
@@ -43,7 +48,7 @@ public:
 	{
 		Super::updateContainerFor(*member, *this);
 
-		auto ptr = dict_.add(std::move(member));
+		auto &ptr = dict_ -> add(std::move(member));
 
 		if (!ptr) {
 			throw ConstructionException(Errorcode::E_MEMBER_EXISTS, member -> name());
@@ -57,7 +62,7 @@ public:
 	{
 		Super::updateContainerFor(*member, *this);
 
-		auto ptr = dict_.replace(std::move(member));
+		auto &ptr = dict_ -> replace(std::move(member));
 
 		if (!ptr) {
 			throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER, member -> name());
@@ -67,15 +72,17 @@ public:
 		return *ptr;
 	}
 
-	std::size_t size() const override {return dict_.size();}
+	std::size_t size() const override {return dict_ -> size();}
 
-	const std::vector<const char*> &c_strings() const override {return dict_.c_strings();}
+	const std::vector<const char*> &c_strings() const override {return dict_ -> c_strings();}
 
 protected:
-	void clearDict() {dict_.clear();}
+	void clearDict() {dict_ -> clear();}
 
-	auto begin() {dict_.begin();}
-	auto end() {dict_.end();}
+#if 0
+	auto begin() {dict_ -> begin();}
+	auto end() {dict_ -> end();}
+#endif
 
 private:
 	const CObject &add(const CValue &cvalue) {
@@ -86,16 +93,16 @@ private:
 		return replace(static_cast<PT>(&cvalue));
 	}
 
-	LexicalPointingDictionary<CObject, OWNING> dict_;
+	Dict dict_;
 };
 
 template<bool OWNING>
 inline const CObject& ComplexCObject<OWNING>::at(const std::string &name) const
 {
-	if (!dict_.contains(name))
+	if (!dict_ -> contains(name))
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
 
-	return dict_.at(name);
+	return *dict_ -> at(name);
 }
 
 template<bool OWNING>
@@ -110,22 +117,22 @@ template<bool OWNING>
 inline bool ComplexCObject<OWNING>::contains(
 		const std::string &name) const
 {
-	return dict_.contains(name);
+	return dict_ -> contains(name);
 }
 
 template<bool OWNING>
 inline bool ComplexCObject<OWNING>::contains(const char *name) const
 {
-	return dict_.contains(name);
+	return dict_ -> contains(name);
 }
 
 template<bool OWNING>
 inline const CObject& ComplexCObject<OWNING>::at(const char *name) const
 {
-	if (!dict_.contains(name))
+	if (!dict_ -> contains(name))
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
 
-	return dict_.at(name);
+	return *dict_ -> at(name);
 }
 
 }

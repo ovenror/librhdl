@@ -10,8 +10,7 @@
 
 #include "cached.h"
 #include <rhdl/construction/constructionexception.h>
-#include <util/extensibledictionary.h>
-
+#include <util/mutabledictionary.h>
 #include <set>
 #include <tuple>
 #include <vector>
@@ -20,9 +19,9 @@
 namespace rhdl {
 
 template <class T>
-class DictionaryBase : public ExtensibleDictionary<T> {
+class DictionaryBase : public MutableDictionary<T> {
 private:
-	using Super = ExtensibleDictionary<T>;
+	using Super = MutableDictionary<T>;
 
 public:
 	class Less;
@@ -49,11 +48,11 @@ public:
 	const T& at(const std::string &name) const override;
 
 	const T &add(T element) override;
-	virtual const T &replace(T element);
+	const T &replace(T element) override;
 
 	size_type size() const override;
 
-	virtual void clear() {set_.clear();}
+	void clear() override {set_.clear();}
 
 protected:
 	class SetElement {
