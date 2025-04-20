@@ -44,8 +44,8 @@ public:
 	bool contains(const std::string &name) const override;
 	bool contains(const char *name) const override;
 
-	const T& at(const char *name) const override;
-	const T& at(const std::string &name) const override;
+	const T &at(const char *name) const override;
+	const T &at(const std::string &name) const override;
 
 	const T &add(T element) override;
 	const T &replace(T element) override;
@@ -184,7 +184,7 @@ inline std::pair<typename DictionaryBase<T>::iterator, bool> DictionaryBase<T>::
 }
 
 template<class T>
-const T& DictionaryBase<T>::at(const std::string &name) const
+const T & DictionaryBase<T>::at(const std::string &name) const
 {
 	const_iterator i;
 	if ((i = set_.find(name)) == set_.end())
@@ -206,7 +206,7 @@ T& LexicalDictionary<T>::at(const std::string& name)
 
 /* speed boost for unique C strings */
 template<class T>
-const T& DictionaryBase<T>::at(const char *name) const
+const T & DictionaryBase<T>::at(const char *name) const
 {
 	const_iterator i;
 	if ((i = set_.find(name)) == set_.end())

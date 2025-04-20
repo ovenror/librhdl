@@ -15,37 +15,15 @@ namespace rhdl {
 CValue::CValue(rhdl_type typeId, std::string name, CValueContainer &container)
 		: CObject(typeId, name)
 {
-	c_.content().members = c_strings().data();
 	container.add(*this);
 }
 
 CValue::CValue(CValue &&moved, CValueContainer &newContainer)
-		: CObject(std::move(moved)), c_strings_(std::move(moved.c_strings_))
+		: CObject(std::move(moved))
 {
-	c_.content().members = c_strings().data();
 	newContainer.add_after_move(*this);
 }
 
 CValue::~CValue() {}
-
-const CObject& CValue::at(const std::string &name) const
-{
-	throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
-}
-
-const CObject& CValue::at(const char *name) const
-{
-	throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
-}
-
-bool CValue::contains(const std::string &name) const
-{
-	return false;
-}
-
-bool CValue::contains(const char *name) const
-{
-	return false;
-}
 
 } /* namespace rhdl */

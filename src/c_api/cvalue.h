@@ -9,6 +9,7 @@
 #define SRC_C_API_CVALUE_H_
 
 #include "cobject.h"
+#include "util/emptydictionary.h"
 
 #include <memory>
 
@@ -24,18 +25,6 @@ public:
 	CValue(CValue &&moved, CValueContainer &newContainer);
 
 	virtual ~CValue();
-
-	bool contains(const std::string &name) const override;
-	bool contains(const char *name) const override;
-
-	const CObject& at(const std::string &name) const override;
-	const CObject& at(const char *name) const override;
-
-	virtual std::size_t size() const {return 0;}
-
-	const std::vector<const char*> &c_strings() const override {return c_strings_;}
-
-	//explicit operator const char*() const override {return to_cstring();}
 
 	explicit operator int64_t() const override {
 		throw ConstructionException(Errorcode::E_WRONG_VALUE_TYPE);
@@ -68,7 +57,9 @@ public:
 	bool isValue() const override {return true;}
 
 private:
-	std::vector<const char *> c_strings_ = {0};
+	const Dictionary<const CObject &> &dictionary() const override {return dict_;}
+
+	EmptyDictionary<const CObject &> dict_;
 };
 
 } /* namespace rhdl */

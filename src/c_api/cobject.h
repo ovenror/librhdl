@@ -21,7 +21,7 @@ namespace rhdl {
 class Entity;
 class Namespace;
 
-class CObject : public Dictionary<CObject> {
+class CObject : public Dictionary<const CObject &> {
 public:
 	CObject(rhdl_type typeId, std::string name);
 	CObject(CObject &&moved);
@@ -31,6 +31,14 @@ public:
 	const std::string &name() const {return name_;}
 	const std::string fqn() const;
 	const CObject *container() const {return container_;}
+
+	bool contains(const std::string &name) const override;
+	bool contains(const char *name) const override;
+
+	const CObject& at(const char *name) const override;
+	const CObject& at(const std::string &name) const override;
+
+	size_t size() const override {return dictionary().size();}
 
 	operator const rhdl_object *const() const {return c_ptr(*this);}
 
@@ -87,6 +95,7 @@ public:
 	virtual bool isValue() const {return false;}
 
 protected:
+	const CStrings &c_strings() const override;
 	virtual void setMembers();
 
 	static void updateContainerFor(const CObject &o, const CObject &c)
@@ -95,6 +104,7 @@ protected:
 	}
 
 private:
+	virtual const Dictionary<const CObject &> &dictionary() const = 0;
 	void updateContainer(const CObject &c) const {container_ = &c;}
 
 	const std::string name_;

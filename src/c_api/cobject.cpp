@@ -53,5 +53,37 @@ void CObject::setMembers()
 	c_.content_.members = c_strings().data();
 }
 
+bool CObject::contains(const std::string &name) const
+{
+	return dictionary().contains(name);
 }
 
+bool CObject::contains(const char *name) const
+{
+	return dictionary().contains(name);
+}
+
+const CObject& CObject::at(const char *name) const
+{
+	if (!dictionary().contains(name)) {
+		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
+	}
+
+	return dictionary().at(name);
+}
+
+const CObject& CObject::at(const std::string &name) const
+{
+	if (!dictionary().contains(name)) {
+		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
+	}
+
+	return dictionary().at(name);
+}
+
+const CObject::CStrings& CObject::c_strings() const
+{
+	return dictionary().c_strings();
+}
+
+}
