@@ -11,10 +11,11 @@
 using namespace rhdl;
 
 ISingle::ISingle(const std::string &name, Direction dir) :
-	VisitableBase(name), dir_("direction", *this, c_.content().single.dir)
-
+	VisitableBase(name), dir_("direction", *this, c_ptr() -> single.dir)
 {
-	auto &c = c_.content();
+	setDictionary(dict_.dereferencer());
+
+	auto &c = *c_ptr();
 
 	c.type = RHDL_SINGLE;
 	c.single.dir = static_cast<enum rhdl_direction>(dir);
@@ -28,4 +29,15 @@ bool ISingle::eq_inner_names(const Interface &other) const
 	bool result = wat -> success();
 
 	return result;
+}
+
+const CObject& rhdl::ISingle::add(const CValue &v)
+{
+	return *Super::add(dict_, &v);
+}
+
+const CObject& rhdl::ISingle::add_after_move(const CValue &v)
+{
+	assert(0);
+	return *Super::replace(dict_, &v);
 }

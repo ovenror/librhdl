@@ -13,7 +13,7 @@
 namespace rhdl {
 
 template <class CRTP, class C_Struct>
-using TypedValueObject = TypedCObject<CRTP, C_Struct, false, true>;
+using TypedValueObject = TypedCObject<CRTP, C_Struct, false, TypedCObjectBase::VALUES_ONLY>;
 
 } /* namespace rhdl */
 

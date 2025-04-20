@@ -8,27 +8,45 @@
 #ifndef SRC_C_API_TYPEDCOBJECT_H_
 #define SRC_C_API_TYPEDCOBJECT_H_
 
-#include "complexcobject.h"
+#include <c_api/complexcobject.h>
 #include "cvalueobject.h"
 #include "cstructtotypeid.h"
+
+#include "util/staticswitch.h"
 
 #include <cassert>
 #include <iostream>
 
 namespace rhdl {
 
+enum class TypedCObjectBase {BASIC, COMPLEX, VALUES_ONLY};
+
+template <bool OWNING, TypedCObjectBase BASE>
+class MakeTypedCObjectBase {
+	using Setup = staticswitch::Setup<TypedCObjectBase, staticswitch::Class>;
+
+	template <TypedCObjectBase SWITCH, class DEFAULT, class... CASES>
+	using Switch = Setup::Switch<SWITCH, DEFAULT, CASES...>;
+
+	template <TypedCObjectBase CASE, class RESULT>
+	using Case = Setup::Case<CASE, RESULT>;
+
+public:
+	using type =
+			Switch<BASE, CObject,
+				Case<TypedCObjectBase::COMPLEX, ComplexCObject<OWNING>>,
+				Case<TypedCObjectBase::VALUES_ONLY, CValueObject>>;
+};
+
 template <
 		class CRTP, class Typed_C_Struct,
-		bool OWNING = true, bool VALUE_OBJECT = false>
-class TypedCObject :
-		public std::conditional<
-			VALUE_OBJECT, CValueObject, ComplexCObject<OWNING>>::type
+		bool OWNING = true, TypedCObjectBase BASE = TypedCObjectBase::BASIC>
+class TypedCObject : public MakeTypedCObjectBase<OWNING, BASE>::type
 {
 	static constexpr rhdl_type typeId = CStructToTypeID<Typed_C_Struct>::value;
 
 public:
-	using Super = typename std::conditional<
-			VALUE_OBJECT, CValueObject, ComplexCObject<OWNING>>::type;
+	using Super = typename MakeTypedCObjectBase<OWNING, BASE>::type;
 	using C_Struct = Typed_C_Struct;
 
 	TypedCObject(std::string name) : Super(typeId, name), c_(*this) {}
@@ -43,9 +61,9 @@ public:
 	}
 
 	const C_Struct *c_ptr() const {return rhdl::c_ptr(*this);}
-	C_Struct *c_ptr() {return rhdl::c_ptr(*this);}
 
 protected:
+	C_Struct *c_ptr() {return rhdl::c_ptr(*this);}
 	virtual CRTP &cast() = 0;
 
 	friend class Wrapper<TypedCObject>;

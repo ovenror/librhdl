@@ -48,6 +48,12 @@ CObject::operator const char*() const
 	return static_cast<const std::string &>(*this).c_str();
 }
 
+void CObject::setDictionaryPtr(std::unique_ptr<Dictionary<const CObject>> dict)
+{
+	dict_ = std::move(dict);
+	setMembers();
+}
+
 void CObject::setMembers()
 {
 	c_.content_.members = c_strings().data();
@@ -55,35 +61,49 @@ void CObject::setMembers()
 
 bool CObject::contains(const std::string &name) const
 {
-	return dictionary().contains(name);
+	assertInitialized();
+	return dict_ -> contains(name);
 }
 
 bool CObject::contains(const char *name) const
 {
-	return dictionary().contains(name);
+	assertInitialized();
+	return dict_ -> contains(name);
 }
 
 const CObject& CObject::at(const char *name) const
 {
-	if (!dictionary().contains(name)) {
+	if (!contains(name)) {
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
 	}
 
-	return dictionary().at(name);
+	return dict_ -> at(name);
 }
 
 const CObject& CObject::at(const std::string &name) const
 {
-	if (!dictionary().contains(name)) {
+	if (!contains(name)) {
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER);
 	}
 
-	return dictionary().at(name);
+	return dict_ -> at(name);
 }
 
-const CObject::CStrings& CObject::c_strings() const
+const Dictionary<const CObject>::CStrings& CObject::c_strings() const
 {
-	return dictionary().c_strings();
+	assertInitialized();
+	return dict_ -> c_strings();
+}
+
+size_t CObject::size() const
+{
+	assertInitialized();
+	return dict_ -> size();
+}
+
+void CObject::assertInitialized() const
+{
+	assert(dict_.get());
 }
 
 }

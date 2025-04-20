@@ -8,7 +8,7 @@
 #ifndef SRC_C_API_CVALUEOBJECT_H_
 #define SRC_C_API_CVALUEOBJECT_H_
 
-#include "complexcobject.h"
+#include <c_api/complexcobject.h>
 
 namespace rhdl {
 

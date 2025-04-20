@@ -14,17 +14,19 @@ namespace rhdl {
 
 template <class T>
 class EmptyDictionary : public Dictionary<T> {
-	using typename Dictionary<T>::CStrings;
+	using Super = Dictionary<T>;
+	using typename Super::CStrings;
+	using typename Super::ReturnType;
 
 public:
 	static constexpr auto at_error = "Empty dictionary is empty.";
 
-	const T & at(const std::string &name) const override
+	ReturnType at(const std::string &name) const override
 	{
 		throw std::out_of_range(at_error);
 	}
 
-	const T & at(const char *name) const override {
+	ReturnType at(const char *name) const override {
 		throw std::out_of_range(at_error);
 	}
 

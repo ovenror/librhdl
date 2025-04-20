@@ -41,7 +41,6 @@ public:
 
 	enum class Type {SINGLE = RHDL_SINGLE, COMPOSITE = RHDL_COMPOSITE, PLACEHOLDER = RHDL_UNSPECIFIED};
 
-	Interface(const std::string &name);
 	virtual ~Interface();
 
 	Interface &cast() override {return *this;};
@@ -78,6 +77,9 @@ public:
 	virtual void add_components_to_queue(std::queue<const Interface *> &bfs_backlog) const;
 
 	operator std::string() const;
+
+protected:
+	Interface(const std::string &name);
 
 private:
 	virtual const Interface *get(const std::string &name) const = 0;

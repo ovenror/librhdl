@@ -8,21 +8,19 @@
 #ifndef SRC_C_API_CVALUECONTAINER_H_
 #define SRC_C_API_CVALUECONTAINER_H_
 
-#include "cobject.h"
+#include <cassert>
 
 namespace rhdl {
 
 class CValue;
+class CObject;
 
-class CValueContainer : public CObject {
+class CValueContainer {
 public:
-	CValueContainer(rhdl_type typeId, std::string name);
-	CValueContainer(CValueContainer &&moved);
-
-	virtual ~CValueContainer();
+	virtual ~CValueContainer() {}
 
 	virtual const CObject &add(const CValue &) = 0;
-	virtual const CObject &add_after_move(const CValue &) = 0;
+	virtual const CObject &add_after_move(const CValue &v) = 0;
 };
 
 } /* namespace rhdl */

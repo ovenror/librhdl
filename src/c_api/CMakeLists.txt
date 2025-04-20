@@ -3,7 +3,6 @@ target_sources(rhdl_obj
 		c_api.cpp
 		cobject.cpp
 		cvalue.cpp
-		cvaluecontainer.cpp
 		cvalueobject.cpp
 		context.cpp
 		handle.cpp

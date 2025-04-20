@@ -19,7 +19,7 @@ template <class iterator, bool CONST>
 class Functor {
 	using Argument = decltype(*std::declval<iterator>());
 	using NonconstResult = decltype(**std::declval<iterator>());
-	using Result = typename cond_const<CONST, NonconstResult>::type;
+	using Result = cond_const<CONST, NonconstResult>;
 
 public:
 	Result operator()(Argument a) const {return *a;}

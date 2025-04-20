@@ -15,7 +15,10 @@
 
 namespace rhdl {
 
-Interface::Interface(const std::string &name) : TypedCObject(name) {}
+Interface::Interface(
+		const std::string &name) : TypedCObject(name)
+{}
+
 Interface::~Interface() {}
 
 bool Interface::eq_name(const Interface &other) const

@@ -8,13 +8,13 @@
 #ifndef SRC_UTIL_LEXICALDICTIONARY_H_
 #define SRC_UTIL_LEXICALDICTIONARY_H_
 
-#include "dictionarybase.h"
+#include <util/dictionaryimplbase.h>
 
 namespace rhdl {
 
 template <class T>
-class LexicalDictionary : public DictionaryBase<T> {
-	using Super = DictionaryBase<T>;
+class LexicalDictionary : public DictionaryImplBase<T> {
+	using Super = DictionaryImplBase<T>;
 	using typename Super::CStrings;
 	using typename Super::SetElement;
 
@@ -42,6 +42,9 @@ inline LexicalDictionary<T>::LexicalDictionary()
 		: c_stringcache_(*this, &LexicalDictionary::compute_cstrings,
 				Super::c_strings())
 {
+	void *vptr = *((void **) this);
+
+	assert((uint64_t ) vptr > 100000);
 }
 
 template<class T>

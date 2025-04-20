@@ -16,7 +16,7 @@
 #include "util/util.h"
 #include "util/iterable.h"
 #include "util/catiterator.h"
-#include "c_api/typedcobject.h"
+#include "c_api/typedcomplexcobject.h"
 
 #include "boost/iterator/transform_iterator.hpp"
 
@@ -29,7 +29,7 @@ namespace rhdl {
 
 class Timing;
 
-class Entity : public TypedCObject<Entity, rhdl_entity_struct, false>
+class Entity : public TypedComplexCObject<Entity, rhdl_entity_struct, false>
 {
 public:
 	Entity(

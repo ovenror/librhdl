@@ -4,6 +4,7 @@
 #include "util.h"
 #include <utility>
 
+namespace rhdl {
 namespace detail {
 
 template <class T>
@@ -121,5 +122,7 @@ class Cached<RESULT_TYPE, None, ID> : public detail::Cached_Base<RESULT_TYPE, vo
 		return Super::return_value_;
 	}
 };
+
+}
 
 #endif // CACHED_H

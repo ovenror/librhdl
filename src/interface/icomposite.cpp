@@ -12,19 +12,20 @@ IComposite::IComposite(
 		const std::string &name, std::vector<const Interface *> components)
 	: VisitableBase (name), components_(components)
 {
-	c_.content().type = RHDL_COMPOSITE;
+	setDictionary(components_.derefConv<CObject>());
+
+	c_ptr() -> type = RHDL_COMPOSITE;
 
 	for (auto *comp : components)
 	{
 		direction_ |= comp -> compositeDirection();
-		add(comp);
 	}
 
-	c_.content().composite.interfaces = c_strings().data();
+	c_ptr() -> composite.interfaces = c_strings().data();
 }
 
 static std::vector<const Interface *> cloneComponents(
-		 const std::vector<const Interface *> &ifaces)
+		 const IComposite::InterfaceContainer &ifaces)
 {
 	std::vector<const Interface *> result;
 
@@ -78,7 +79,7 @@ bool IComposite::eq_inner_names(const Interface &other) const
 
 	for (size_t index = 0; index < components_.size (); ++index)
 	{
-		if (!components_ [index] -> eq_names (*otta -> components_ [index]))
+		if (!components_ .at(index) -> eq_names (*otta -> components_ .at(index)))
 		{
 			return false;
 		}
@@ -89,7 +90,7 @@ bool IComposite::eq_inner_names(const Interface &other) const
 
 SingleDirection IComposite::preferredDirection() const
 {
-	assert (!components_.empty());
+	assert_not_empty();
 	assert (!direction_.free());
 
 	if (direction_.mixed())

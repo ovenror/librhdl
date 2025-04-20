@@ -9,8 +9,6 @@
 #define SRC_C_API_CVALUE_H_
 
 #include "cobject.h"
-#include "util/emptydictionary.h"
-
 #include <memory>
 
 namespace rhdl {
@@ -55,11 +53,6 @@ public:
 	}
 
 	bool isValue() const override {return true;}
-
-private:
-	const Dictionary<const CObject &> &dictionary() const override {return dict_;}
-
-	EmptyDictionary<const CObject &> dict_;
 };
 
 } /* namespace rhdl */

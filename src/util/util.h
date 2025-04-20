@@ -10,7 +10,7 @@ namespace rhdl {
 class Empty{};
 
 template <bool CONST, class T>
-using cond_const = std::conditional <CONST, const T, T>;
+using cond_const = typename std::conditional <CONST, const T, T>::type;
 }
 
 template <class T>

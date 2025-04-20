@@ -121,6 +121,7 @@ struct TesterEmpty {
 		auto &const_d = const_cast<const DICT &>(d);
 
 		ASSERT_EQ(d.size(), 0);
+		EXPECT_EQ(const_d.c_strings().size(), 1);
 		EXPECT_EQ(const_d.c_strings().at(0), nullptr);
 	}
 };
@@ -136,6 +137,7 @@ struct TesterOne {
 		d.add(std::move(e));
 
 		ASSERT_EQ(d.size(), 1);
+		EXPECT_EQ(const_d.c_strings().size(), 2);
 		EXPECT_TRUE(m.same(d.at("lol"), ptr));
 		EXPECT_STREQ(const_d.c_strings().at(0), "lol");
 		EXPECT_EQ(const_d.c_strings().at(0), ptr -> name().c_str());
@@ -157,6 +159,7 @@ struct TesterMany {
 			order.add(ptr);
 
 			ASSERT_EQ(d.size(), order.size());
+			EXPECT_EQ(const_d.c_strings().size(), order.size() + 1);
 
 			for (auto ptr : order) {
 				EXPECT_TRUE(m.same(d.at(ptr -> name()), ptr));

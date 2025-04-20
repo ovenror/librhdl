@@ -14,7 +14,7 @@
 
 namespace rhdl {
 
-class RepresentationContainer: public TypedCObject<
+class RepresentationContainer: public TypedComplexCObject<
 		RepresentationContainer, rhdl_namespace_struct, false>
 {
 	using Container = std::vector<std::unique_ptr<const Representation>>;

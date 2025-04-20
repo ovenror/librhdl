@@ -58,6 +58,13 @@ int entity()
 
 	REQUIRE(iface);
 
+	const char *const *list = iface -> members;
+
+	REQUIRE(list);
+	CHECK(&list, "in");
+	CHECK(&list, "out");
+	END(list);
+
 	rhdl_object_t *in = rhdl_get(iface, "in");
 	rhdl_object_t *out = rhdl_get(iface, "out");
 
@@ -82,7 +89,7 @@ int entity()
 	rhdl_object_t *r = rhdl_get(reps, "Inverter_Netlist_0");
 	REQUIRE(r);
 
-	const char *const *list = r -> members;
+	list = r -> members;
 
 	REQUIRE(list);
 	CHECK(&list, "content");

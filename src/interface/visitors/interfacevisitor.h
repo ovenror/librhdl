@@ -18,7 +18,7 @@ public:
 	virtual ~InterfaceVisitor() {};
 
 	template <class T>
-	using Visitee = typename cond_const<CONST, T>::type;
+	using Visitee = cond_const<CONST, T>;
 
 	virtual void visit(Visitee<ISingle> &) = 0;
 	virtual void visit(Visitee<IComposite> &) = 0;

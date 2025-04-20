@@ -21,7 +21,8 @@ namespace rhdl {
 class Entity;
 class Namespace;
 
-class CObject : public Dictionary<const CObject &> {
+class CObject : public Dictionary<const CObject>
+{
 public:
 	CObject(rhdl_type typeId, std::string name);
 	CObject(CObject &&moved);
@@ -38,7 +39,7 @@ public:
 	const CObject& at(const char *name) const override;
 	const CObject& at(const std::string &name) const override;
 
-	size_t size() const override {return dictionary().size();}
+	size_t size() const override;
 
 	operator const rhdl_object *const() const {return c_ptr(*this);}
 
@@ -95,19 +96,26 @@ public:
 	virtual bool isValue() const {return false;}
 
 protected:
+	template <class DICT> const typename DICT::StoreType &add(
+			DICT &d, typename DICT::StoreType member);
+	template <class DICT> const typename DICT::StoreType &replace(
+			DICT &d, typename DICT::StoreType member);
+
+	void setDictionaryPtr(std::unique_ptr<Dictionary<const CObject>> dict);
+	template <class DICT> void setDictionary(DICT d);
 	const CStrings &c_strings() const override;
 	virtual void setMembers();
 
-	static void updateContainerFor(const CObject &o, const CObject &c)
-	{
-		o.updateContainer(c);
-	}
-
 private:
-	virtual const Dictionary<const CObject &> &dictionary() const = 0;
+	template <class T> void updateContainerFor(T &member);
+	template <class T> void updateContainerFor(T* member);
+	template <class T> void updateContainerFor(std::unique_ptr<T> &member);
+
+	void assertInitialized() const;
 	void updateContainer(const CObject &c) const {container_ = &c;}
 
 	const std::string name_;
+	std::unique_ptr<Dictionary<const CObject>> dict_;
 	mutable const CObject *container_ = nullptr;
 
 public:
@@ -118,9 +126,75 @@ private:
 
 	static constexpr unsigned long C_ID = 0x0813C7;
 
-public:
 	Wrapper<CObject> c_;
 };
+
+template<class T>
+inline void CObject::updateContainerFor(T &member)
+{
+	member.updateContainer(*this);
+}
+
+template<class T>
+inline void CObject::updateContainerFor(T *member)
+{
+	member -> updateContainer(*this);
+}
+
+template<class T>
+inline void CObject::updateContainerFor(std::unique_ptr<T> &member)
+{
+	member -> updateContainer(*this);
+}
+
+template<class DICT>
+inline const typename DICT::StoreType &CObject::add(DICT &d, typename DICT::StoreType member)
+{
+	if (dict_)
+		assert(d.is_same_as(*dict_));
+
+	updateContainerFor(member);
+	const typename DICT::StoreType *result ;
+
+	try {
+		result = &d.add(std::move(member));
+	} catch (std::out_of_range &e) {
+		throw ConstructionException(Errorcode::E_MEMBER_EXISTS, member -> name());
+	}
+
+	if (dict_)
+		setMembers();
+
+	return *result;
+}
+
+template<class DICT>
+inline const typename DICT::StoreType &CObject::replace(DICT &d, typename DICT::StoreType member)
+{
+	if (dict_)
+		assert(d.is_same_as(*dict_));
+
+	updateContainerFor(member);
+	const typename DICT::StoreType *result ;
+
+	try {
+		result = &d.replace(std::move(member));
+	} catch (std::out_of_range &e) {
+		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER, member -> name());
+	}
+
+	if (dict_)
+		setMembers();
+
+	return *result;
+}
+
+template<class DICT>
+inline void CObject::setDictionary(DICT d)
+{
+	setDictionaryPtr(std::make_unique<DICT>(std::move(d)));
+}
+
 
 }
 

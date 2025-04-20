@@ -7,6 +7,9 @@
 #include "util/visitable.h"
 #include "util/cached.h"
 
+#include "util/fcfsdictionary.h"
+#include "util/dictionaryadapter.h"
+
 #include <vector>
 #include <list>
 
@@ -16,7 +19,7 @@ class IComposite : public Interface::VisitableChild<IComposite>
 {
 public:
 	using Super = Interface;
-	using InterfaceContainer =  std::vector<const Interface *>;
+	using InterfaceContainer = FCFSDictionary<const Interface *>;
 	using const_iterator = InterfaceContainer::const_iterator;
 
 	IComposite(
@@ -34,7 +37,7 @@ public:
 	const_iterator begin() const {return components_.cbegin();}
 	const_iterator end() const {return components_.cend();}
 	size_t size() const {return components_.size();}
-	void assert_not_empty() const {assert(!components_.empty());}
+	void assert_not_empty() const {assert(components_.size());}
 
 	static bool componentWise(
 			const std::vector<const IComposite *> &,

@@ -8,13 +8,13 @@
 #ifndef SRC_C_API_NAMESPACE_H_
 #define SRC_C_API_NAMESPACE_H_
 
-#include <c_api/typedcobject.h>
+#include "typedcomplexcobject.h"
 #include "../util/lexicaldictionary.h"
 #include <cassert>
 
 namespace rhdl {
 
-class Namespace : public TypedCObject<Namespace, rhdl_namespace_struct> {
+class Namespace : public TypedComplexCObject<Namespace, rhdl_namespace_struct> {
 public:
 	Namespace(std::string);
 	virtual ~Namespace();

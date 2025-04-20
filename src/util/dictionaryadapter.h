@@ -8,19 +8,20 @@
 #ifndef SRC_UTIL_DICTIONARYADAPTER_H_
 #define SRC_UTIL_DICTIONARYADAPTER_H_
 
-#include "mutabledictionary.h"
+#include "dictionary.h"
+#include "util/any_pointer.h"
 #include <memory>
 
 namespace rhdl {
 
 namespace detail {
 
-template <template <class> class DICT, class T, class CT>
-class DictionaryAdapterBase : public Dictionary<CT> {
-	using Super = Dictionary<CT>;
+template <class T, class RT>
+class DictionaryAdapterBase : public Dictionary<RT> {
+	using Super = Dictionary<RT>;
 
 public:
-	DictionaryAdapterBase(DICT<T> &dict) : dict_(dict) {}
+	DictionaryAdapterBase(const Dictionary<T> &dict) : dict_(dict) {}
 
 	bool contains(const std::string &name) const override {return dict_.contains(name);}
 	bool contains(const char *name) const override {return dict_.contains(name);}
@@ -29,62 +30,74 @@ public:
 
 	const typename Super::CStrings &c_strings() const {return dict_.c_strings();}
 
+	const DictionaryBase *underlying() const override
+	{
+		return dict_.underlying();
+	}
+
 protected:
-	DICT<T> &dict_;
+	const Dictionary<T> &dict_;
 };
 
 }
 
-template <class DICT, class CT>
-class ConvertingDictionaryAdapter {
-	static_assert(0, "DICT must be a Dictionary, and its template parameter "
-			"must be convertible to CT");
-};
-
-template <template <class> class DICT, class T, class CT>
-class ConvertingDictionaryAdapter<DICT<T>, CT>
-		: public detail::DictionaryAdapterBase<DICT, T, CT>
+template <class T>
+class DereferencingDictionaryAdapter
+		: public detail::DictionaryAdapterBase<T, remove_any_pointer_t<T>>
 {
-	using Super = detail::DictionaryAdapterBase<DICT, T, CT>;
+	using Super = detail::DictionaryAdapterBase<T, remove_any_pointer_t<T>>;
+	using typename Super::ReturnType;
 
 public:
-	ConvertingDictionaryAdapter(DICT<T> &dict) : Super(dict) {}
+	DereferencingDictionaryAdapter(const Dictionary<T> &dict) : Super(dict) {}
 
-	CT at(const char *name) const override {return Super::dict_.at(name);}
-	CT at(const std::string &name) const override {return Super::dict_.at(name);}
+	const ReturnType at(const char *name) const override {return *Super::dict_.at(name);}
+	const ReturnType at(const std::string &name) const override {return *Super::dict_.at(name);}
 };
 
-template <class DICT>
-class DereferencingDictionaryAdapter {
-	static_assert(0, "DICT must be a Dictionary and its template parameter "
-			"must implement operator*()");
+template <class T, class CT>
+class ConvertingDictionaryAdapter : public detail::DictionaryAdapterBase<T, CT>
+{
+	using Super = detail::DictionaryAdapterBase<T, CT>;
+	using typename Super::ReturnType;
+
+public:
+	ConvertingDictionaryAdapter(const Dictionary<T> &dict) : Super(dict) {}
+
+	ReturnType at(const char *name) const override {return Super::dict_.at(name);}
+	ReturnType at(const std::string &name) const override {return Super::dict_.at(name);}
+};
+
+template <class T, class CT>
+class DerefConvDictionaryAdapter : public detail::DictionaryAdapterBase<T, CT>
+{
+	using Super = detail::DictionaryAdapterBase<T, CT>;
+	using typename Super::ReturnType;
+
+public:
+	DerefConvDictionaryAdapter(const Dictionary<T> &dict) : Super(dict) {}
+
+	ReturnType at(const char *name) const override {return *Super::dict_.at(name);}
+	ReturnType at(const std::string &name) const override {return *Super::dict_.at(name);}
+};
+
+#if 0
+template <class DICT, bool DEREFERENCE_FIRST = false>
+class PolymorphicDictionary : public DICT {
+	template <class CT>
+	operator ConvertingDictionaryAdapter<DICT, CT>() const {
+		return ConvertingDictionaryAdapter<DICT, CT>(*this);
+	}
 };
 
 template <template <class> class DICT, class T>
-class DereferencingDictionaryAdapter<DICT<T*>>
-		: public detail::DictionaryAdapterBase<DICT, T*, T&>
-{
-	using Super = detail::DictionaryAdapterBase<DICT, T*, T&>;
-
-public:
-	DereferencingDictionaryAdapter(DICT<T*> &dict) : Super(dict) {}
-
-	T &at(const char *name) const override {return *Super::dict_.at(name);}
-	T &at(const std::string &name) const override {return *Super::dict_.at(name);}
+class PolymorphicDictionary<DICT<T>, true> : public DICT<T> {
+	template <class CT>
+	operator DerefConvDictionaryAdapter<DICT<T>, CT>() const {
+		return DerefConvDictionaryAdapter<DICT<T>, CT>(*this);
+	}
 };
-
-template <template <class> class DICT, class T>
-class DereferencingDictionaryAdapter<DICT<std::unique_ptr<T>>>
-		: public detail::DictionaryAdapterBase<DICT, std::unique_ptr<T>, T&>
-{
-	using Super = detail::DictionaryAdapterBase<DICT, std::unique_ptr<T>, T&>;
-
-public:
-	DereferencingDictionaryAdapter(DICT<std::unique_ptr<T>> &dict) : Super(dict) {}
-
-	T &at(const char *name) const override {return *Super::dict_.at(name);}
-	T &at(const std::string &name) const override {return *Super::dict_.at(name);}
-};
+#endif
 
 }
 

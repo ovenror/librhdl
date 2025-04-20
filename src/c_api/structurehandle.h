@@ -14,7 +14,7 @@
 #include "handle.h"
 #include "wrapper.h"
 
-#include "c_api/typedcobject.h"
+#include "c_api/typedcomplexcobject.h"
 
 #include "representation/structural/builder/structure.h"
 
@@ -25,7 +25,7 @@ namespace rhdl {
 class Entity;
 class Namespace;
 
-class StructureHandle : public TypedCObject<StructureHandle, rhdl_structure, false> {
+class StructureHandle : public TypedComplexCObject<StructureHandle, rhdl_structure, false> {
 public:
 	StructureHandle(Namespace &ns, const std::string name, int mode);
 	virtual ~StructureHandle();
