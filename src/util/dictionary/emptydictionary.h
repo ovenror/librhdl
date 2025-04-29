@@ -5,12 +5,12 @@
  *      Author: js
  */
 
-#ifndef SRC_UTIL_EMPTYDICTIONARY_H_
-#define SRC_UTIL_EMPTYDICTIONARY_H_
+#ifndef SRC_UTIL_DICTIONARY_EMPTYDICTIONARY_H_
+#define SRC_UTIL_DICTIONARY_EMPTYDICTIONARY_H_
 
-#include "dictionary.h"
+#include <util/dictionary/dictionary.h>
 
-namespace rhdl {
+namespace rhdl::dictionary {
 
 template <class T>
 class EmptyDictionary : public Dictionary<T> {
@@ -45,4 +45,4 @@ private:
 
 
 
-#endif /* SRC_UTIL_EMPTYDICTIONARY_H_ */
+#endif /* SRC_UTIL_DICTIONARY_EMPTYDICTIONARY_H_ */

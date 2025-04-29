@@ -5,9 +5,9 @@
  *      Author: ovenror
  */
 
+#include <util/dictionary/emptydictionary.h>
 #include "complexcobject.h"
 #include "rhdl/construction/c/types.h"
-#include "util/emptydictionary.h"
 #include "cvalue.h"
 #include <cassert>
 
@@ -16,14 +16,14 @@ namespace rhdl {
 CValue::CValue(rhdl_type typeId, std::string name, CValueContainer &container)
 		: CObject(typeId, name)
 {
-	setDictionary(EmptyDictionary<CObject>());
+	setDictionary(dictionary::EmptyDictionary<CObject>());
 	container.add(*this);
 }
 
 CValue::CValue(CValue &&moved, CValueContainer &newContainer)
 		: CObject(std::move(moved))
 {
-	setDictionary(EmptyDictionary<CObject>());
+	setDictionary(dictionary::EmptyDictionary<CObject>());
 	newContainer.add_after_move(*this);
 }
 

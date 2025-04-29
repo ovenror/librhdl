@@ -10,7 +10,7 @@ namespace rhdl {
 
 IComposite::IComposite(
 		const std::string &name, std::vector<const Interface *> components)
-	: VisitableBase (name), components_(components)
+	: VisitableBase (name), components_(std::move(components))
 {
 	setDictionary(components_.derefConv<CObject>());
 
@@ -94,7 +94,7 @@ SingleDirection IComposite::preferredDirection() const
 	assert (!direction_.free());
 
 	if (direction_.mixed())
-		return components_.front() -> preferredDirection();
+		return (*components_.begin()) -> preferredDirection();
 
 	return static_cast<SingleDirection>(direction_);
 }

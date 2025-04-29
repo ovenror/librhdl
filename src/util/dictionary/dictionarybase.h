@@ -5,14 +5,14 @@
  *      Author: js
  */
 
-#ifndef SRC_UTIL_DICTIONARYBASE_H_
-#define SRC_UTIL_DICTIONARYBASE_H_
+#ifndef SRC_UTIL_DICTIONARY_DICTIONARYBASE_H_
+#define SRC_UTIL_DICTIONARY_DICTIONARYBASE_H_
 
 #include <stddef.h>
 #include <string>
 #include <vector>
 
-namespace rhdl {
+namespace rhdl::dictionary {
 
 struct DictionaryBase {
 	using CStrings = std::vector<const char *>;
@@ -37,4 +37,4 @@ struct DictionaryBase {
 }
 
 
-#endif /* SRC_UTIL_DICTIONARYBASE_H_ */
+#endif /* SRC_UTIL_DICTIONARY_DICTIONARYBASE_H_ */

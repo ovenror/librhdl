@@ -89,7 +89,7 @@ const CObject& CObject::at(const std::string &name) const
 	return dict_ -> at(name);
 }
 
-const Dictionary<const CObject>::CStrings& CObject::c_strings() const
+const CObject::CStrings& CObject::c_strings() const
 {
 	assertInitialized();
 	return dict_ -> c_strings();

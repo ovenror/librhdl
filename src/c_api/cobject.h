@@ -9,7 +9,7 @@
 #define SRC_C_API_COBJECT_H_
 
 #include <rhdl/construction/c/types.h>
-#include "util/dictionary.h"
+#include <util/dictionary/dictionary.h>
 #include "util/cached.h"
 #include "c_api/wrapper.h"
 
@@ -21,8 +21,11 @@ namespace rhdl {
 class Entity;
 class Namespace;
 
-class CObject : public Dictionary<const CObject>
+class CObject : public dictionary::Dictionary<const CObject>
 {
+	template <class T>
+	using Dictionary = dictionary::Dictionary<T>;
+
 public:
 	CObject(rhdl_type typeId, std::string name);
 	CObject(CObject &&moved);

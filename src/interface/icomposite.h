@@ -2,13 +2,12 @@
 #define rhdl_ICOMPOSITE_H
 
 
+#include <util/dictionary/dictionaryadapter.h>
+#include <util/dictionary/fcfsdictionary.h>
 #include "interface.h"
 
 #include "util/visitable.h"
 #include "util/cached.h"
-
-#include "util/fcfsdictionary.h"
-#include "util/dictionaryadapter.h"
 
 #include <vector>
 #include <list>
@@ -19,7 +18,7 @@ class IComposite : public Interface::VisitableChild<IComposite>
 {
 public:
 	using Super = Interface;
-	using InterfaceContainer = FCFSDictionary<const Interface *>;
+	using InterfaceContainer = dictionary::FCFSDictionary<const Interface *>;
 	using const_iterator = InterfaceContainer::const_iterator;
 
 	IComposite(

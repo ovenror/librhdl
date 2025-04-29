@@ -5,12 +5,12 @@
  *      Author: js
  */
 
-#include "util/lexicaldictionary.h"
-#include "util/fcfsdictionary.h"
-
 #include <gtest/gtest.h>
+#include <util/dictionary/fcfsdictionary.h>
+#include <util/dictionary/lexicaldictionary.h>
 
 using namespace rhdl;
+using namespace rhdl::dictionary;
 
 class Element {
 public:
@@ -53,8 +53,8 @@ struct Maker {
 	std::vector<std::unique_ptr<Element>> elements;
 };
 
-template <template <class> class DICT>
-struct Maker<DICT<std::unique_ptr<Element>>> {
+template <template <class, class> class DICT, class ORDER>
+struct Maker<DICT<std::unique_ptr<Element>, ORDER>> {
 	auto make(std::string name)
 	{
 		auto element = std::make_unique<Element>(std::move(name));
@@ -69,7 +69,7 @@ struct Maker<DICT<std::unique_ptr<Element>>> {
 };
 
 template <class T>
-struct OrderLess {
+struct OrderLOCALLess {
 	bool operator()(const Element *lhs, const Element *rhs) const
 	{
 		return lhs -> name() < rhs -> name();
@@ -77,13 +77,13 @@ struct OrderLess {
 };
 
 template <class DICT>
-struct Order;
+struct OrderLOCAL;
 
 template <class DELEM>
-struct Order<L<DELEM>> : public std::set<
-		const Element *, OrderLess<DELEM>>
+struct OrderLOCAL<L<DELEM>> : public std::set<
+		const Element *, OrderLOCALLess<DELEM>>
 {
-	using Super = std::set<const Element *, OrderLess<DELEM>>;
+	using Super = std::set<const Element *, OrderLOCALLess<DELEM>>;
 	void add(const Element *e) {Super::insert(e);}
 	void replace(const Element *ne)
 	{
@@ -95,7 +95,7 @@ struct Order<L<DELEM>> : public std::set<
 };
 
 template <class DELEM>
-struct Order<F<DELEM>> : public std::vector<const Element *>
+struct OrderLOCAL<F<DELEM>> : public std::vector<const Element *>
 {
 	using Super = std::vector<const Element *>;
 	void add(const Element *e) {Super::push_back(e);}
@@ -151,22 +151,22 @@ struct TesterMany {
 		DICT d;
 		auto &const_d = const_cast<const DICT &>(d);
 		Maker<DICT> m;
-		Order<DICT> order;
+		OrderLOCAL<DICT> OrderLOCAL;
 
 		for (auto name : {"a", "d", "c", "b"}) {
 			auto [element, ptr] = m.make(name);
 			d.add(std::move(element));
-			order.add(ptr);
+			OrderLOCAL.add(ptr);
 
-			ASSERT_EQ(d.size(), order.size());
-			EXPECT_EQ(const_d.c_strings().size(), order.size() + 1);
+			ASSERT_EQ(d.size(), OrderLOCAL.size());
+			EXPECT_EQ(const_d.c_strings().size(), OrderLOCAL.size() + 1);
 
-			for (auto ptr : order) {
+			for (auto ptr : OrderLOCAL) {
 				EXPECT_TRUE(m.same(d.at(ptr -> name()), ptr));
 			}
 
 			unsigned int i = 0;
-			for (auto ptr : order) {
+			for (auto ptr : OrderLOCAL) {
 				EXPECT_EQ(const_d.c_strings().at(i), ptr -> name().c_str());
 				++i;
 			}
@@ -182,24 +182,24 @@ struct TesterReplace {
 		DICT d;
 		auto &const_d = const_cast<const DICT &>(d);
 		Maker<DICT> m;
-		Order<DICT> order;
+		OrderLOCAL<DICT> OrderLOCAL;
 
 		for (auto name : {"a", "d", "e", "c", "b"}) {
 			auto [element, ptr] = m.make(name);
 			d.add(std::move(element));
-			order.add(ptr);
+			OrderLOCAL.add(ptr);
 		}
 
 		auto [newE, newEptr] = m.make("e");
 		auto [newD, newDptr] = m.make("d");
 
-		order.replace(newEptr);
+		OrderLOCAL.replace(newEptr);
 		d.replace(std::move(newE));
-		order.replace(newDptr);
+		OrderLOCAL.replace(newDptr);
 		d.replace(std::move(newD));
 
 		unsigned int i = 0;
-		for (auto ptr : order) {
+		for (auto ptr : OrderLOCAL) {
 			EXPECT_TRUE(m.same(d.at(ptr -> name()), ptr));
 			EXPECT_EQ(const_d.c_strings().at(i), ptr -> name().c_str());
 			++i;

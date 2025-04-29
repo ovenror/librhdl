@@ -5,14 +5,14 @@
  *      Author: js
  */
 
-#ifndef SRC_UTIL_DICTIONARYADAPTER_H_
-#define SRC_UTIL_DICTIONARYADAPTER_H_
+#ifndef SRC_UTIL_DICTIONARY_DICTIONARYADAPTER_H_
+#define SRC_UTIL_DICTIONARY_DICTIONARYADAPTER_H_
 
-#include "dictionary.h"
+#include <util/dictionary/dictionary.h>
 #include "util/any_pointer.h"
 #include <memory>
 
-namespace rhdl {
+namespace rhdl::dictionary {
 
 namespace detail {
 
@@ -81,26 +81,8 @@ public:
 	ReturnType at(const std::string &name) const override {return *Super::dict_.at(name);}
 };
 
-#if 0
-template <class DICT, bool DEREFERENCE_FIRST = false>
-class PolymorphicDictionary : public DICT {
-	template <class CT>
-	operator ConvertingDictionaryAdapter<DICT, CT>() const {
-		return ConvertingDictionaryAdapter<DICT, CT>(*this);
-	}
-};
-
-template <template <class> class DICT, class T>
-class PolymorphicDictionary<DICT<T>, true> : public DICT<T> {
-	template <class CT>
-	operator DerefConvDictionaryAdapter<DICT<T>, CT>() const {
-		return DerefConvDictionaryAdapter<DICT<T>, CT>(*this);
-	}
-};
-#endif
-
 }
 
 
 
-#endif /* SRC_UTIL_DICTIONARYADAPTER_H_ */
+#endif /* SRC_UTIL_DICTIONARY_DICTIONARYADAPTER_H_ */

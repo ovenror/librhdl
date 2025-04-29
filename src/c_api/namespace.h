@@ -9,7 +9,6 @@
 #define SRC_C_API_NAMESPACE_H_
 
 #include "typedcomplexcobject.h"
-#include "../util/lexicaldictionary.h"
 #include <cassert>
 
 namespace rhdl {
