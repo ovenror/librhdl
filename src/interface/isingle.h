@@ -1,7 +1,6 @@
 #ifndef ISINGLE_H
 #define ISINGLE_H
 
-#include <util/dictionary/lexicaldictionary.h>
 #include "interface.h"
 #include "cresult/csingle.h"
 
@@ -9,6 +8,7 @@
 #include "c_api/cvalueobject.h"
 
 #include "util/visitable.h"
+#include "util/dictionary/fcfsdictionary.h"
 
 namespace rhdl {
 
@@ -38,7 +38,7 @@ private:
 	const CObject &add(const CValue &) override;
 	const CObject &add_after_move(const CValue &) override;
 
-	dictionary::LexicalDictionary<const CObject *> dict_;
+	dictionary::FCFSDictionary<const CObject *> dict_;
 	ReferencedCValue<rhdl_direction> dir_;
 };
 

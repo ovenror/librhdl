@@ -8,9 +8,9 @@
 #ifndef SRC_C_API_COMPLEXCOBJECT_H_
 #define SRC_C_API_COMPLEXCOBJECT_H_
 
-#include <util/dictionary/lexicaldictionary.h>
 #include "cvalue.h"
 #include "cvaluecontainer.h"
+#include "util/dictionary/fcfsdictionary.h"
 
 
 namespace rhdl {
@@ -60,7 +60,7 @@ private:
 		return replace(static_cast<PT>(&cvalue));
 	}
 
-	dictionary::LexicalDictionary<PT> dict_;
+	dictionary::FCFSDictionary<PT> dict_;
 };
 
 
