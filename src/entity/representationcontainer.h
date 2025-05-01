@@ -17,6 +17,8 @@ namespace rhdl {
 class RepresentationContainer: public TypedComplexCObject<
 		RepresentationContainer, rhdl_namespace_struct, false>
 {
+	using Super = TypedComplexCObject<
+			RepresentationContainer, rhdl_namespace_struct, false>;
 	using Container = std::vector<std::unique_ptr<const Representation>>;
 
 public:
@@ -34,6 +36,8 @@ public:
 	iterator end() {return container_.end();}
 
 private:
+	void setTypedMembers(const char *const *) override;
+
 	Container container_;
 };
 

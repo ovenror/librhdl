@@ -6,30 +6,26 @@
  */
 
 #include "namespace.h"
-
 #include "construction/library.h"
+#include "util/dictionary/lexicaldictionary.h"
 
 #include <memory>
 #include <iostream>
 
 namespace rhdl {
 
-Namespace::Namespace(std::string name) : TypedCObject(name)
+Namespace::Namespace(std::string name) : Super(
+		name, std::make_unique<
+				dictionary::LexicalDictionary<
+						std::unique_ptr<const CObject>>>())
 {
-	setTypedMembers();
+	setTypedMembers(c_strings().data());
 }
 
 Namespace::~Namespace() {}
 
-void Namespace::setMembers()
-{
-	Super::setMembers();
-	setTypedMembers();
-}
-
-void Namespace::setTypedMembers()
-{
-	c_ptr() -> members = c_strings().data();
+void Namespace::setTypedMembers(const char *const *s) {
+	c_ptr() -> members = s;
 }
 
 }

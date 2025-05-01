@@ -10,8 +10,8 @@
 
 namespace rhdl {
 
-RepresentationContainer::RepresentationContainer()
-			: TypedCObject("representations") {}
+RepresentationContainer::RepresentationContainer() : Super("representations")
+{}
 
 RepresentationContainer::~RepresentationContainer() {}
 
@@ -20,6 +20,11 @@ void rhdl::RepresentationContainer::push_back(
 {
 	add(r.get());
 	container_.push_back(std::move(r));
+}
+
+void RepresentationContainer::setTypedMembers(const char *const *s)
+{
+	c_ptr() -> members = s;
 }
 
 }

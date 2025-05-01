@@ -92,9 +92,9 @@ int entity()
 	list = r -> members;
 
 	REQUIRE(list);
-	CHECK(&list, "content");
-	CHECK(&list, "parent");
 	CHECK(&list, "type");
+	CHECK(&list, "parent");
+	CHECK(&list, "content");
 	END(list);
 
 	rhdl_object_t *rtype = rhdl_get(r, "type");

@@ -20,13 +20,16 @@ class ComplexCObject : public CObject, public CValueContainer {
 	using Super = CObject;
 	using PT = typename std::conditional<
 			OWNING, std::unique_ptr<const CObject>, const CObject *>::type;
+	using DictPtr = std::unique_ptr<dictionary::MutableDictionary<PT>>;
 
 public:
 	ComplexCObject(
-			rhdl_type typeId, std::string name)
+			rhdl_type typeId, std::string name,
+			DictPtr &&dict = std::make_unique<dictionary::FCFSDictionary<PT>>())
 			: Super(typeId, name)
 	{
-		Super::setDictionary(dict_.dereferencer());
+		dict_ = std::move(dict);
+		Super::setDictionary(dict_ -> dereferencer());
 	}
 
 	ComplexCObject(ComplexCObject &&);
@@ -35,16 +38,17 @@ public:
 
 	const CObject &add(PT member)
 	{
-		return *Super::add(dict_, std::move(member));
+		return *Super::add(*dict_, std::move(member));
 	}
 
 	const CObject &replace(PT member)
 	{
-		return *Super::replace(dict_, std::move(member));
+		return *Super::replace(*dict_, std::move(member));
 	}
 
 protected:
-	void clearDict() {dict_.clear();}
+	const CStrings &c_strings() const override {return dict_ -> c_strings();}
+	void clearDict() {dict_ -> clear();}
 
 #if 0
 	auto begin() {dict_ -> begin();}
@@ -60,7 +64,7 @@ private:
 		return replace(static_cast<PT>(&cvalue));
 	}
 
-	dictionary::FCFSDictionary<PT> dict_;
+	DictPtr dict_;
 };
 
 
@@ -70,7 +74,7 @@ inline ComplexCObject<OWNING>::ComplexCObject(
 				Super(std::move(moved)),
 				dict_(std::move(moved.dict_))
 {
-	Super::setDictionary(dict_.dereferencer());
+	Super::setDictionary(dict_ -> dereferencer());
 }
 
 }

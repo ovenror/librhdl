@@ -14,6 +14,8 @@
 namespace rhdl {
 
 class Namespace : public TypedComplexCObject<Namespace, rhdl_namespace_struct> {
+	using Super = TypedComplexCObject<Namespace, rhdl_namespace_struct>;
+
 public:
 	Namespace(std::string);
 	virtual ~Namespace();
@@ -24,8 +26,7 @@ private:
 	virtual operator Namespace &() override {return *this;}
 	virtual operator const Namespace &() const override {return *this;}
 
-	void setMembers() override;
-	void setTypedMembers();
+	void setTypedMembers(const char *const *) override;
 };
 
 } /* namespace rhdl */

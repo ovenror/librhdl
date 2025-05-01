@@ -13,6 +13,7 @@
 #include "cstructtotypeid.h"
 
 #include "util/staticswitch.h"
+#include "util/dictionary/mutabledictionary.h"
 
 #include <cassert>
 #include <iostream>
@@ -50,6 +51,17 @@ public:
 	using C_Struct = Typed_C_Struct;
 
 	TypedCObject(std::string name) : Super(typeId, name), c_(*this) {}
+
+	//template <class DICT, std::enable_if_t<isComplex<DICT>, bool> dummy = true>
+	template <class DICT>
+	TypedCObject(
+			std::string name,
+			std::unique_ptr<DICT> dict)
+			: Super(typeId, name, std::move(dict)), c_(*this)
+	{
+		static_assert(BASE != TypedCObjectBase::BASIC);
+	}
+
 	TypedCObject(TypedCObject &&moved)
 			: Super(std::move(moved)), c_(std::move(moved.c_), *this) {}
 
@@ -66,6 +78,17 @@ protected:
 	C_Struct *c_ptr() {return rhdl::c_ptr(*this);}
 	virtual CRTP &cast() = 0;
 
+private:
+	virtual void setTypedMembers(const char *const *) {}
+	void setTypedMembers() {setTypedMembers(Super::c_strings().data());}
+
+	void setMembers() override
+	{
+		Super::setMembers();
+		setTypedMembers();
+	}
+
+protected:
 	friend class Wrapper<TypedCObject>;
 	friend class Wrapper<CRTP>;
 
