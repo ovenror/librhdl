@@ -22,14 +22,19 @@ ComplexPort::ComplexPort(
 {
 	adoptEnclosed();
 
+	Port::setDictionary(dictionary::DereferencingDictionaryAdapter<decltype(enclosed_), const CObject>(enclosed_));
+	PortContainer::setDictionary(dictionary::DereferencingDictionaryAdapter<decltype(enclosed_), Port>(enclosed_));
+
 	auto *connection = new ComplexConnection(*this);
 	establishConnectionRelations(*connection);
+
+	c_ptr() -> iface = iface_.c_ptr();
 }
 
 ComplexPort::~ComplexPort()
 {
 	for (auto &port : enclosed_)
-		port.invalidateHandles();
+		port -> invalidateHandles();
 }
 
 template <bool (*f)(ExistingPort &, ExistingPort &)>
@@ -113,12 +118,10 @@ Port* ComplexPort::findCompatible(Port &peer, ConnectionPredicate p)
 
 Port& ComplexPort::operator[](const std::string &ifaceName)
 {
-	auto result = enclosed_.find(ifaceName);
-
-	if (result == enclosed_.end())
+	if (!enclosed_.contains(ifaceName))
 		throw ConstructionException(Errorcode::E_NO_SUCH_INTERFACE);
 
-	return *result;
+	return *enclosed_.at(ifaceName);
 }
 
 std::unique_ptr<CompatibilityResult> ComplexPort::compat(
@@ -140,7 +143,7 @@ const Interface& ComplexPort::iface() const
 
 void ComplexPort::adoptEnclosed(){
 	for (auto &p: enclosed_)
-		adopt(p);
+		adopt(*p);
 }
 
 void ComplexPort::connectCompat(ExistingPort &peer)
@@ -165,10 +168,7 @@ ExistingPort& ComplexPort::get(const Interface &iface) const
 	if (iface.name() == Interface::anon_name)
 		throw ConstructionException(Errorcode::E_CANNOT_GET_ANONYMOUS_INTERFACE);
 
-	auto port = enclosed_.find(iface.name());
-	assert (port != enclosed_.end());
-
-	return *port;
+	return *enclosed_.at(iface.name());
 }
 
 void ComplexPort::establishConnectionRelations(ComplexConnection &connection)
@@ -176,7 +176,7 @@ void ComplexPort::establishConnectionRelations(ComplexConnection &connection)
 	std::set<Connection *> connectionChildren;
 
 	for (auto &e : enclosed_) {
-		auto &childConnection = e.connection();
+		auto &childConnection = e -> connection();
 		connectionChildren.insert(&childConnection);
 		childConnection.addParent(connection);
 	}

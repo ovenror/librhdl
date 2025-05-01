@@ -8,15 +8,11 @@
 #ifndef SRC_UTIL_DICTIONARY_FCFS_H_
 #define SRC_UTIL_DICTIONARY_FCFS_H_
 
-#include <util/dictionary/dictionaryimpldefs.h>
-#include <util/dictionary/order.h>
 #include <vector>
 
 namespace rhdl::dictionary::order {
 
 struct FCFS {
-	static constexpr Nature nature = Nature::ORDER;
-
 	template <class Element>
 	using Container = std::vector<Element>;
 
@@ -31,6 +27,7 @@ class FCFS::Order : public Container {
 public:
 	using Element = typename Container::value_type;
 	using typename Super::const_iterator;
+	using iterator = const_iterator;
 
 protected:
 	using Result = std::optional<std::pair<const_iterator, size_t>>;

@@ -59,7 +59,6 @@ public:
 	PortContainer *enclosing() const override {return enclosing_;}
 	virtual Element &element() const override {return element_;}
 	virtual const Interface &iface() const = 0;
-	const std::string &name() const override;
 	virtual const rhdl_iface_struct *c_ptr_iface() const override;
 
 	void getAdoptedBy(PortContainer *p) const {enclosing_ = p;}

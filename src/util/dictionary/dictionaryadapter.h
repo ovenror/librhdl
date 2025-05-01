@@ -9,76 +9,53 @@
 #define SRC_UTIL_DICTIONARY_DICTIONARYADAPTER_H_
 
 #include <util/dictionary/dictionary.h>
+#include "polymorphybase.h"
 #include "util/any_pointer.h"
 #include <memory>
 
 namespace rhdl::dictionary {
 
 namespace detail {
-
-template <class T, class RT>
-class DictionaryAdapterBase : public Dictionary<RT> {
-	using Super = Dictionary<RT>;
-
-public:
-	DictionaryAdapterBase(const Dictionary<T> &dict) : dict_(dict) {}
-
-	bool contains(const std::string &name) const override {return dict_.contains(name);}
-	bool contains(const char *name) const override {return dict_.contains(name);}
-
-	size_t size() const override {return dict_.size();}
-
-	const typename Super::CStrings &c_strings() const {return dict_.c_strings();}
-
-	const DictionaryBase *underlying() const override
-	{
-		return dict_.underlying();
-	}
-
-protected:
-	const Dictionary<T> &dict_;
-};
-
+template <class DICT, class RT, bool DEREF>
+using DictionaryAdapterBase = PolymorphyBase<DICT, RT, DEREF>;
 }
 
-template <class T>
+template <class DICT, class CT = remove_any_pointer_t<typename DICT::ValueType>>
 class DereferencingDictionaryAdapter
-		: public detail::DictionaryAdapterBase<T, remove_any_pointer_t<T>>
+		: public detail::DictionaryAdapterBase<DICT, CT, true>
 {
-	using Super = detail::DictionaryAdapterBase<T, remove_any_pointer_t<T>>;
-	using typename Super::ReturnType;
+	using Super = detail::DictionaryAdapterBase<DICT, CT, true>;
 
 public:
-	DereferencingDictionaryAdapter(const Dictionary<T> &dict) : Super(dict) {}
+	DereferencingDictionaryAdapter(DICT &dict) : Super(dict) {}
+	virtual ~DereferencingDictionaryAdapter() {}
 
-	const ReturnType at(const char *name) const override {return *Super::dict_.at(name);}
-	const ReturnType at(const std::string &name) const override {return *Super::dict_.at(name);}
+	const CT &at(size_t i) const override {return *Super::dict_.at(i);}
+	const CT &at(const char *name) const override {return *Super::dict_.at(name);}
+	const CT &at(const std::string &name) const override {return *Super::dict_.at(name);}
+
+	CT &at(size_t i) {return *Super::dict_.at(i);}
+	CT &at(const char *name) {return *Super::dict_.at(name);}
+	CT &at(const std::string &name) {return *Super::dict_.at(name);}
 };
 
-template <class T, class CT>
-class ConvertingDictionaryAdapter : public detail::DictionaryAdapterBase<T, CT>
+template <class DICT, class CT>
+class ConvertingDictionaryAdapter
+		: public detail::DictionaryAdapterBase<DICT, CT, false>
 {
-	using Super = detail::DictionaryAdapterBase<T, CT>;
-	using typename Super::ReturnType;
+	using Super = detail::DictionaryAdapterBase<DICT, CT, false>;
 
 public:
-	ConvertingDictionaryAdapter(const Dictionary<T> &dict) : Super(dict) {}
+	ConvertingDictionaryAdapter(const DICT &dict) : Super(dict) {}
+	virtual ~ConvertingDictionaryAdapter() {}
 
-	ReturnType at(const char *name) const override {return Super::dict_.at(name);}
-	ReturnType at(const std::string &name) const override {return Super::dict_.at(name);}
-};
+	const CT &at(size_t i) const override {return Super::dict_.at(i);}
+	const CT &at(const char *name) const override {return Super::dict_.at(name);}
+	const CT &at(const std::string &name) const override {return Super::dict_.at(name);}
 
-template <class T, class CT>
-class DerefConvDictionaryAdapter : public detail::DictionaryAdapterBase<T, CT>
-{
-	using Super = detail::DictionaryAdapterBase<T, CT>;
-	using typename Super::ReturnType;
-
-public:
-	DerefConvDictionaryAdapter(const Dictionary<T> &dict) : Super(dict) {}
-
-	ReturnType at(const char *name) const override {return *Super::dict_.at(name);}
-	ReturnType at(const std::string &name) const override {return *Super::dict_.at(name);}
+	CT &at(size_t i) {return Super::dict_.at(i);}
+	CT &at(const char *name) {return Super::dict_.at(name);}
+	CT &at(const std::string &name) {return Super::dict_.at(name);}
 };
 
 }

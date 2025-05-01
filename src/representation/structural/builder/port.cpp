@@ -23,7 +23,7 @@
 
 namespace rhdl::structural::builder {
 
-Port::Port() {}
+Port::Port(std::string name) : Super(std::move(name)) {}
 
 Port::~Port()
 {
@@ -111,19 +111,19 @@ Port &Port::operator[](const std::string &ifaceName)
 	throw ConstructionException(Errorcode::E_NO_SUCH_INTERFACE);
 }
 
-void Port::registerHandle(PortHandle *handle)
+void Port::registerHandle(PortHandle *handle) const
 {
 	auto result = handles_.insert(handle);
 	assert (result.second);
 }
 
-void Port::removeHandle(PortHandle *handle)
+void Port::removeHandle(PortHandle *handle) const
 {
 	auto result = handles_.erase(handle);
 	assert (result == 1);
 }
 
-void Port::invalidateHandles() {
+void Port::invalidateHandles() const {
 	auto handle = handles_.begin();
 
 	while (handle != handles_.end()) {
@@ -159,7 +159,7 @@ ExistingPort& Port::realization(
 	return *static_cast<ExistingPort *>(nullptr);
 }
 
-void Port::realizeHandles(ExistingPort &realization)
+void Port::realizeHandles(ExistingPort &realization) const
 {
 	for (auto *handle : handles_) {
 		handle -> realizePort(realization);

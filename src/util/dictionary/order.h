@@ -15,10 +15,12 @@
 namespace rhdl::dictionary {
 
 template <class CONTAINER>
-class Order {
+class Order : public CONTAINER {
+	using Super = CONTAINER;
+
 public:
-	using iterator = typename CONTAINER::iterator;
 	using const_iterator = typename CONTAINER::const_iterator;
+	using iterator = const_iterator;
 
 protected:
 	using Result = std::optional<std::pair<const_iterator, size_t>>;
@@ -28,38 +30,25 @@ public:
 
 	virtual ~Order() {}
 
-	Element at(size_t);
-	const Element at(size_t) const;
-
-	Element front() {return *begin();}
-	const Element front() const {return *begin();}
-
-	Element back() {return *--end();}
-	const Element back() const {return *--end();}
+	Element at(size_t) const;
+	Element front() const {return *Super::cbegin();}
+	Element back() const {return *--Super::cend();}
 
 	Result add(Element);
 	Result replace(const_iterator, size_t, Element);
+	void pop_back() {Super::erase(--Super::cend());}
 
-	void clear() {return container_.clear();}
-
-	iterator begin() {return container_.begin();}
-	iterator end() {return container_.end();}
-	const_iterator begin() const {return container_.begin();}
-	const_iterator end() const {return container_.end();}
-	const_iterator cbegin() const {return container_.cbegin();}
-	const_iterator cend() const {return container_.cend();}
+	void clear() {return Super::clear();}
 
 protected:
 	size_t getIndex(const_iterator i) const;
-
-	CONTAINER container_;
 };
 
 template<class CONTAINER>
 inline typename Order<CONTAINER>::Result Order<CONTAINER>::add(
 		Element e)
 {
-	auto [i, success] = container_.insert(e);
+	auto [i, success] = Super::insert(e);
 
 	if (!success) {
 		throw std::out_of_range("Order::add(): Element exists.");
@@ -74,26 +63,18 @@ inline typename Order<CONTAINER>::Result Order<CONTAINER>::replace(
 {
 	assert((*i) -> name() == e -> name());
 
-	auto nh = container_.extract(i);
+	auto nh = Super::extract(i);
 	Element old = nh.value();
 	old = std::move(e);
-	container_.insert(std::move(nh));
+	Super::insert(std::move(nh));
 
 	return std::nullopt;
 }
 
 template<class CONTAINER>
-inline typename Order<CONTAINER>::Element Order<CONTAINER>::at(size_t i)
+inline typename Order<CONTAINER>::Element Order<CONTAINER>::at(size_t i) const
 {
-	auto iter = begin();
-	std::advance(iter, i);
-	return *iter;
-}
-
-template<class CONTAINER>
-inline const typename Order<CONTAINER>::Element Order<CONTAINER>::at(size_t i) const
-{
-	auto iter = begin();
+	auto iter = Super::begin();
 	std::advance(iter, i);
 	return *iter;
 }
@@ -101,7 +82,7 @@ inline const typename Order<CONTAINER>::Element Order<CONTAINER>::at(size_t i) c
 template<class CONTAINER>
 inline size_t Order<CONTAINER>::getIndex(const_iterator i) const
 {
-	return std::distance(begin(), i);
+	return std::distance(Super::begin(), i);
 }
 
 }

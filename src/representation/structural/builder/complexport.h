@@ -10,7 +10,7 @@
 
 #include <representation/structural/builder/existingportbase.h>
 #include "portcontainer.h"
-#include "util/polycontainer/poly.h"
+#include "util/dictionary/fcfsdictionary.h"
 
 #include <set>
 
@@ -25,7 +25,7 @@ class ComplexConnection;
 
 class ComplexPort : public ExistingPortBase<ComplexPort>, public PortContainer {
 public:
-	using Enclosed = pc::Poly<std::set<std::unique_ptr<ExistingPort>, PortContainer::Less>, Port>;
+	using Enclosed = dictionary::FCFSDictionary<std::unique_ptr<ExistingPort>>;
 
 	ComplexPort(
 			Element &element, const IComposite &iface, Enclosed &&enclosed);
@@ -53,8 +53,10 @@ public:
 
 	const Interface &iface() const override;
 
+protected:
+	ComplexPort &cast() override {return *this;}
+
 private:
-	const Enclosed &enclosed() const override {return enclosed_;}
 	Port &port() override {return *this;}
 	void adoptEnclosed();
 	void establishConnectionRelations(ComplexConnection &);

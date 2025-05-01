@@ -13,7 +13,7 @@ using namespace rhdl;
 ISingle::ISingle(const std::string &name, Direction dir) :
 	VisitableBase(name), dir_("direction", *this, c_ptr() -> single.dir)
 {
-	setDictionary(dict_.dereferencer());
+	setDictionary(dictionary::DereferencingDictionaryAdapter<decltype(dict_)>(dict_));
 
 	auto &c = *c_ptr();
 

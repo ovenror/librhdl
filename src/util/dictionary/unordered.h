@@ -8,20 +8,16 @@
 #ifndef SRC_UTIL_DICTIONARY_UNORDERED_H_
 #define SRC_UTIL_DICTIONARY_UNORDERED_H_
 
-#include "lookupwithorder.h"
-#include "order.h"
-#include "nature.h"
 #include <unordered_set>
 
 namespace rhdl::dictionary::order {
 
 class Unordered {
+	using IsLookup = void;
 	template <class> class Hash;
 	template <class> class Equal;
 
 public:
-	static constexpr Nature nature = Nature::LOOKUP_ORDER;
-
 	template <class Element>
 	using Container = std::unordered_set<Element, Hash<Element>, Equal<Element>>;
 };

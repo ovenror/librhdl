@@ -38,7 +38,7 @@ private:
 	const CObject &add(const CValue &) override;
 	const CObject &add_after_move(const CValue &) override;
 
-	dictionary::FCFSDictionary<const CObject *> dict_;
+	dictionary::FCFSDictionary<const CObject *const> dict_;
 	ReferencedCValue<rhdl_direction> dir_;
 };
 

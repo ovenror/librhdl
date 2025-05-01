@@ -21,7 +21,7 @@ namespace structural {
 namespace builder {
 
 ExistingPort::ExistingPort(Element &element, const Interface &iface)
-	: element_(element)
+	: Port(iface.name()), element_(element)
 {}
 
 ExistingPort::~ExistingPort() {}
@@ -86,11 +86,6 @@ Port* ExistingPort::findCompatible(Port &peer, ConnectionPredicate p)
 	return nullptr;
 }
 
-const std::string& ExistingPort::name() const
-{
-	return iface().name();
-}
-
 ExistingPort& ExistingPort::realization(Port &peer,
 		const ConnectionPredicate &p)
 {
@@ -128,7 +123,7 @@ CompositeDirection ExistingPort::direction() const
 
 const rhdl_iface_struct* ExistingPort::c_ptr_iface() const
 {
-	return c_ptr(iface());
+	return iface().c_ptr();
 }
 
 void ExistingPort::realizeHandles()

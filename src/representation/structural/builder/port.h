@@ -9,7 +9,7 @@
 #define SRC_REPRESENTATION_STRUCTURAL_BUILDER_PORT_H_
 
 #include "construction/connectionpredicate.h"
-#include "c_api/wrapper.h"
+#include "c_api/typedcobject.h"
 #include "interface/compositedirection.h"
 
 #include <array>
@@ -38,17 +38,19 @@ class ComplexPort;
 class Element;
 class StructureBuilder;
 
-class Port {
+class Port : public TypedCObject<Port, rhdl_connector> {
+	using Super = TypedCObject<Port, rhdl_connector>;
+
 public:
-	Port();
+	Port(std::string name);
 	virtual ~Port();
 
 	virtual Port &operator[](const std::string &ifaceName);
 
-	void registerHandle(PortHandle *handle);
-	void removeHandle(PortHandle *handle);
-	void invalidateHandles();
-	void realizeHandles(ExistingPort &realization);
+	void registerHandle(PortHandle *handle) const;
+	void removeHandle(PortHandle *handle) const;
+	void invalidateHandles() const;
+	void realizeHandles(ExistingPort &realization) const;
 
 	bool isExternal();
 
@@ -90,7 +92,6 @@ public:
 
 	virtual Element &element() const = 0;
 	virtual PortContainer *enclosing() const = 0;
-	virtual const std::string &name() const = 0;
 	virtual CompositeDirection direction() const = 0;
 	virtual const rhdl_iface_struct *c_ptr_iface() const = 0;
 
@@ -108,7 +109,7 @@ private:
 			Port &from, Port &to, const ConnectionPredicate &p);
 	friend std::ostream &operator<<(std::ostream &os, const Port &p);
 
-	std::unordered_set<PortHandle *> handles_;
+	mutable std::unordered_set<PortHandle *> handles_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Port &p);

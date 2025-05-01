@@ -24,7 +24,7 @@ PortsCreator::~PortsCreator() {}
 
 void PortsCreator::visit(const ISingle& i) {
 	assert (enclosed_);
-	enclosed_ -> emplace(std::make_unique<SimplePort>(element_, i));
+	enclosed_ -> add(std::make_unique<SimplePort>(element_, i));
 }
 
 void PortsCreator::visit(const IComposite& i) {
@@ -33,7 +33,7 @@ void PortsCreator::visit(const IComposite& i) {
 	auto enclosed_saved = enclosed_;
 	ComplexPort::Enclosed enclosed;
 	createEnclosed(i, enclosed);
-	enclosed_saved -> emplace(std::make_unique<ComplexPort>(element_, i, std::move(enclosed)));
+	enclosed_saved -> add(std::make_unique<ComplexPort>(element_, i, std::move(enclosed)));
 	enclosed_ = enclosed_saved;
 }
 
@@ -51,7 +51,7 @@ std::unique_ptr<ExistingPort> PortsCreator::create(const Interface &i)
 
 	i.accept(*this);
 
-	return std::move(dummy.extract(dummy.begin()).value());
+	return std::move(dummy.erase(dummy.begin()));
 }
 
 void PortsCreator::createEnclosed(const IComposite &i,

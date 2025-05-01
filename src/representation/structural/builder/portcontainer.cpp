@@ -36,7 +36,7 @@ std::array<Port*, 2> PortContainer::findCompatibles(
 
 	std::array<Port*, 2> found = {nullptr, nullptr};
 
-	for (auto &sub : enclosed()) {
+	for (Port &sub : enclosed()) {
 		std::array<Port*, 2> newFound;
 
 		if (sub.compatible(peer, p))

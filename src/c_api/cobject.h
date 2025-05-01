@@ -11,6 +11,7 @@
 #include <rhdl/construction/c/types.h>
 #include <util/dictionary/dictionary.h>
 #include "util/cached.h"
+#include "util/any_pointer.h"
 #include "c_api/wrapper.h"
 
 #include <cassert>
@@ -21,12 +22,13 @@ namespace rhdl {
 class Entity;
 class Namespace;
 
-class CObject : public dictionary::Dictionary<const CObject>
+class CObject
 {
-	template <class T>
-	using Dictionary = dictionary::Dictionary<T>;
+	using Dictionary = dictionary::Dictionary<const CObject>;
 
 public:
+	using CStrings = typename Dictionary::CStrings;
+
 	CObject(rhdl_type typeId, std::string name);
 	CObject(CObject &&moved);
 
@@ -36,14 +38,15 @@ public:
 	const std::string fqn() const;
 	const CObject *container() const {return container_;}
 
-	bool contains(const std::string &name) const override;
-	bool contains(const char *name) const override;
+	bool contains(const std::string &name) const;
+	bool contains(const char *name) const;
 
-	const CObject& at(const char *name) const override;
-	const CObject& at(const std::string &name) const override;
+	const CObject& at(const char *name) const;
+	const CObject& at(const std::string &name) const;
 
-	size_t size() const override;
+	size_t size() const;
 
+	bool empty() {return !size();}
 
 	virtual explicit operator int64_t() const {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
@@ -98,26 +101,27 @@ public:
 	virtual bool isValue() const {return false;}
 
 protected:
-	template <class DICT> const typename DICT::StoreType &add(
-			DICT &d, typename DICT::StoreType member);
-	template <class DICT> const typename DICT::StoreType &replace(
-			DICT &d, typename DICT::StoreType member);
+	template <class DICT> const typename DICT::ValueType &add(
+			DICT &d, typename DICT::ValueType &&member);
+	template <class DICT> const typename DICT::ValueType &replace(
+			DICT &d, typename DICT::ValueType &&member);
 
-	void setDictionaryPtr(std::unique_ptr<Dictionary<const CObject>> dict);
-	template <class DICT> void setDictionary(DICT d);
-	const CStrings &c_strings() const override;
+	void setDictionaryPtr(std::unique_ptr<Dictionary> dict);
+	template <class DICT> void setDictionary(DICT &&d);
+	const CStrings &c_strings() const;
 	virtual void setMembers();
 
 private:
 	template <class T> void updateContainerFor(T &member);
 	template <class T> void updateContainerFor(T* member);
 	template <class T> void updateContainerFor(std::unique_ptr<T> &member);
+	template <class T> void updateContainerFor(const std::unique_ptr<T> &member);
 
 	void assertInitialized() const;
 	void updateContainer(const CObject &c) const {container_ = &c;}
 
 	const std::string name_;
-	std::unique_ptr<Dictionary<const CObject>> dict_;
+	std::unique_ptr<Dictionary> dict_;
 	mutable const CObject *container_ = nullptr;
 
 public:
@@ -149,14 +153,20 @@ inline void CObject::updateContainerFor(std::unique_ptr<T> &member)
 	member -> updateContainer(*this);
 }
 
+template<class T>
+inline void CObject::updateContainerFor(const std::unique_ptr<T> &member)
+{
+	member -> updateContainer(*this);
+}
+
 template<class DICT>
-inline const typename DICT::StoreType &CObject::add(DICT &d, typename DICT::StoreType member)
+inline const typename DICT::ValueType &CObject::add(DICT &d, typename DICT::ValueType &&member)
 {
 	if (dict_)
 		assert(d.is_same_as(*dict_));
 
 	updateContainerFor(member);
-	const typename DICT::StoreType *result ;
+	typename DICT::ValueType *result ;
 
 	try {
 		result = &d.add(std::move(member));
@@ -171,13 +181,13 @@ inline const typename DICT::StoreType &CObject::add(DICT &d, typename DICT::Stor
 }
 
 template<class DICT>
-inline const typename DICT::StoreType &CObject::replace(DICT &d, typename DICT::StoreType member)
+inline const typename DICT::ValueType &CObject::replace(DICT &d, typename DICT::ValueType &&member)
 {
 	if (dict_)
 		assert(d.is_same_as(*dict_));
 
 	updateContainerFor(member);
-	const typename DICT::StoreType *result ;
+	typename DICT::ValueType *result ;
 
 	try {
 		result = &d.replace(std::move(member));
@@ -191,10 +201,15 @@ inline const typename DICT::StoreType &CObject::replace(DICT &d, typename DICT::
 	return *result;
 }
 
+namespace structural::builder { class Port; }
+
 template<class DICT>
-inline void CObject::setDictionary(DICT d)
+inline void CObject::setDictionary(DICT &&d)
 {
-	setDictionaryPtr(std::make_unique<DICT>(std::move(d)));
+	static_assert(!std::is_same_v<typename DICT::ValueType, structural::builder::Port>);
+	static_assert(!is_any_pointer_v<typename DICT::ValueType>);
+	setDictionaryPtr(static_cast<std::unique_ptr<Dictionary>>(
+			std::make_unique<DICT>(std::move(d))));
 }
 
 

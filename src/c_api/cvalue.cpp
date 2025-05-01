@@ -16,14 +16,14 @@ namespace rhdl {
 CValue::CValue(rhdl_type typeId, std::string name, CValueContainer &container)
 		: CObject(typeId, name)
 {
-	setDictionary(dictionary::EmptyDictionary<CObject>());
+	setDictionary(dictionary::EmptyDictionary<const CObject>());
 	container.add(*this);
 }
 
 CValue::CValue(CValue &&moved, CValueContainer &newContainer)
 		: CObject(std::move(moved))
 {
-	setDictionary(dictionary::EmptyDictionary<CObject>());
+	setDictionary(dictionary::EmptyDictionary<const CObject>());
 	newContainer.add_after_move(*this);
 }
 

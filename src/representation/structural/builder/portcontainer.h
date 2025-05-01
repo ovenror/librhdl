@@ -8,7 +8,7 @@
 #ifndef SRC_REPRESENTATION_STRUCTURAL_BUILDER_PORTCONTAINER_H_
 #define SRC_REPRESENTATION_STRUCTURAL_BUILDER_PORTCONTAINER_H_
 
-#include "util/polycontainer/abstractpoly.h"
+#include "util/dictionary/dictionary.h"
 #include <memory>
 #include <set>
 
@@ -20,14 +20,15 @@ class ConnectionPredicate;
 namespace structural {
 namespace builder {
 
-namespace pc = polycontainer;
-
 class Port;
 class ExistingPort;
 class ComplexPort;
 class CBuilderPortContainerOps;
 
 class PortContainer {
+	using Dict = rhdl::dictionary::Dictionary<Port>;
+	using DictPtr = std::unique_ptr<Dict>;
+
 public:
 	PortContainer();
 	virtual ~PortContainer();
@@ -37,6 +38,9 @@ public:
 
 	virtual Port &port() = 0;
 	const Port &port() const;
+
+	Dict &enclosed() {return *enclosed_;}
+	const Dict &enclosed() const {return *enclosed_;}
 
 protected:
 	struct Less {
@@ -99,10 +103,14 @@ protected:
 
 	void adopt(const ExistingPort &p);
 
+	template <class DICT>
+	void setDictionary(DICT &&dict) {setDictionary(static_cast<DictPtr>(std::make_unique<DICT>(std::move(dict))));}
+
 private:
+	void setDictionary(DictPtr dict) {enclosed_ = std::move(dict);}
 	friend class CBuilderPortContainerOps;
 
-	virtual const pc::AbstractPoly<Port> &enclosed() const = 0;
+	DictPtr enclosed_;
 };
 
 } /* namespace builder */

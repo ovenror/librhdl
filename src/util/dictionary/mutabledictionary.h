@@ -9,6 +9,7 @@
 #define SRC_UTIL_DICTIONARY_MUTABLEDICTIONARY_H_
 
 #include "dictionaryadapter.h"
+#include "util/util.h"
 
 namespace rhdl::dictionary {
 namespace detail {
@@ -40,39 +41,49 @@ class MutableDictionary : public Dictionary<T> {
 	static_assert(detail::hasName<T>);
 	static_assert(detail::nameOK<T>);
 
+	template <class CT = remove_any_pointer_t<T>>
+	using Deref = DereferencingDictionaryAdapter<Dictionary<T>, CT>;
+
+	template <class CT>
+	using Conv = ConvertingDictionaryAdapter<Dictionary<T>, CT>;
+
 public:
 	using typename Super::CStrings;
 
 	MutableDictionary() {}
 	virtual ~MutableDictionary() {}
 
-	virtual const T &add(T element) = 0;
-	virtual const T &replace(T element) = 0;
+	virtual T &add(T &&element) = 0;
+	virtual T &replace(T &&element) = 0;
+	virtual T erase(const std::string &) = 0;
+	virtual T erase(const char *) = 0;
 
 	virtual void clear() = 0;
 
+#if 0
 	template <class CT, std::enable_if_t<!std::is_same_v<T, CT>, bool> dummy = true>
-	auto converter() const {return ConvertingDictionaryAdapter<T, CT>(*this);}
+	auto converter() const {return Conv<CT>(*this);}
 
 	template <class CT, std::enable_if_t<!std::is_same_v<T, CT>, bool> dummy = true>
-	auto converterPtr() const {return std::make_unique<ConvertingDictionaryAdapter<T, CT>>(*this);}
+	auto converterPtr() const {return std::make_unique<Conv<CT>>(*this);}
 
 	template <std::enable_if_t<is_any_pointer_v<T>, bool> dummy = true>
-	auto dereferencer() const {return DereferencingDictionaryAdapter<T>(*this);}
+	auto dereferencer() const {return Deref<>(*this);}
 
 	template <std::enable_if_t<is_any_pointer_v<T>, bool> dummy = true>
-	auto dereferencerPtr() const {return std::make_unique<DereferencingDictionaryAdapter<T>>(*this);}
+	auto dereferencerPtr() const {return std::make_unique<Deref<>>(*this);}
 
 	template <class CT, std::enable_if_t<!std::is_same_v<T, CT>, bool> dummy = true>
-	auto derefConv() const {return DerefConvDictionaryAdapter<T, CT>(*this);}
+	auto derefConv() const {return Deref<CT>(*this);}
 
 	template <class CT, std::enable_if_t<!std::is_same_v<T, CT>, bool> dummy = true>
-	auto derefConvPtr() const {return std::make_unique<DerefConvDictionaryAdapter<T, CT>>(*this);}
+	auto derefConvPtr() const {return std::make_unique<Deref<CT>>(*this);}
 
 	template <class CT, std::enable_if_t<!std::is_same_v<Dictionary<T>, CT>, bool> dummy = true>
 	operator ConvertingDictionaryAdapter<T, CT>() const {
-		return converter();
+		return converter<CT>();
 	}
+#endif
 };
 
 } /* namespace rhdl::dictionary */

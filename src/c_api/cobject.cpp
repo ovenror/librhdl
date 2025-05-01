@@ -48,7 +48,7 @@ CObject::operator const char*() const
 	return static_cast<const std::string &>(*this).c_str();
 }
 
-void CObject::setDictionaryPtr(std::unique_ptr<Dictionary<const CObject>> dict)
+void CObject::setDictionaryPtr(std::unique_ptr<Dictionary> dict)
 {
 	dict_ = std::move(dict);
 	setMembers();

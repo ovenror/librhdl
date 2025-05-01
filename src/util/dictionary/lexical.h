@@ -8,9 +8,6 @@
 #ifndef SRC_UTIL_DICTIONARY_LEXICAL_H_
 #define SRC_UTIL_DICTIONARY_LEXICAL_H_
 
-#include <util/dictionary/lookupwithorder.h>
-#include <util/dictionary/nature.h>
-#include <util/dictionary/order.h>
 #include <set>
 
 namespace rhdl::dictionary::order {
@@ -19,7 +16,8 @@ class Lexical {
 	template <class> class Less;
 
 public:
-	static constexpr Nature nature = Nature::LOOKUP_ORDER;
+	using requires_const = void;
+	using IsLookup = void;
 
 	template <class Element>
 	using Container = std::set<Element, Less<Element>>;

@@ -23,6 +23,7 @@ struct DictionaryBase {
 	virtual bool contains(const char *name) const = 0;
 
 	virtual size_t size() const = 0;
+	virtual bool empty() const {return !size();}
 
 	virtual const CStrings &c_strings() const = 0;
 

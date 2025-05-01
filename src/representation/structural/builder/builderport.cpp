@@ -24,19 +24,22 @@ namespace builder {
 BuilderPort::BuilderPort(
 		NewEntityStructure &structure, BuilderPort *enclosing,
 		size_t index, std::string name)
-	: structure_(structure), enclosing_(enclosing),
-	  orderIndex_(index), name_(name), c_(*this)
+	: Port(name), structure_(structure), enclosing_(enclosing),
+	  orderIndex_(index)
 {
-	auto &c = *c_ptr(*this);
+	Port::setDictionary(dictionary::DereferencingDictionaryAdapter<decltype(enclosed_), const CObject>(enclosed_));
+	PortContainer::setDictionary(dictionary::DereferencingDictionaryAdapter<decltype(enclosed_)>(enclosed_));
 
-	c.type = enclosing_ ? RHDL_UNSPECIFIED : RHDL_COMPOSITE;
-	c.composite.interfaces = c_strings_.data();
+	c_ptr() -> iface = &c_iface_;
+
+	c_iface_.type = enclosing_ ? RHDL_UNSPECIFIED : RHDL_COMPOSITE;
+	c_iface_.composite.interfaces = c_strings().data();
 }
 
 BuilderPort::~BuilderPort()
 {
 	for (auto &port : enclosed_)
-		port.invalidateHandles();
+		port -> invalidateHandles();
 }
 
 const Interface& BuilderPort::iface() const
@@ -47,64 +50,32 @@ const Interface& BuilderPort::iface() const
 
 BuilderPort& BuilderPort::encloseNew(const std::string &ifaceName)
 {
-	assertLenghts();
-
 	auto newPort =std::make_unique<BuilderPort>(
-		structure_, this, enclosedOrder_.size(), ifaceName);
+		structure_, this, enclosed_.size(), ifaceName);
 	auto &result = *newPort;
 
-	auto [iterator, inserted] = enclosed_.insert(std::move(newPort));
-	assert (inserted);
-	enclosedOrder_.emplace_back(&result);
+	enclosed_.add(std::move(newPort));
 
-	auto &c = *c_ptr(*this);
-
-	c.type = RHDL_COMPOSITE;
-	c_strings_.back() = result.name_.data();
-	c_strings_.push_back(nullptr);
-	c.composite.interfaces = c_strings_.data();
-
-	assertLenghts();
+	c_iface_.type = RHDL_COMPOSITE;
+	c_iface_.composite.interfaces = c_strings().data();
 
 	return result;
 }
 
 void BuilderPort::removeLastEnclosed(const BuilderPort &port)
 {
-	assertLenghts();
+	assert (&port == enclosed_.back().get());
 
-	assert (&port == enclosedOrder_.back());
+	enclosed_.erase(port.name());
 
-	auto iterator = enclosed_.find(port);
-	assert (iterator != enclosed_.end());
-	assert (&*iterator == &port);
-
-	auto &c = *c_ptr(*this);
-
-	c_strings_.pop_back();
-	assert (c_strings_.back() = port.name_.data());
-	c_strings_.back() = nullptr;
 	if (enclosing_ && enclosed_.empty())
-		c.type = RHDL_UNSPECIFIED;
-
-	enclosedOrder_.pop_back();
-	enclosed_.erase(iterator);
-
-	assertLenghts();
+		c_iface_.type = RHDL_UNSPECIFIED;
 }
-
-void BuilderPort::assertLenghts() const
-{
-	assert (c_strings_.size() == enclosed_.size() + 1);
-	assert (enclosedOrder_.size() == enclosed_.size());
-}
-
 
 Port& BuilderPort::operator [](const std::string &ifaceName)
 {
-	auto port = enclosed_.find(ifaceName);
-	if (port != enclosed_.end())
-		return *port;
+	if (enclosed_.contains(ifaceName))
+		return *enclosed_.at(ifaceName);
 
 	return encloseNew(ifaceName);
 }
@@ -210,7 +181,7 @@ std::unique_ptr<ExistingPort> BuilderPort::constructExistingPort(
 {
 	assert (predicate.samedir_);
 
-	auto *iface = peer.iface().clone(name_);
+	auto *iface = peer.iface().clone(name());
 	assert (iface -> compatTo(peer.iface(), predicate));
 
 	return PortsCreator(element()).create(*iface);
@@ -219,21 +190,10 @@ std::unique_ptr<ExistingPort> BuilderPort::constructExistingPort(
 void BuilderPort::replaceEnclosedBuilder(
 		BuilderPort &builder, std::unique_ptr<ExistingPort> &&newPort)
 {
-	assertLenghts();
-
 	adopt(*newPort);
 	encloseDirection(newPort -> direction());
 
-	c_strings_[builder.orderIndex_] = newPort -> name().data();
-	enclosedOrder_[builder.orderIndex_] = newPort.get();
-
-	auto erase_result = enclosed_.erase(builder);
-	assert (erase_result == 1);
-
-	auto insert_result = enclosed_.insert(std::move(newPort));
-	assert (insert_result.second);
-
-	assertLenghts();
+	enclosed_.replace(std::move(newPort));
 }
 
 ExistingPort &BuilderPort::realization(
@@ -255,7 +215,7 @@ ExistingPort* BuilderPort::realization()
 	if (components.empty())
 		return nullptr;
 
-	auto iface = new IComposite(name_, components);
+	auto iface = new IComposite(name(), components);
 
 	auto real = constructComplexPort(*iface);
 	realizeHandles(*real);
@@ -268,16 +228,16 @@ ExistingPort* BuilderPort::realization()
 
 std::unique_ptr<ComplexPort> BuilderPort::constructComplexPort(const IComposite &itop)
 {
-	pc::Poly<std::set<std::unique_ptr<ExistingPort>, Less>, Port> existingEnclosed;
+	dictionary::FCFSDictionary<std::unique_ptr<ExistingPort>> existingEnclosed;
 
 	for (auto port = enclosed_.begin(); port != enclosed_.end();) {
-		ExistingPort *real = port -> realization();
+		ExistingPort *real = (*port) -> realization();
 
 		// all enclosed ports should have been realized at this point
-		assert (real == &*port);
+		assert (real == port -> get());
 
-		enclosed_.extract(port).value().release();
-		existingEnclosed.emplace(std::unique_ptr<ExistingPort>(real));
+		enclosed_.erase((*port) -> name()).release();
+		existingEnclosed.add(std::unique_ptr<ExistingPort>(real));
 		port = enclosed_.begin();
 	}
 
@@ -319,7 +279,7 @@ std::vector<const Interface*> BuilderPort::ifaces()
 {
 	std::vector<const Interface*> result;
 
-	for (auto p : enclosedOrder_) {
+	for (auto &p : enclosed_) {
 		auto real = p -> realization();
 
 		if (real)
@@ -332,11 +292,6 @@ std::vector<const Interface*> BuilderPort::ifaces()
 Element& BuilderPort::element() const
 {
 	return structure_;
-}
-
-const rhdl_iface_struct* BuilderPort::c_ptr_iface() const
-{
-	return c_ptr(*this);
 }
 
 void BuilderPort::encloseDirection(CompositeDirection newDir) {

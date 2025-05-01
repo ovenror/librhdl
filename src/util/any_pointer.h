@@ -22,6 +22,11 @@ struct remove_any_pointer<std::unique_ptr<Pointee>> {
 	using type = Pointee;
 };
 
+template <class Pointee>
+struct remove_any_pointer<const std::unique_ptr<Pointee>> {
+	using type = Pointee;
+};
+
 template <class PT>
 using remove_any_pointer_t = typename remove_any_pointer<PT>::type;
 
@@ -30,6 +35,9 @@ struct is_any_pointer : public std::is_pointer<PT>{};
 
 template <class Pointee>
 struct is_any_pointer<std::unique_ptr<Pointee>> : std::true_type {};
+
+template <class Pointee>
+struct is_any_pointer<const std::unique_ptr<Pointee>> : std::true_type {};
 
 template <class PT>
 constexpr bool is_any_pointer_v = is_any_pointer<PT>();

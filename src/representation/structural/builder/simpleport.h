@@ -25,6 +25,9 @@ public:
 
 	const ISingle &iface() const override {return iface_;}
 
+protected:
+	SimplePort &cast() override {return *this;}
+
 private:
 	const ISingle &iface_;
 };

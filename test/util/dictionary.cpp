@@ -70,9 +70,21 @@ struct Maker<DICT<std::unique_ptr<Element>, ORDER>> {
 
 template <class T>
 struct OrderLOCALLess {
+	using is_transparent = void;
+
 	bool operator()(const Element *lhs, const Element *rhs) const
 	{
 		return lhs -> name() < rhs -> name();
+	}
+
+	bool operator()(const Element *lhs, const std::string &rhs) const
+	{
+		return lhs -> name() < rhs;
+	}
+
+	bool operator()(const std::string &lhs, const Element *rhs) const
+	{
+		return lhs < rhs -> name();
 	}
 };
 
@@ -91,6 +103,12 @@ struct OrderLOCAL<L<DELEM>> : public std::set<
 		nh.value() = ne;
 		auto [iter, inserted, node] = Super::insert(std::move(nh));
 		ASSERT_TRUE(inserted);
+	}
+	void erase(const std::string &name)
+	{
+		auto i = Super::find(name);
+		assert(i != Super::end());
+		Super::erase(i);
 	}
 };
 
@@ -111,6 +129,17 @@ struct OrderLOCAL<F<DELEM>> : public std::vector<const Element *>
 		ASSERT_NE(i, Super::end());
 
 		*i = ne;
+	}
+	void erase(const std::string &name)
+	{
+		for (auto i = Super::begin(); i != Super::end(); ++i) {
+			if ((*i) -> name() == name) {
+				Super::erase(i);
+				return;
+			}
+		}
+
+		assert(0);
 	}
 };
 
@@ -204,6 +233,37 @@ struct TesterReplace {
 			EXPECT_EQ(const_d.c_strings().at(i), ptr -> name().c_str());
 			++i;
 		}
+	}
+};
+
+template <class DICT>
+struct TesterErase {
+	static void exec() {
+		DICT d;
+		const auto &const_d = d;
+		Maker<DICT> m;
+		OrderLOCAL<DICT> OrderLOCAL;
+
+		for (auto name : {"a", "d", "e", "c", "b"}) {
+			auto [element, ptr] = m.make(name);
+			d.add(std::move(element));
+			OrderLOCAL.add(ptr);
+		}
+
+		OrderLOCAL.erase("d");
+		d.erase("d");
+		OrderLOCAL.erase("b");
+		d.erase("b");
+
+		ASSERT_EQ(d.size(), 3);
+		EXPECT_EQ(const_d.c_strings().size(), 4);
+
+		unsigned int i = 0;
+		for (auto ptr : OrderLOCAL) {
+			EXPECT_TRUE(m.same(d.at(ptr -> name()), ptr));
+			EXPECT_EQ(const_d.c_strings().at(i), ptr -> name().c_str());
+			++i;
+		}
 
 	}
 };
@@ -226,4 +286,9 @@ TEST(DictionaryTest, many)
 TEST(DictionaryTest, replace)
 {
 	exec<TesterReplace>();
+}
+
+TEST(DictionaryTest, erase)
+{
+	exec<TesterErase>();
 }

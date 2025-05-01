@@ -12,7 +12,8 @@ IComposite::IComposite(
 		const std::string &name, std::vector<const Interface *> components)
 	: VisitableBase (name), components_(std::move(components))
 {
-	setDictionary(components_.derefConv<CObject>());
+	setDictionary(dictionary::DereferencingDictionaryAdapter
+			<InterfaceContainer, const CObject>(components_));
 
 	c_ptr() -> type = RHDL_COMPOSITE;
 

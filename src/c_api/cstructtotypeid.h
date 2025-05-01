@@ -43,4 +43,9 @@ struct CStructToTypeID<rhdl_structure> {
 	constexpr static rhdl_type value = RHDL_STRUCTURE_HANDLE;
 };
 
+template <>
+struct CStructToTypeID<rhdl_connector> {
+	constexpr static rhdl_type value = RHDL_CONNECTOR;
+};
+
 #endif /* SRC_C_API_CSTRUCTTOTYPEID_H_ */

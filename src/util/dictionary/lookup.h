@@ -18,8 +18,11 @@ template <class CONTAINER>
 class Lookup : public CONTAINER {
 public:
 	using Element = typename CONTAINER::value_type;
+	using iterator = typename CONTAINER::iterator;
 	using const_iterator = typename CONTAINER::const_iterator;
 
+	Lookup() {}
+	Lookup(Lookup &&moved) : CONTAINER(std::move(moved)) {}
 	virtual ~Lookup() {}
 
 	template <class STRING>
@@ -28,15 +31,24 @@ public:
 	template <class STRING>
 	const Element &at(const STRING name) const;
 
-	const Element &add(Element);
-	const Element &replace(Element);
-	const Element &replace(const_iterator, Element);
+	const Element &at(size_t) const;
+	const Element &front() const {return *CONTAINER::cbegin();}
+	const Element &back() const {return *--CONTAINER::cend();}
 
-protected:
+	const Element &add(Element &&);
+	const Element &replace(Element &&);
+	const Element &replace(const_iterator, Element &&);
+
+	template <class STRING>
+	Element erase(STRING name);
+
+	Element erase(const_iterator);
+
 	template <class STRING>
 	const_iterator find(const STRING name) const;
 
-	const_iterator add_internal(Element);
+protected:
+	const_iterator add_internal(Element &&);
 };
 
 
@@ -57,16 +69,24 @@ inline const typename Lookup<CONTAINER>::Element& Lookup<CONTAINER>::at(
 }
 
 template<class CONTAINER>
+inline const typename Lookup<CONTAINER>::Element &Lookup<CONTAINER>::
+		at(size_t i) const
+{
+	auto iter = CONTAINER::cbegin();
+	std::advance(iter, i);
+	return *iter;
+}
+
+template<class CONTAINER>
 inline const typename Lookup<CONTAINER>::Element& Lookup<CONTAINER>::add(
-		Element e)
+		Element &&e)
 {
 	return *add_internal(std::move(e));
 }
 
-
 template <class CONTAINER>
 inline typename Lookup<CONTAINER>::const_iterator
-		Lookup<CONTAINER>::add_internal(Element element)
+		Lookup<CONTAINER>::add_internal(Element &&element)
 {
 	auto [i, success] = CONTAINER::insert(std::move(element));
 
@@ -78,8 +98,8 @@ inline typename Lookup<CONTAINER>::const_iterator
 }
 
 template <class CONTAINER>
-inline const typename  Lookup<CONTAINER>::Element
-		&Lookup<CONTAINER>::replace(Element element)
+inline const typename Lookup<CONTAINER>::Element
+		&Lookup<CONTAINER>::replace(Element &&element)
 {
 	auto i = find(element.name());
 	return replace(i, std::move(element));
@@ -87,21 +107,20 @@ inline const typename  Lookup<CONTAINER>::Element
 
 template<class CONTAINER>
 inline const typename Lookup<CONTAINER>::Element &Lookup<CONTAINER>::replace(
-		const_iterator i, Element e)
+		const_iterator i, Element &&e)
 {
 	assert(i -> name() == e.name());
 
-	auto nh = CONTAINER::extract(i);
-	auto &ref = nh.value();
-	ref = std::move(e);
-	auto [iter, inserted, node] = CONTAINER::insert(std::move(nh));
+	CONTAINER::erase(i);
+	auto [iter, inserted] = CONTAINER::insert(std::move(e));
 	assert (inserted);
 	return *iter;
 }
 
 template<class CONTAINER>
 template <class STRING>
-inline typename Lookup<CONTAINER>::const_iterator Lookup<CONTAINER>::find(const STRING name) const
+inline typename CONTAINER::const_iterator Lookup<CONTAINER>::
+		find(const STRING name) const
 {
 	auto i = CONTAINER::template find<const STRING>(name);
 
@@ -110,6 +129,27 @@ inline typename Lookup<CONTAINER>::const_iterator Lookup<CONTAINER>::find(const 
 	}
 
 	return i;
+}
+
+template<class CONTAINER>
+inline typename Lookup<CONTAINER>::Element Lookup<CONTAINER>::erase(
+		const_iterator i)
+{
+	auto nh = CONTAINER::extract(i);
+	return std::move(nh.value());
+}
+
+template<class CONTAINER>
+template<class STRING>
+inline typename Lookup<CONTAINER>::Element Lookup<CONTAINER>::
+		erase(STRING name)
+{
+	//return *std::make_move_iterator(find(name));
+
+	/* somehow, std::make_move_iterator won't work */
+
+	auto i = find(name);
+	return erase(i);
 }
 
 }

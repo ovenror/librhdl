@@ -13,7 +13,7 @@
 
 #include "interface/interface.h"
 
-#include "util/polycontainer/poly.h"
+#include "util/dictionary/fcfsdictionary.h"
 
 #include <string>
 
@@ -53,14 +53,15 @@ public:
 	std::unique_ptr<ComplexPort> constructComplexPort(const IComposite &);
 
 	CompositeDirection direction() const override {return direction_;}
-	const pc::Poly<std::set<std::unique_ptr<Port>, Less>> &enclosed() const override {return enclosed_;}
 	PortContainer *enclosing() const override {return enclosing_;}
+
+protected:
+	BuilderPort &cast() override {return *this;}
 
 private:
 	std::unique_ptr<CompatibilityResult> compat(
 			const PortContainer &peer, ConnectionPredicate p) const;
 
-	virtual const std::string &name() const override {return name_;}
 	const Interface &iface() const;
 
 	ExistingPort &realization(Port &peer, const ConnectionPredicate &p) override;
@@ -79,30 +80,18 @@ private:
 
 	Element &element() const override;
 	Port &port() override {return *this;}
-	virtual const rhdl_iface_struct *c_ptr_iface() const override;
+	virtual const rhdl_iface_struct *c_ptr_iface() const override {return &c_iface_;}
 
 	BuilderPort &encloseNew(const std::string &ifaceName = Interface::anon_name);
 	void removeLastEnclosed(const BuilderPort &);
 	void encloseDirection(CompositeDirection newDir);
 
-	void assertLenghts() const;
-
 	NewEntityStructure &structure_;
 	BuilderPort *enclosing_;
 	const size_t orderIndex_;
-	std::string name_;
-	pc::Poly<std::set<std::unique_ptr<Port>, Less>> enclosed_;
-	std::vector<Port *> enclosedOrder_;
+	dictionary::FCFSDictionary<std::unique_ptr<Port>> enclosed_;
 	CompositeDirection direction_;
-	std::vector<const char *> c_strings_ = {nullptr};
-
-public:
-	using C_Struct = rhdl_iface_struct;
-
-protected:
-	friend class Wrapper<BuilderPort>;
-	static constexpr unsigned long C_ID = 0x197E6FACE19DEC5;
-	Wrapper<BuilderPort> c_;
+	rhdl_iface_struct c_iface_;
 };
 
 } /* namespace builder */
