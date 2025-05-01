@@ -347,7 +347,7 @@ uint64_t rhdl_read_u64(const rhdl_object_t *o) {
 
 rhdl_object_t* rhdl_read_objref(const rhdl_object_t *o)
 {
-	return rhdl_read_value<const rhdl_object_t *>(o);
+	return c_ptr(*rhdl_read_value<const rhdl::CObject *>(o));
 }
 
 rhdl_direction rhdl_read_direction(const rhdl_object_t *o) {

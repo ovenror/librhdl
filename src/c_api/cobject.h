@@ -44,7 +44,6 @@ public:
 
 	size_t size() const override;
 
-	operator const rhdl_object *const() const {return c_ptr(*this);}
 
 	virtual explicit operator int64_t() const {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
