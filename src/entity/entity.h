@@ -107,7 +107,6 @@ protected:
 	const Representation &addRepresentation_internal(std::unique_ptr<Representation> &&representation) const;
 
 	const IComposite interface_;
-	const std::string name_;
 	mutable std::vector<std::unique_ptr<Timing>> timings_;
 	bool stateless_;
 
