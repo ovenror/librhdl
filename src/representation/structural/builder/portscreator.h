@@ -38,7 +38,8 @@ public:
 	void visit(const IComposite &i) override;
 
 	std::unique_ptr<ExistingPort> create(const Interface &i);
-	ComplexPort create(const IComposite &i);
+	ComplexPort create(const IComposite &i, const std::string *name = nullptr);
+	ComplexPort::Enclosed createEnclosed(const IComposite &i);
 
 private:
 	void createEnclosed(

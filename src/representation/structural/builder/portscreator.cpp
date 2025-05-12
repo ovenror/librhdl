@@ -37,11 +37,11 @@ void PortsCreator::visit(const IComposite& i) {
 	enclosed_ = enclosed_saved;
 }
 
-ComplexPort PortsCreator::create(const IComposite &i)
+ComplexPort PortsCreator::create(const IComposite &i, const std::string *name)
 {
 	ComplexPort::Enclosed enclosed;
 	createEnclosed(i, enclosed);
-	return ComplexPort(element_, i, std::move(enclosed));
+	return ComplexPort(element_, i, std::move(enclosed), name);
 }
 
 std::unique_ptr<ExistingPort> PortsCreator::create(const Interface &i)

@@ -24,7 +24,9 @@ template <class> class TypedConnection;
 
 class ExistingPort : public Port {
 public:
-	ExistingPort(Element &element, const Interface &iface);
+	ExistingPort(
+			Element &element, const Interface &iface,
+			const std::string *name = nullptr);
 
 	virtual ~ExistingPort();
 

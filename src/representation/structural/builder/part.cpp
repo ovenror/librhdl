@@ -15,9 +15,9 @@
 
 namespace rhdl::structural::builder {
 
-Part::Part(const Entity &entity)
+Part::Part(const Entity &entity, const std::string *name)
 	: entity_(entity),
-	  top_(PortsCreator(*this).create(entity.interface()))
+	  top_(PortsCreator(*this).create(entity.interface(), name))
 {}
 
 Part::~Part() {

@@ -29,9 +29,9 @@ Structure::Structure(bool stateless) : builder_(stateless)
 
 Structure::~Structure() {}
 
-ComplexPort &Structure::add(const Entity &partEntity)
+ComplexPort &Structure::add(const Entity &partEntity, const std::string *name)
 {
-	return builder_.add(partEntity);
+	return builder_.add(partEntity, name);
 }
 
 void Structure::toStream(std::ostream &os) const

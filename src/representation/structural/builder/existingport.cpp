@@ -20,8 +20,9 @@ namespace rhdl {
 namespace structural {
 namespace builder {
 
-ExistingPort::ExistingPort(Element &element, const Interface &iface)
-	: Port(iface.name()), element_(element)
+ExistingPort::ExistingPort(
+		Element &element, const Interface &iface, const std::string *name)
+	: Port(name ? *name : iface.name()), element_(element)
 {}
 
 ExistingPort::~ExistingPort() {}

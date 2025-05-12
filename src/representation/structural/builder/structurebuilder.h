@@ -38,7 +38,7 @@ public:
 	StructureBuilder(bool stateless = true);
 	virtual ~StructureBuilder();
 
-	ComplexPort &add(const Entity &partEntity);
+	ComplexPort &add(const Entity &partEntity, const std::string *name = nullptr);
 
 	bool stateless() {return stateless_;}
 

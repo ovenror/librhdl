@@ -20,7 +20,7 @@ ExistingEntityStructure::ExistingEntityStructure(Namespace &ns, const std::strin
 
 ExistingEntityStructure::ExistingEntityStructure(const Entity &entity)
 	: Structure(entity.isStateless()), entity_(entity),
-	  top_(PortsCreator(*this).create(entity.interface()))
+	  top_(PortsCreator(*this).create(entity.interface(), &entity.name()))
 
 {}
 

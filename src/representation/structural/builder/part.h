@@ -23,7 +23,7 @@ class StructureBuilder;
 
 class Part : public Element, public Partitionable<Part, StructureBuilder> {
 public:
-	Part(const Entity& entity);
+	Part(const Entity& entity, const std::string *name = nullptr);
 	Part(Part &&) = default;
 
 	virtual ~Part();

@@ -28,7 +28,8 @@ public:
 	using Enclosed = dictionary::FCFSDictionary<std::unique_ptr<ExistingPort>>;
 
 	ComplexPort(
-			Element &element, const IComposite &iface, Enclosed &&enclosed);
+			Element &element, const IComposite &iface, Enclosed &&enclosed,
+			const std::string *name = nullptr);
 
 	virtual ~ComplexPort();
 

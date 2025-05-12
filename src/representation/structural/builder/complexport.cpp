@@ -17,8 +17,9 @@
 namespace rhdl::structural::builder {
 
 ComplexPort::ComplexPort(
-		Element &element, const IComposite &iface, Enclosed &&enclosed)
-	: ExistingPortBase<ComplexPort>(element, iface), iface_(iface), enclosed_(std::move(enclosed))
+		Element &element, const IComposite &iface,
+		Enclosed &&enclosed, const std::string *name)
+	: ExistingPortBase<ComplexPort>(element, iface, name), iface_(iface), enclosed_(std::move(enclosed))
 {
 	adoptEnclosed();
 

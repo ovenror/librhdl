@@ -30,7 +30,7 @@ public:
 	Structure(Structure &&) = default;
 	virtual ~Structure();
 
-	ComplexPort &add(const Entity &partEntity);
+	ComplexPort &add(const Entity &partEntity, const std::string *name = nullptr);
 
 	void abort();
 	virtual void finalize();

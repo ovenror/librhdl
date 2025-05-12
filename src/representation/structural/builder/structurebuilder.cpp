@@ -66,12 +66,12 @@ void StructureBuilder::combineIffNotSame(
 		b1.combineWith(b2);
 }
 
-ComplexPort &StructureBuilder::add(const Entity &partEntity)
+ComplexPort &StructureBuilder::add(const Entity &partEntity, const std::string *name)
 {
 	if (stateless_ && !partEntity.isStateless())
 		setStateful();
 
-	return parts_.accept(std::make_unique<Part>(partEntity)).topPort();
+	return parts_.accept(std::make_unique<Part>(partEntity, name)).topPort();
 }
 
 void StructureBuilder::invalidate()
