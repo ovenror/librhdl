@@ -54,7 +54,7 @@ BuilderPort& BuilderPort::encloseNew(const std::string &ifaceName)
 		structure_, this, enclosed_.size(), ifaceName);
 	auto &result = *newPort;
 
-	enclosed_.add(std::move(newPort));
+	add(enclosed_, std::move(newPort));
 
 	c_iface_.type = RHDL_COMPOSITE;
 	c_iface_.composite.interfaces = c_strings().data();
