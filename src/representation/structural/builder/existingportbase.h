@@ -17,7 +17,7 @@ namespace builder {
 
 
 template <class DERIVED>
-class ExistingPortBase : public Partitionable<DERIVED, TypedConnection<DERIVED>>, public ExistingPort {
+class ExistingPortBase : public ExistingPort, public Partitionable<DERIVED, TypedConnection<DERIVED>> {
 	using PartitionableBase = Partitionable<DERIVED, TypedConnection<DERIVED>>;
 
 public:

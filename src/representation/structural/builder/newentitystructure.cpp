@@ -20,7 +20,7 @@ namespace builder {
 
 NewEntityStructure::NewEntityStructure(
 		Namespace &ns, std::string entityName, bool stateless)
-		: Structure(stateless), entityName_(entityName), ns_(ns)
+		: Structure(entityName, stateless), entityName_(entityName), ns_(ns)
 {
 	if (ns.contains(entityName)) {
 		valid_ = false;
@@ -28,8 +28,9 @@ NewEntityStructure::NewEntityStructure(
 	}
 
 	auto top = std::make_unique<BuilderPort>(*this, nullptr, 0, entityName);
-	topBuilder = top.get();
+	topBuilder_ = top.get();
 	top_ = std::move(top);
+	init_c(*topBuilder_);
 }
 
 NewEntityStructure::~NewEntityStructure()
@@ -46,8 +47,8 @@ void NewEntityStructure::finalize()
 
 void NewEntityStructure::doFinalize()
 {
-	assert (topBuilder);
-	auto ifaces = topBuilder -> ifaces();
+	assert (topBuilder_);
+	auto ifaces = topBuilder_ -> ifaces();
 
 	if (ifaces.empty()) {
 		abort();
@@ -74,7 +75,7 @@ const Entity& NewEntityStructure::entity() const
 void NewEntityStructure::replaceTopBuilder(std::unique_ptr<ComplexPort> &&e)
 {
 	top_ = std::move(e);
-	topBuilder = nullptr;
+	topBuilder_ = nullptr;
 }
 
 } /* namespace builder */

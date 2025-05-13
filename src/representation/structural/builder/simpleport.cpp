@@ -15,8 +15,18 @@ namespace builder {
 SimplePort::SimplePort(Element &e, const ISingle &i)
 	: ExistingPortBase<SimplePort>(e, i), iface_(i)
 {
-	new SimpleConnection(*this);
+	constructorCommon();
+}
 
+SimplePort::SimplePort(Element &e, const ISingle &i, WPtr &&c)
+	: ExistingPortBase<SimplePort>(e, i, std::move(c)), iface_(i)
+{
+	constructorCommon();
+}
+
+void SimplePort::constructorCommon()
+{
+	new SimpleConnection(*this);
 	c_ptr() -> iface = iface_.c_ptr();
 }
 

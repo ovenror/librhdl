@@ -184,7 +184,7 @@ std::unique_ptr<ExistingPort> BuilderPort::constructExistingPort(
 	auto *iface = peer.iface().clone(name());
 	assert (iface -> compatTo(peer.iface(), predicate));
 
-	return PortsCreator(element()).create(*iface);
+	return PortsCreator(element()).create(*iface, std::move(c_));
 }
 
 void BuilderPort::replaceEnclosedBuilder(
@@ -241,7 +241,9 @@ std::unique_ptr<ComplexPort> BuilderPort::constructComplexPort(const IComposite 
 		port = enclosed_.begin();
 	}
 
-	auto real = std::make_unique<ComplexPort>(structure_, itop, std::move(existingEnclosed));
+	auto real = std::make_unique<ComplexPort>(
+			structure_, itop, std::move(existingEnclosed),
+			std::move(c_), &name());
 	real -> autoconsolidate();
 	return std::move(real);
 }

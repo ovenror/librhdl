@@ -18,6 +18,7 @@
 namespace rhdl {
 
 class Interface;
+template <class> class Wrapper;
 
 namespace structural::builder {
 
@@ -37,9 +38,10 @@ public:
 	void visit(const ISingle &i) override;
 	void visit(const IComposite &i) override;
 
-	std::unique_ptr<ExistingPort> create(const Interface &i);
+	std::unique_ptr<ExistingPort> create(
+			const Interface &i,
+			std::unique_ptr<Wrapper<Port>> &&builder_c = nullptr);
 	ComplexPort create(const IComposite &i, const std::string *name = nullptr);
-	ComplexPort::Enclosed createEnclosed(const IComposite &i);
 
 private:
 	void createEnclosed(
@@ -48,6 +50,7 @@ private:
 
 	Element &element_;
 	ComplexPort::Enclosed *enclosed_ = nullptr;
+	std::unique_ptr<Wrapper<Port>> builder_c_;
 };
 
 } /* namespace structural::builder */

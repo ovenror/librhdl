@@ -23,7 +23,12 @@
 
 namespace rhdl::structural::builder {
 
-Port::Port(std::string name) : Super(std::move(name)) {}
+Port::Port(std::string name)
+			: Super(RHDL_CONNECTOR, std::move(name)),
+			  c_(std::make_unique<Wrapper<Port>>(*this)) {}
+
+Port::Port(std::string name, std::unique_ptr<Wrapper<Port>> c)
+			: Super(RHDL_CONNECTOR, std::move(name)), c_(std::move(c)) {}
 
 Port::~Port()
 {

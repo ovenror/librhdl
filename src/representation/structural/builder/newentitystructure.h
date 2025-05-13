@@ -38,7 +38,7 @@ private:
 
 	std::string entityName_;
 	std::unique_ptr<PortContainer> top_ = nullptr;
-	BuilderPort *topBuilder = nullptr;
+	BuilderPort *topBuilder_ = nullptr;
 	Namespace &ns_;
 };
 

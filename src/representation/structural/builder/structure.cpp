@@ -24,8 +24,8 @@ using Mode = rhdl::Structure::Mode;
 
 using behavioral::TimedBehavior;
 
-Structure::Structure(bool stateless) : builder_(stateless)
-{}
+Structure::Structure(const std::string &name, bool stateless)
+		: Super(name), builder_(stateless) {}
 
 Structure::~Structure() {}
 
@@ -96,6 +96,11 @@ void Structure::expect_valid()
 {
 	if (!valid_)
 		throw ConstructionException(Errorcode::E_INVALID_HANDLE);
+}
+
+void Structure::init_c(const Port &top)
+{
+	c_ptr() -> connector = top.c_ptr();
 }
 
 } /* namespace rhdl::structural::builder */

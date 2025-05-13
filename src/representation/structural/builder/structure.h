@@ -10,25 +10,29 @@
 
 #include "element.h"
 #include "completestructurebuilder.h"
-
 #include <rhdl/construction/structure.h>
-
 #include "entity/entity.h"
-
 #include "simulation/fast/fastsimfactory.h"
+#include "c_api/typedcomplexcobject.h"
 
 #include <memory>
 #include <vector>
 
 namespace rhdl::structural::builder {
 
-class Structure : public Element {
+class Structure
+		: public TypedComplexCObject<Structure, rhdl_structure>,
+		  public Element
+{
+	using Super = TypedComplexCObject<Structure, rhdl_structure>;
 	using Behavior = std::pair<std::unique_ptr<SimFactory>, bool>;
 
 public:
-	Structure(bool stateless);
+	Structure(const std::string &name, bool stateless);
 	Structure(Structure &&) = default;
 	virtual ~Structure();
+
+	virtual Structure &cast() {return *this;}
 
 	ComplexPort &add(const Entity &partEntity, const std::string *name = nullptr);
 
@@ -76,6 +80,7 @@ protected:
 						simfunc, procfunc, initial), timed);
 	}
 
+	void init_c(const Port &top);
 	void toStream(std::ostream &os) const override;
 	virtual const std::string &name() const = 0;
 	bool valid() {return valid_;}

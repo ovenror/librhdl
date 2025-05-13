@@ -38,11 +38,14 @@ class ComplexPort;
 class Element;
 class StructureBuilder;
 
-class Port : public TypedCObject<Port, rhdl_connector> {
-	using Super = TypedCObject<Port, rhdl_connector>;
+class Port : public CObject {
+	using Super = CObject;
 
 public:
+	using WPtr = std::unique_ptr<Wrapper<Port>>;
+
 	Port(std::string name);
+	Port(std::string name, std::unique_ptr<Wrapper<Port>>);
 	virtual ~Port();
 
 	virtual Port &operator[](const std::string &ifaceName);
@@ -97,7 +100,13 @@ public:
 
 	bool operator<(const Port &p) const;
 
+	using C_Struct = rhdl_connector;
+
+	const C_Struct *c_ptr() const {return &c_ -> content();}
+
 protected:
+	C_Struct *c_ptr() {return &c_ -> content();}
+	void move_c(Port &from, Port &to);
 	void qnameToStream(std::ostream &) const;
 	static ConnectionPredicate predicate(
 			const Port &from, const Port &to, bool directional = true);
@@ -110,6 +119,11 @@ private:
 	friend std::ostream &operator<<(std::ostream &os, const Port &p);
 
 	mutable std::unordered_set<PortHandle *> handles_;
+
+protected:
+	friend class Wrapper<Port>;
+	static constexpr unsigned long C_ID = 0x1DF059057;
+	WPtr c_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Port &p);

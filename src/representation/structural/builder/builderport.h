@@ -55,9 +55,6 @@ public:
 	CompositeDirection direction() const override {return direction_;}
 	PortContainer *enclosing() const override {return enclosing_;}
 
-protected:
-	BuilderPort &cast() override {return *this;}
-
 private:
 	std::unique_ptr<CompatibilityResult> compat(
 			const PortContainer &peer, ConnectionPredicate p) const;

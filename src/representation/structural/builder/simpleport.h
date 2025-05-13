@@ -18,6 +18,7 @@ namespace builder {
 class SimplePort: public ExistingPortBase<SimplePort> {
 public:
 	SimplePort(Element &, const ISingle &);
+	SimplePort(Element &, const ISingle &, WPtr &&);
 	virtual ~SimplePort();
 
 	virtual void connectCompat(ExistingPort &peer) override;
@@ -25,10 +26,9 @@ public:
 
 	const ISingle &iface() const override {return iface_;}
 
-protected:
-	SimplePort &cast() override {return *this;}
-
 private:
+	void constructorCommon();
+
 	const ISingle &iface_;
 };
 

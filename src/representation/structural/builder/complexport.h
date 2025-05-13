@@ -31,6 +31,10 @@ public:
 			Element &element, const IComposite &iface, Enclosed &&enclosed,
 			const std::string *name = nullptr);
 
+	ComplexPort(
+			Element &element, const IComposite &iface, Enclosed &&enclosed,
+			std::unique_ptr<Wrapper<Port>> c, const std::string *name = nullptr);
+
 	virtual ~ComplexPort();
 
 	Port &operator[](const std::string &ifaceName) override;
@@ -54,10 +58,9 @@ public:
 
 	const Interface &iface() const override;
 
-protected:
-	ComplexPort &cast() override {return *this;}
-
 private:
+	ComplexPort(Enclosed &&enclosed);
+
 	Port &port() override {return *this;}
 	void adoptEnclosed();
 	void establishConnectionRelations(ComplexConnection &);
@@ -70,6 +73,8 @@ private:
 			const std::function<bool(const std::vector<const ExistingPort *>)> &);
 
 	ExistingPort &get(const Interface &) const;
+
+	void constructorCommon();
 
 	const IComposite &iface_;
 	Enclosed enclosed_;

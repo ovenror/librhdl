@@ -53,7 +53,6 @@ Port& Element::topPort()
 	return top().port();
 }
 
-
 void Element::combineBuilders(Element &lhs, Element &rhs)
 {
 	StructureBuilder::combineIffNotSame(lhs.builder(), rhs.builder());

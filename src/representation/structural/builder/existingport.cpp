@@ -22,8 +22,12 @@ namespace builder {
 
 ExistingPort::ExistingPort(
 		Element &element, const Interface &iface, const std::string *name)
-	: Port(name ? *name : iface.name()), element_(element)
-{}
+		: Port(name ? *name : iface.name()), element_(element) {}
+
+ExistingPort::ExistingPort(
+		Element &element, const Interface &iface,
+		std::unique_ptr<Wrapper<Port>> c, const std::string *name)
+		: Port(name ? *name : iface.name(), std::move(c)), element_(element) {}
 
 ExistingPort::~ExistingPort() {}
 

@@ -4,10 +4,7 @@ target_sources(rhdl_obj
 		cobject.cpp
 		cvalue.cpp
 		cvalueobject.cpp
-		context.cpp
-		handle.cpp
 		namespace.cpp
 		rootnamespace.cpp
 		stringconversion.cpp
-		structurehandle.cpp
 )

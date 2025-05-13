@@ -15,14 +15,14 @@ namespace structural {
 namespace builder {
 
 ExistingEntityStructure::ExistingEntityStructure(Namespace &ns, const std::string &entityName)
-	: ExistingEntityStructure(ns.at(entityName))
-{}
+	: ExistingEntityStructure(ns.at(entityName)) {}
 
 ExistingEntityStructure::ExistingEntityStructure(const Entity &entity)
-	: Structure(entity.isStateless()), entity_(entity),
-	  top_(PortsCreator(*this).create(entity.interface(), &entity.name()))
-
-{}
+	: Structure(entity.name(), entity.isStateless()), entity_(entity),
+	  top_(PortsCreator(*this).create(entity.interface()))
+{
+	init_c(top_);
+}
 
 ExistingEntityStructure::~ExistingEntityStructure()
 {

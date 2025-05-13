@@ -28,6 +28,10 @@ public:
 			Element &element, const Interface &iface,
 			const std::string *name = nullptr);
 
+	ExistingPort(
+			Element &element, const Interface &iface,
+			std::unique_ptr<Wrapper<Port>> c, const std::string *name = nullptr);
+
 	virtual ~ExistingPort();
 
 	std::unique_ptr<CompatibilityResult> compat(

@@ -7,9 +7,6 @@
 
 #include <rhdl/construction/connectible.h>
 
-#include "handle.h"
-#include "structurehandle.h"
-
 #include "c_api/rootnamespace.h"
 #include "c_api/typedcvalue.h"
 
@@ -22,6 +19,9 @@
 
 #include "util/iterable.h"
 
+#include "representation/structural/builder/structure.h"
+#include "representation/structural/builder/complexport.h"
+
 #include <array>
 #include <functional>
 #include <cassert>
@@ -32,14 +32,15 @@ extern "C" {
 #include <rhdl/construction/c/error.h>
 }
 
-using rhdl::Handle;
-using rhdl::StructureHandle;
 using rhdl::Connectible;
 using rhdl::ConstructionException;
 using rhdl::InterfaceCompatException;
 using rhdl::Wrapper;
 using rhdl::recover;
 using rhdl::c_ptr;
+using rhdl::structural::builder::Structure;
+using rhdl::structural::builder::Port;
+using rhdl::structural::builder::makeStructure;
 
 static ConstructionException lastException(rhdl::Errorcode::E_NO_ERROR);
 
@@ -193,7 +194,9 @@ rhdl_structure_t *rhdl_begin_structure(rhdl_namespace_t *nspace, const char *ent
 {
 	try {
 		rhdl::Namespace &ns = recover_namespace_for_entity(nspace);
-		return c_ptr(*new StructureHandle(ns, entity_name, mode));
+		const auto &structure = *makeStructure(ns, entity_name,
+				static_cast<rhdl::Structure::Mode>(mode)).release();
+		return structure.c_ptr();
 	}
 	catch (const ConstructionException &e) {
 		switch (e.errorcode()) {
@@ -212,7 +215,7 @@ rhdl_structure_t *rhdl_begin_structure(rhdl_namespace_t *nspace, const char *ent
 int rhdl_finish_structure(rhdl_structure_t *structure)
 {
 	auto f = [=](){
-		auto &cpp = recover<StructureHandle>(structure);
+		auto &cpp = recover<Structure>(structure);
 		cpp.finalize();
 		delete &cpp;
 		return 0;
@@ -224,7 +227,7 @@ int rhdl_finish_structure(rhdl_structure_t *structure)
 int rhdl_abort_structure(rhdl_structure_t *structure)
 {
 	auto f = [=](){
-		auto &cpp = recover<StructureHandle>(structure);
+		auto &cpp = recover<Structure>(structure);
 		cpp.abort();
 		delete &cpp;
 		return 0;
@@ -237,10 +240,10 @@ int rhdl_abort_structure(rhdl_structure_t *structure)
 rhdl_connector_t *rhdl_component(rhdl_structure_t *structure, rhdl_entity_t *entity)
 {
 	auto f = [=]() {
-		auto &cpp_sh = recover<StructureHandle>(structure);
+		auto &cpp_sh = recover<Structure>(structure);
 		auto &cpp_entity = rhdl::Entity::recover(entity);
-		auto &cpp_component = cpp_sh.makeComponent(cpp_entity);
-		return c_ptr(cpp_component);
+		const Port &cpp_component = cpp_sh.add(cpp_entity);
+		return cpp_component.c_ptr();
 	};
 
 	return cerror<rhdl_connector_t *, 1>(f, {E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY});
@@ -249,9 +252,9 @@ rhdl_connector_t *rhdl_component(rhdl_structure_t *structure, rhdl_entity_t *ent
 rhdl_connector_t *rhdl_select(rhdl_connector_t *connector, const char *iface_name)
 {
 	std::function<rhdl_connector_t *()> f = [=]() {
-		auto &cpp_handle = recover<Handle>(connector);
-		auto &selected_handle = cpp_handle.select(iface_name);
-		return c_ptr(selected_handle);
+		auto &cpp_handle = recover<Port>(connector);
+		const auto &selected_handle = cpp_handle[iface_name];
+		return selected_handle.c_ptr();
 	};
 
 	return cerror<rhdl_connector_t *, 2>(f, {E_NO_SUCH_INTERFACE, E_CANNOT_GET_ANONYMOUS_INTERFACE});
@@ -260,9 +263,14 @@ rhdl_connector_t *rhdl_select(rhdl_connector_t *connector, const char *iface_nam
 int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 {
 	try {
-		auto &cpp_from = recover<Handle>(from);
-		auto &cpp_to = recover<Handle>(to);
-		cpp_from.connect(cpp_to);
+		auto &cpp_from = recover<Port>(from);
+		auto &cpp_to = recover<Port>(to);
+
+		if (cpp_from.element().isTheStructure() &&
+				cpp_to.element().isTheStructure())
+			return static_cast<int>(rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH);
+
+		Port::connect(cpp_from, cpp_to);
 		return 0;
 	}
 	catch (const InterfaceCompatException &e) {
@@ -277,7 +285,7 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 		case rhdl::Errorcode::E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES:
 		case rhdl::Errorcode::E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY:
 		case rhdl::Errorcode::E_ILLEGAL_RECONNECTION:
-		case rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH:
+		//case rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH:
 			except(e);
 			return static_cast<int>(e.errorcode());
 		default:

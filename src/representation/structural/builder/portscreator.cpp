@@ -24,16 +24,23 @@ PortsCreator::~PortsCreator() {}
 
 void PortsCreator::visit(const ISingle& i) {
 	assert (enclosed_);
-	enclosed_ -> add(std::make_unique<SimplePort>(element_, i));
+	auto result = builder_c_ ?
+			std::make_unique<SimplePort>(element_, i, std::move(builder_c_)) :
+			std::make_unique<SimplePort>(element_, i);
+	enclosed_ -> add(std::move(result));
 }
 
 void PortsCreator::visit(const IComposite& i) {
 	assert (enclosed_);
 
 	auto enclosed_saved = enclosed_;
+	Port::WPtr builder_c = std::move(builder_c_);
 	ComplexPort::Enclosed enclosed;
 	createEnclosed(i, enclosed);
-	enclosed_saved -> add(std::make_unique<ComplexPort>(element_, i, std::move(enclosed)));
+	auto result = builder_c ?
+			std::make_unique<ComplexPort>(element_, i, std::move(enclosed), std::move(builder_c)) :
+			std::make_unique<ComplexPort>(element_, i, std::move(enclosed));
+	enclosed_saved -> add(std::move(result));
 	enclosed_ = enclosed_saved;
 }
 
@@ -44,8 +51,11 @@ ComplexPort PortsCreator::create(const IComposite &i, const std::string *name)
 	return ComplexPort(element_, i, std::move(enclosed), name);
 }
 
-std::unique_ptr<ExistingPort> PortsCreator::create(const Interface &i)
+std::unique_ptr<ExistingPort> PortsCreator::create(
+		const Interface &i, std::unique_ptr<Wrapper<Port>> &&builder_c)
 {
+	builder_c_ = std::move(builder_c);
+
 	ComplexPort::Enclosed dummy;
 	enclosed_ = &dummy;
 

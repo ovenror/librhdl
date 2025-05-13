@@ -136,4 +136,3 @@ TEST(ApiMisconstruction, entityExists)
         Structure nope("Inverter");
     });
 }
-
