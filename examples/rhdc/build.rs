@@ -20,8 +20,8 @@ fn main() {
         "rhdl_component", "rhdl_select", "rhdl_connect",
         "rhdl_finish_structure",
         "rhdl_print_commands",
-        "rhdl_get",
-        "rhdl_read_cstring", "rhdl_has_value",
+        "rhdlo_get",
+        "rhdlo_read_cstring", "rhdlo_has_value",
         "rhdl_errno", "rhdl_errstr",
 
 //        "Flags::F_CREATE_STATELESS", "Flags::F_CREATE_STATEFUL",

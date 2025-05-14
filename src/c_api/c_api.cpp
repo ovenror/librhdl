@@ -308,7 +308,7 @@ int rhdl_print_commands(const char *entity_name) {
 	return cerror<int, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
 }
 
-const rhdl_object * rhdl_get(const rhdl_object_t *o, const char *member) {
+const rhdl_object * rhdlo_get(const rhdl_object_t *o, const char *member) {
 	auto f = [=]() {
 		const rhdl::CObject &cobject = o ? recover<rhdl::CObject>(o) : rhdl::rootNamespace;
 		const rhdl::CObject &result = member ? cobject.at(member) : cobject;
@@ -331,7 +331,7 @@ static VALUE_TYPE rhdl_read_value(const rhdl_object_t *o) {
 	return result;
 }
 
-int rhdl_has_value(const rhdl_object_t *o) {
+int rhdlo_has_value(const rhdl_object_t *o) {
 	auto f = [=]() {
 		const auto &co = rhdl::recover<rhdl::CObject>(o);
 		return co.isValue();
@@ -340,28 +340,28 @@ int rhdl_has_value(const rhdl_object_t *o) {
 	return cerror<int, 0>(f, std::array<int, 0>{});
 }
 
-const char* rhdl_read_cstring(const rhdl_object_t *o)
+const char* rhdlo_read_cstring(const rhdl_object_t *o)
 {
 	return rhdl_read_value<const char *>(o);
 }
 
-int64_t rhdl_read_i64(const rhdl_object_t *o) {
+int64_t rhdlo_read_i64(const rhdl_object_t *o) {
 	return rhdl_read_value<int64_t>(o);
 }
 
-uint64_t rhdl_read_u64(const rhdl_object_t *o) {
+uint64_t rhdlo_read_u64(const rhdl_object_t *o) {
 	return rhdl_read_value<uint64_t>(o);
 }
 
-rhdl_object_t* rhdl_read_objref(const rhdl_object_t *o)
+rhdl_object_t* rhdlo_read_objref(const rhdl_object_t *o)
 {
 	return c_ptr(*rhdl_read_value<const rhdl::CObject *>(o));
 }
 
-rhdl_direction rhdl_read_direction(const rhdl_object_t *o) {
+rhdl_direction rhdlo_read_direction(const rhdl_object_t *o) {
 	return rhdl_read_value<rhdl_direction>(o);
 }
 
-enum rhdl_reptype rhdl_read_reptype(const rhdl_object_t *o) {
+enum rhdl_reptype rhdlo_read_reptype(const rhdl_object_t *o) {
 	return rhdl_read_value<rhdl_reptype>(o);
 }

@@ -81,7 +81,7 @@ impl Interfacible for rhdl_object_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_object_t = self;
         let tname = CString::new(name).unwrap();
-        unsafe {rhdl_get(this, tname.as_ptr())}  
+        unsafe {rhdlo_get(this, tname.as_ptr())}  
     }
 }
 
@@ -172,8 +172,8 @@ impl fmt::Display for rhdl_connector_t {
 
 impl fmt::Display for rhdl_object_t {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if unsafe{rhdl_has_value(self)} != 0 {
-            write!(f, "{}", unsafe{CStr::from_ptr(rhdl_read_cstring(self))}.to_str().unwrap())
+        if unsafe{rhdlo_has_value(self)} != 0 {
+            write!(f, "{}", unsafe{CStr::from_ptr(rhdlo_read_cstring(self))}.to_str().unwrap())
         }
         else {
             write!(f, "{}", CStrings::new(self.members))
@@ -515,7 +515,7 @@ impl<'a> RHDC<'a> {
         let name = args.fold(String::from(""), |acc, arg| {acc + arg});
         
         if name == "" {
-            let ns = unsafe {rhdl_get(ptr::null(), ptr::null())};
+            let ns = unsafe {rhdlo_get(ptr::null(), ptr::null())};
             println!("{}", unsafe{&*ns});
             return true;
         }
@@ -530,7 +530,7 @@ impl<'a> RHDC<'a> {
             return self.ls_internal(basename, iface, &mut components);
         }
         
-        let object = unsafe {rhdl_get(ptr::null(), tname.as_ptr())};
+        let object = unsafe {rhdlo_get(ptr::null(), tname.as_ptr())};
         if !(object.is_null()) {
             //println!("{}", unsafe{*object});
             //return true;
@@ -682,7 +682,7 @@ fn resolve_object(qn : &str) -> *const rhdl_object_t
 fn resolve_object_with_base(base : *const rhdl_object_t, qn : &str) -> *const rhdl_object_t
 {
     if qn.trim().is_empty() {
-        return unsafe {rhdl_get(base, ptr::null())}
+        return unsafe {rhdlo_get(base, ptr::null())}
     }
 
     let components = qn.split('.');
@@ -694,7 +694,7 @@ fn resolve_object_with_base(base : *const rhdl_object_t, qn : &str) -> *const rh
         component_str = component.trim().to_string();
 
         let component_cstr = CString::new(component_str).unwrap();
-        curbase = unsafe {rhdl_get(curbase, component_cstr.as_ptr())};
+        curbase = unsafe {rhdlo_get(curbase, component_cstr.as_ptr())};
 
         if curbase.is_null() {
             return ptr::null()
