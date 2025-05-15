@@ -14,8 +14,9 @@
 int rootNamespace()
 {
 	rhdl_object_t *root = rhdlo_get(0, 0);
-
 	REQUIRE(root);
+	REQUIRE_STREQ(root -> name, "root");
+
 	REQUIRE(rhdlo_get(root, 0) == root);
 	REQUIRE(!rhdlo_has_value(root));
 
