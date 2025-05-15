@@ -81,8 +81,6 @@ impl Selectable for rhdl_object_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_object_t = self;
         let tname = CString::new(name).unwrap();
-        let selfptr: *const rhdl_object_t = &*self;
-        println!("trying to get {} from {} at {:p}", name, unsafe{*self.name}, selfptr);
         unsafe {rhdlo_get(this, tname.as_ptr())}  
     }
 }
@@ -631,7 +629,7 @@ impl CommandCompleter for ObjectCompleter {
             Some((m, l)) => (m,l)
         };
 
-        let base = resolve_object(most);
+        let base = resolve_object_noerr(most);
 
         if base.is_null() {
             return Err(());
@@ -676,31 +674,54 @@ impl CommandCompleter for ObjectCompleter {
     }
 }
 
-fn resolve_object(qn : &str) -> *const rhdl_object_t
+fn resolve_object_noerr(qn : &str) -> *const rhdl_object_t
 {
-    resolve_object_with_base(ptr::null(), qn)
+    return resolve_object(qn, Option::None)
 }
 
-fn resolve_object_with_base(base : *const rhdl_object_t, qn : &str) -> *const rhdl_object_t
+fn resolve_object(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_t
 {
+    let root: *const rhdl_object_t = unsafe{rhdlo_get(ptr::null(), ptr::null())};
+    assert!(unsafe{CStr::from_ptr((*root).name)}.to_str().unwrap() == "root");
+    resolve_with_object(root, qn, err)
+}
+
+fn resolve_with_object(base: *const rhdl_object_t, qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_t
+{
+    return resolve_with_base(base, qn, unsafe{CStr::from_ptr((*base).name)}.to_str().unwrap(), err)
+}
+
+fn resolve_with_base<S: Selectable>(base : *const S, qn : &str, basename: &str, err: Option<&mut dyn Write>) -> *const S
+{
+    println!("base address is {:p}", &base);
+
     if qn.trim().is_empty() {
-        return unsafe {rhdlo_get(base, ptr::null())}
+        return base
     }
 
     let components = qn.split('.');
 
+    let mut accu: String = basename.to_string();
     let mut curbase = base;
     let mut component_str : String;
 
     for component in components {
         component_str = component.trim().to_string();
 
-        let component_cstr = CString::new(component_str).unwrap();
-        curbase = unsafe {rhdlo_get(curbase, component_cstr.as_ptr())};
+        curbase = unsafe{(*curbase).select(&component_str)};
 
         if curbase.is_null() {
+            match err {
+                Some(stream) => {
+                    write!(stream, "{} contains no member named {}", accu, component_str).unwrap();
+                    perror(stream);        
+                },
+                None => {}
+            }
             return ptr::null()
         }
+
+        accu = accu + &component_str;
     }
 
     return curbase
@@ -712,39 +733,42 @@ mod tests {
 
     #[test]
     fn failed_resolve() {
-        assert!(resolve_object("doesnotexist") == ptr::null());
+        assert!(resolve_object_noerr("doesnotexist") == ptr::null());
         assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
     }
 
     #[test]
     fn root_resolve() {
-        assert!(resolve_object("") != ptr::null());
+        let root = resolve_object_noerr("");
+        assert!(!root.is_null());
+        assert!(unsafe{CStr::from_ptr((*root).name)}.to_str().unwrap() == "root");
     }
 
     #[test]
     fn toplevel_resolve() {
-        assert!(resolve_object("entities") != ptr::null());
+        assert!(resolve_object_noerr("entities") != ptr::null());
     }
 
     #[test]
     fn secondlevel_resolve() {
-        assert!(resolve_object("entities.Inverter") != ptr::null());
+        assert!(resolve_object_noerr("entities.Inverter") != ptr::null());
     }
 
     #[test]
     fn complex_resolve() {
-        assert!(resolve_object("entities.AND.representations.AND_Structure_0.content") != ptr::null());
+        assert!(resolve_object_noerr("entities.AND.representations.AND_Structure_0.content") != ptr::null());
     }
 
     #[test]
     fn spaced_resolve() {
-        assert!(resolve_object("   entities .AND.      representations .   AND_Structure_0. content  ") != ptr::null());
+        assert!(resolve_object_noerr("   entities .AND.      representations .   AND_Structure_0. content  ") != ptr::null());
     }
 
-    fn based_resolve() {
-        let entities = resolve_object("entities");
-        assert!(entities != ptr::null());
-        assert!(resolve_object_with_base(entities, "ClockDiv2") != ptr::null());
+    #[test]
+    fn based_resolve_stderr() {
+        let entities = resolve_object_noerr("entities");
+        assert!(!entities.is_null());
+        assert!(!resolve_with_object_noerr(entities, "ClockDiv2").is_null());
     }
 
 }
