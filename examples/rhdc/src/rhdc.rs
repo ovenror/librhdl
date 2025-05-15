@@ -646,16 +646,57 @@ impl CommandCompleter for ObjectCompleter {
     }
 }
 
-fn resolve_object_noerr(qn : &str) -> *const rhdl_object_t
-{
-    return resolve_object(qn, Option::None)
+trait ResolveErrorHandler {
+    fn record(&mut self, component: &str);
+    fn whine(&mut self, component: &str);
 }
 
-fn resolve_object(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_t
+struct NOPResolveErrorHandler {}
+
+impl NOPResolveErrorHandler {
+    pub fn new() -> NOPResolveErrorHandler
+    {
+        NOPResolveErrorHandler {}
+    }
+}
+
+impl ResolveErrorHandler for NOPResolveErrorHandler {
+    fn record(&mut self, _component: &str) {}
+    fn whine(&mut self, _component: &str) {}
+}
+
+struct PrintingResolveErrorHandler<'a> {
+    stream: &'a mut dyn Write,
+    accu: String
+}
+
+impl<'a> PrintingResolveErrorHandler<'a> {
+    pub fn new(stream: &'a mut dyn Write, basename: &str) -> PrintingResolveErrorHandler<'a>
+    {
+        PrintingResolveErrorHandler {
+            stream: stream,
+            accu: basename.to_string()
+        }
+    }
+}
+
+impl<'a> ResolveErrorHandler for PrintingResolveErrorHandler<'a> {
+    fn record(&mut self, component: &str)
+    {
+        self.accu += ".";
+        self.accu += component;
+    }
+
+    fn whine(&mut self, component: &str )
+    {
+        write!(self.stream, "{} contains no member named {}", self.accu, component).unwrap();
+        perror(self.stream)
+    }
+}
+
+fn resolve_object_noerr(qn : &str) -> *const rhdl_object_t
 {
-    let root: *const rhdl_object_t = unsafe{rhdlo_get(ptr::null(), ptr::null())};
-    assert!(unsafe{CStr::from_ptr((*root).name)}.to_str().unwrap() == "root");
-    resolve_with_object(root, qn, err)
+    resolve_object(qn, Option::None)
 }
 
 fn resolve_object_err(qn : &str, err: &mut dyn Write) -> *const rhdl_object_t
@@ -663,25 +704,40 @@ fn resolve_object_err(qn : &str, err: &mut dyn Write) -> *const rhdl_object_t
     resolve_object(qn, Some(err))
 }
 
-fn resolve_with_object(base: *const rhdl_object_t, qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_t
+fn resolve_object(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_t
 {
-    resolve_with_base(base, qn, unsafe{CStr::from_ptr((*base).name)}.to_str().unwrap(), err)
+    let root: *const rhdl_object_t = unsafe{rhdlo_get(ptr::null(), ptr::null())};
+    return match err {
+        Some(stream) => resolve_with_base(
+            root, qn,
+            PrintingResolveErrorHandler::new(
+                stream, unsafe{CStr::from_ptr((*root).name)}.to_str().unwrap())),
+        None => resolve_with_base(root, qn, NOPResolveErrorHandler::new())
+    }
+}
+
+fn resolve_with_object_noerr(base: *const rhdl_object_t, qn : &str) -> *const rhdl_object_t
+{
+    resolve_with_base(base, qn, NOPResolveErrorHandler::new())
+}
+
+fn resolve_with_base_noerr<S: Selectable>(base : *const S, qn : &str) -> *const S
+{
+    resolve_with_base(base, qn, NOPResolveErrorHandler::new())
 }
 
 fn resolve_with_base_err<S: Selectable>(base : *const S, qn : &str, basename: &str, err: &mut dyn Write) -> *const S
 {
-    resolve_with_base(base, qn, basename, Some(err))
+    resolve_with_base(base, qn, PrintingResolveErrorHandler::new(err, basename))
 }
 
-fn resolve_with_base<S: Selectable>(base : *const S, qn : &str, basename: &str, err: Option<&mut dyn Write>) -> *const S
+fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn : &str, mut err: E) -> *const S
 {
     if qn.trim().is_empty() {
         return base
     }
 
     let components = qn.split('.');
-
-    let mut accu: String = basename.to_string();
     let mut curbase = base;
     let mut component_str : String;
 
@@ -691,17 +747,11 @@ fn resolve_with_base<S: Selectable>(base : *const S, qn : &str, basename: &str, 
         curbase = unsafe{(*curbase).select(&component_str)};
 
         if curbase.is_null() {
-            match err {
-                Some(stream) => {
-                    write!(stream, "{} contains no member named {}", accu, component_str).unwrap();
-                    perror(stream);        
-                },
-                None => {}
-            }
+            err.whine(component);
             return ptr::null()
         }
 
-        accu = accu + &component_str;
+        err.record(component)
     }
 
     return curbase
