@@ -8,8 +8,6 @@
 #include <rhdl/rhdl.h>
 #include "ls.h"
 #include "macros.h"
-#include "strlist.h"
-#include "utils.h"
 
 int libOnly()
 {

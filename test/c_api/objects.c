@@ -8,8 +8,6 @@
 #include <rhdl/rhdl.h>
 #include "objects.h"
 #include "macros.h"
-#include "strlist.h"
-#include "utils.h"
 
 #include <stdio.h>
 

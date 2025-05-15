@@ -1,7 +1,6 @@
 #include "construction.h"
 #include "rhdl/rhdl.h"
 #include "macros.h"
-#include "strlist.h"
 
 int instantiateStructure()
 {

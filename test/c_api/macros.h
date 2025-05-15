@@ -9,6 +9,7 @@
 #define TEST_C_API_CMAKEFILES_MACROS_H_
 
 #include <stdio.h>
+#include "utils.h"
 
 #define FAIL 0
 #define SUCCESS 1
@@ -24,6 +25,10 @@
 
 #define REQUIRE(b) REQUIRE_MSG(b, "REQUIRE failed in %s:%u\n", __FILE__, __LINE__)
 #define REQUIRE_NOERR(e) REQUIRE_NOERR_MSG(e, "REQUIRE_NOERR failed in %s:%u\n", __FILE__, __LINE__)
+
+#define REQUIRE_STREQ(a, b) REQUIRE(check_name(a, b))
+#define CHECK(list, name) REQUIRE(check_list((list), (name)))
+#define END(list) REQUIRE(!*list)
 
 #define REQUIRE_ERR(e, exp) \
 	do { \

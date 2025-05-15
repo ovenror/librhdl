@@ -7,11 +7,16 @@
 
 #include "utils.h"
 #include "macros.h"
-#include "strlist.h"
+#include <string.h>
 
-int check(const char *const **list, const char *name)
+int check_name(const char *str, const char *name)
 {
-	return !strncmp(*(*list)++, name, strlen(name) + 1);
+	return !strncmp(str, name, strlen(name) + 1);
+}
+
+int check_list(const char *const **list, const char *name)
+{
+	return check_name(*(*list)++, name);
 }
 
 int checkLib(const char *const **list)
