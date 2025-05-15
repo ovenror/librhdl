@@ -3,7 +3,6 @@ extern crate lazy_static;
 extern crate const_format;
 
 use crate::librhdl::*;
-use crate::util::split_qn;
 use crate::interpreter;
 use crate::interpreter::Command;
 use crate::interpreter::CommandCompleter;
@@ -12,10 +11,10 @@ use crate::cstrings::CStrings;
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::console::Commands;
+use crate::util::split_qn_once;
 
 use lazy_static::lazy_static;
 use std::str::SplitWhitespace;
-use std::str::Split;
 use std::io::Write;
 use std::process::exit;
 use std::ffi::CString;
@@ -83,31 +82,6 @@ impl Selectable for rhdl_object_t {
         let tname = CString::new(name).unwrap();
         unsafe {rhdlo_get(this, tname.as_ptr())}  
     }
-}
-
-fn get_interface<S: Selectable>(
-    basename: &str, err: &mut dyn Write,
-    base: *const S, components: &mut Split<char>
-    ) -> *const S
-{
-    let mut iface = base;
-    let mut accu = basename.to_string();
-
-    for component in components {
-        let iname = component.trim();
-
-        iface = unsafe {(*iface).select(iname)};
-
-        if iface.is_null() {
-            write!(err, "{} contains no member named {}", accu, iname).unwrap();
-            perror(err);
-            return ptr::null_mut();
-        }
-        
-        accu = format!("{}.{}", accu, iname);
-    }
-
-    iface
 }
 
 fn translate_direction<'a>(dir: rhdl_direction) -> &'a str {
@@ -265,7 +239,7 @@ impl InnerRHDL {
     }
 
     fn get_connectible(&mut self, name: &str) -> *const rhdl_connector_t {
-        let (basename, mut components) = split_qn(name);
+        let (basename, components) = split_qn_once(name);
         let base = self.get_interfacible(basename);
 
         if base.is_null() {
@@ -273,7 +247,7 @@ impl InnerRHDL {
             return ptr::null_mut(); 
         }
 
-        get_interface(basename, &mut self.outputs.err, base, &mut components)
+        resolve_with_base_err(base, components, basename, &mut self.outputs.err)
     }
     
     fn get_interfacible(&self, name: &str) -> *const rhdl_connector_t {
@@ -500,13 +474,13 @@ impl<'a> RHDC<'a> {
         panic!();
     }
 
-    fn ls_internal<I: Selectable>(&mut self, basename: &str, base: *const I, mut components: &mut Split<char>) -> bool {
-        let iface = get_interface(basename, &mut self.outputs.err, base, &mut components);
+    fn ls_internal<I: Selectable>(&mut self, basename: &str, base: *const I, qn: &str) -> bool {
+        let resolved = resolve_with_base_err(base, qn, basename, &mut self.outputs.err);
 
-        if iface.is_null() {
+        if resolved.is_null() {
             return true;
         }
-        println!("{}", unsafe{&*iface});
+        println!("{}", unsafe{&*resolved});
 
         true
     }
@@ -515,26 +489,24 @@ impl<'a> RHDC<'a> {
         let name = args.fold(String::from(""), |acc, arg| {acc + arg});
         
         if name == "" {
-            let ns = unsafe {rhdlo_get(ptr::null(), ptr::null())};
+            let ns = resolve_object_err("", &mut self.outputs.err);
             println!("{}", unsafe{&*ns});
             return true;
         }
 
-        let (basename, mut components) = split_qn(&name);
+        let (basename, components) = split_qn_once(&name);
         
         let tname = CString::new(basename).unwrap();
         
         let entity = unsafe {rhdl_entity(ptr::null(), tname.as_ptr())};
         if !(entity.is_null()) {
             let iface = unsafe{*entity}.iface;
-            return self.ls_internal(basename, iface, &mut components);
+            return self.ls_internal(basename, iface, components);
         }
         
         let object = unsafe {rhdlo_get(ptr::null(), tname.as_ptr())};
         if !(object.is_null()) {
-            //println!("{}", unsafe{*object});
-            //return true;
-            return self.ls_internal(basename, object, &mut components);
+            return self.ls_internal(basename, object, components);
         }
 
         let connector = match self.rhdl.get_commands().get_interfacible(basename) {
@@ -551,7 +523,7 @@ impl<'a> RHDC<'a> {
             return true;
         }
             
-        return self.ls_internal(basename, connector, &mut components); 
+        return self.ls_internal(basename, connector, components);
     }
 
     fn synth(&mut self, args: &mut SplitWhitespace) -> bool {
@@ -686,15 +658,23 @@ fn resolve_object(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_
     resolve_with_object(root, qn, err)
 }
 
+fn resolve_object_err(qn : &str, err: &mut dyn Write) -> *const rhdl_object_t
+{
+    resolve_object(qn, Some(err))
+}
+
 fn resolve_with_object(base: *const rhdl_object_t, qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_t
 {
-    return resolve_with_base(base, qn, unsafe{CStr::from_ptr((*base).name)}.to_str().unwrap(), err)
+    resolve_with_base(base, qn, unsafe{CStr::from_ptr((*base).name)}.to_str().unwrap(), err)
+}
+
+fn resolve_with_base_err<S: Selectable>(base : *const S, qn : &str, basename: &str, err: &mut dyn Write) -> *const S
+{
+    resolve_with_base(base, qn, basename, Some(err))
 }
 
 fn resolve_with_base<S: Selectable>(base : *const S, qn : &str, basename: &str, err: Option<&mut dyn Write>) -> *const S
 {
-    println!("base address is {:p}", &base);
-
     if qn.trim().is_empty() {
         return base
     }
