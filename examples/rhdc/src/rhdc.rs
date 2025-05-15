@@ -57,11 +57,11 @@ fn perror(err: &mut dyn Write) {
     writeln!(err, ": error #{}: {}", ec, msg).unwrap();
 }
 
-trait Interfacible : fmt::Display {
+trait Selectable : fmt::Display {
     fn select(&self, name: &str) -> *const Self; 
 }
 
-impl Interfacible for rhdl_connector_t {
+impl Selectable for rhdl_connector_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_connector_t = self;
         let tname = CString::new(name).unwrap();
@@ -69,7 +69,7 @@ impl Interfacible for rhdl_connector_t {
     }
 }
 
-impl Interfacible for rhdl_iface_t {
+impl Selectable for rhdl_iface_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_iface_t = self;
         let tname = CString::new(name).unwrap();
@@ -77,15 +77,17 @@ impl Interfacible for rhdl_iface_t {
     }
 }
 
-impl Interfacible for rhdl_object_t {
+impl Selectable for rhdl_object_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_object_t = self;
         let tname = CString::new(name).unwrap();
+        let selfptr: *const rhdl_object_t = &*self;
+        println!("trying to get {} from {} at {:p}", name, unsafe{*self.name}, selfptr);
         unsafe {rhdlo_get(this, tname.as_ptr())}  
     }
 }
 
-fn get_interface<S: Interfacible>(
+fn get_interface<S: Selectable>(
     basename: &str, err: &mut dyn Write,
     base: *const S, components: &mut Split<char>
     ) -> *const S
@@ -500,7 +502,7 @@ impl<'a> RHDC<'a> {
         panic!();
     }
 
-    fn ls_internal<I: Interfacible>(&mut self, basename: &str, base: *const I, mut components: &mut Split<char>) -> bool {
+    fn ls_internal<I: Selectable>(&mut self, basename: &str, base: *const I, mut components: &mut Split<char>) -> bool {
         let iface = get_interface(basename, &mut self.outputs.err, base, &mut components);
 
         if iface.is_null() {
