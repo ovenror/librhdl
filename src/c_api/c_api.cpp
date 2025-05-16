@@ -147,7 +147,7 @@ rhdl_namespace_t *rhdl_namespace(rhdl_namespace_t* ns, const char *name)
 		const rhdl::Namespace &result = base.at(name);
 		return result.c_ptr();
 	};
-	return cerror<rhdl_namespace_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
+	return cerror<rhdl_namespace_t *, 2>(f, std::array<int, 2>{E_WRONG_OBJECT_TYPE, E_NO_SUCH_MEMBER});
 }
 
 rhdl_namespace_t *rhdl_create_namespace(rhdl_namespace_t* ns, const char *name)
