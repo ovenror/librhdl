@@ -109,6 +109,7 @@ static inline RTYPE cerror(std::function<RTYPE()> f, std::array<int, NEXPECTED> 
 			}
 		}
 
+		std::cerr << "Got unexpected exception: " << e.what() << std::endl;
 		assert (0);
 	}
 
