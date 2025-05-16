@@ -240,7 +240,7 @@ impl InnerRHDL {
 
     fn get_connectible(&mut self, name: &str) -> *const rhdl_connector_t {
         let (basename, components) = split_qn_once(name);
-        let base = self.get_interfacible(basename);
+        let base = self.get_connector(basename);
 
         if base.is_null() {
             writeln!(self.outputs.err, "{} is neither the definee nor one of its components", basename).unwrap();
@@ -250,7 +250,7 @@ impl InnerRHDL {
         resolve_with_base_err(base, components, basename, &mut self.outputs.err)
     }
     
-    fn get_interfacible(&self, name: &str) -> *const rhdl_connector_t {
+    fn get_connector(&self, name: &str) -> *const rhdl_connector_t {
         if name == self.ename {
             return unsafe {(*self.structure).connector};
         }
@@ -396,9 +396,9 @@ impl OuterRHDL {
         return true;
     }
     
-    fn get_interfacible(&self, name: &str) -> std::result::Result<*const rhdl_connector_t, ()> {
+    fn get_connector(&self, name: &str) -> std::result::Result<*const rhdl_connector_t, ()> {
         if self.rhdd.is_active() {
-            Ok(self.rhdd.get_interfacible(name))
+            Ok(self.rhdd.get_connector(name))
         }
         else {
             Err(())
@@ -509,7 +509,7 @@ impl<'a> RHDC<'a> {
             return self.ls_internal(basename, object, components);
         }
 
-        let connector = match self.rhdl.get_commands().get_interfacible(basename) {
+        let connector = match self.rhdl.get_commands().get_connector(basename) {
             Ok(ptr) => ptr,
             Err(_) => {
                 write!(self.outputs.err, "Unknown entity {}", basename).unwrap();
