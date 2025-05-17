@@ -7,7 +7,7 @@ use rustyline::error::ReadlineError;
 
 
 pub trait CommandCompleter {
-    fn complete(&self, text: &str) -> Result<Vec<String>, ()>;
+    fn complete(&self, text: &str) -> Vec<String>;
 }
 
 type CommandFn<T> = fn(&mut T, &mut SplitWhitespace) -> bool;
@@ -76,28 +76,16 @@ pub trait Commands<'a> : Sized where Self:'a {
         
         match optcmd {
             Some(Command(_n, _action, completer)) => {
-                match completer.complete(args.trim()) {
-                    Ok(vec) => {
-                        let veciter = vec.into_iter();
-                        let result : Vec<Pair> = veciter.
-                                map(|arg| {
-                                    let (_, new) = arg.split_at(args.len());
-                                    new.to_string()}).
-                                map(|rep| Pair {
-                                        display: rep.to_string(),
-                                        replacement: rep.to_string()}).
-                                collect();
-                     /* 
-                        for c in result.into_iter() {
-                            print!("cand: {} -- {}", c.display, c.replacement)
-                        }
-
-                        panic!("");
-                    */
-                        return Ok((pos, result));
-                    },
-                    Err(_) => ()
-                };
+                let veciter = completer.complete(args.trim()).into_iter();
+                let result: Vec<Pair> = veciter.
+                        map(|arg| {
+                            let (_, new) = arg.split_at(args.len());
+                            new.to_string()}).
+                        map(|rep| Pair {
+                                display: rep.to_string(),
+                                replacement: rep.to_string()}).
+                        collect();
+                return Ok((pos, result))
             }
             _ => ()
         }

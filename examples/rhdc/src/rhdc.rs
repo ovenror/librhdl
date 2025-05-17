@@ -524,16 +524,16 @@ static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
 struct NoCompleter {}
 
 impl CommandCompleter for NoCompleter {
-    fn complete(&self, _text: &str) -> Result<Vec<String>, ()>
+    fn complete(&self, _text: &str) -> Vec<String>
     {
-        return Err(());
+        return Vec::<String>::new()
     }
 }
 
 struct ObjectCompleter {}
 
 impl CommandCompleter for ObjectCompleter {
-    fn complete(&self, text: &str) -> Result<Vec<String>, ()>
+    fn complete(&self, text: &str) -> Vec<String>
     {
         let split = text.rsplit_once('.');
 
@@ -545,7 +545,7 @@ impl CommandCompleter for ObjectCompleter {
         let base = resolve_object_noerr(most);
 
         if base.is_null() {
-            return Err(());
+            return Vec::<String>::new()
         }
 
         let cs = CStrings::new(unsafe{*base}.members);
@@ -583,7 +583,7 @@ impl CommandCompleter for ObjectCompleter {
             };
         }
 
-        return Ok(vec); 
+        return vec;
     }
 }
 
