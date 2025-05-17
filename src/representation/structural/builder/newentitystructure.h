@@ -40,6 +40,7 @@ private:
 	std::unique_ptr<PortContainer> top_ = nullptr;
 	BuilderPort *topBuilder_ = nullptr;
 	Namespace &ns_;
+	std::unique_ptr<Entity> entity_;
 };
 
 } /* namespace builder */

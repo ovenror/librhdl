@@ -121,6 +121,10 @@ TEST(ApiMisconstruction, introduceCycle)
 
         foo.finalize();
     });
+
+    test(Errorcode::E_NO_SUCH_MEMBER, []() {
+        Structure foo("ShouldNotContainCycles", Structure::EXISTS);
+    });
 }
 
 TEST(ApiMisconstruction, noSuchEntity)

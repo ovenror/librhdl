@@ -55,21 +55,19 @@ void NewEntityStructure::doFinalize()
 		throw ConstructionException(Errorcode::E_EMPTY_INTERFACE);
 	}
 
-	auto entity = std::make_unique<Entity>(entityName_, std::move(ifaces), builder().stateless());
-
-	if (ns_.contains(entity -> name())) {
+	if (ns_.contains(entityName_)) {
 		abort();
 		throw ConstructionException(Errorcode::E_MEMBER_EXISTS);
 	}
 
-	ns_.add(std::move(entity));
+	entity_ = std::make_unique<Entity>(entityName_, std::move(ifaces), builder().stateless());
 	Structure::doFinalize();
+	ns_.add(std::move(entity_));
 }
 
 const Entity& NewEntityStructure::entity() const
 {
-	assert (ns_.contains(entityName_));
-	return ns_.at(entityName_);
+	return *entity_;
 }
 
 void NewEntityStructure::replaceTopBuilder(std::unique_ptr<ComplexPort> &&e)

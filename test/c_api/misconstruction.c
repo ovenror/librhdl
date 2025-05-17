@@ -109,6 +109,8 @@ int introduceCycle()
 	REQUIRE_NOERR(rhdl_connect(s -> connector, i0in));
 
 	REQUIRE_ERR(rhdl_finish_structure(s), E_NETLIST_CONTAINS_CYCLES);
+	REQUIRE(!rhdl_entity(0, "test8"));
+	REQUIRE_ERR(rhdl_errno(), E_NO_SUCH_MEMBER);
 
 	return SUCCESS;
 }
