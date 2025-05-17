@@ -35,8 +35,8 @@ const ALPHA: &'static str = "A-Za-z";
 const IDENTIFIER: &'static str = formatcp!(r"[{0}][{0}0-9_]*", ALPHA);
 const IDENTIFIERW: &'static str = formatcp!(r"\s*{}\s*", IDENTIFIER);
 const QUALIFIED: &'static str = formatcp!(r"{0}(\.{0})*", IDENTIFIERW);
-const OPERATORS: &'static str = r":|->|<-";
-const COMPLETE: &'static str = formatcp!(r"^{0}({1}){0}$", QUALIFIED, OPERATORS);
+const OPERATOR: &'static str = r":|->|<-";
+const COMPLETE: &'static str = formatcp!(r"^{0}({1}){0}$", QUALIFIED, OPERATOR);
 
 
 lazy_static! {
