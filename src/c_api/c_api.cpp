@@ -172,7 +172,7 @@ rhdl_entity_t *rhdl_entity(rhdl_namespace_t* ns, const char *name)
 		const rhdl::Entity &entity = recover_namespace_for_entity(ns).at(name);
 		return entity.c_ptr();
 	};
-	return cerror<rhdl_entity_t *, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
+	return cerror<rhdl_entity_t *, 2>(f, std::array<int, 2>{E_WRONG_OBJECT_TYPE, E_NO_SUCH_MEMBER});
 }
 
 rhdl_iface_t *rhdl_iface(rhdl_iface_t *iface, const char *name)
