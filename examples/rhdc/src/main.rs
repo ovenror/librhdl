@@ -14,6 +14,8 @@ mod console;
 mod util;
 mod rhdc;
 mod librhdl;
+mod librhdl_access;
+mod resolve;
 
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
