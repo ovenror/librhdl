@@ -35,13 +35,34 @@ const ALPHA: &'static str = "A-Za-z";
 const IDENTIFIER: &'static str = formatcp!(r"[{0}][{0}0-9_]*", ALPHA);
 const IDENTIFIERW: &'static str = formatcp!(r"\s*{}\s*", IDENTIFIER);
 const QUALIFIED: &'static str = formatcp!(r"{0}(\.{0})*", IDENTIFIERW);
-const OPERATOR: &'static str = r":|->|<-";
-const COMPLETE: &'static str = formatcp!(r"^{0}({1}){0}$", QUALIFIED, OPERATOR);
+const OPERATOR: &'static str = r":|->?|<-?";
+const COMPLETE: &'static str = formatcp!(r"^({0})?(({1})(({0}))?)?$", QUALIFIED, OPERATOR);
 
 
 lazy_static! {
-    static ref REGEX_ID: Regex = Regex::new(IDENTIFIER).unwrap();
+    //static ref REGEX_ID: Regex = Regex::new(IDENTIFIER).unwrap();
     static ref REGEX_RHDD: Regex = Regex::new(COMPLETE).unwrap();
+}
+
+struct InnerRHDLParseResult<'a> {
+    parsed: u8,
+    id1: Option<&'a str>,
+    operator: Option<&'a str>,
+    id2: Option<&'a str>
+}
+
+impl<'a> InnerRHDLParseResult<'a> {
+    fn new(
+        parsed: u8, id1: Option<&'a str>, operator: Option<&'a str>,
+        id2: Option<&'a str>) -> InnerRHDLParseResult<'a>
+    {
+        InnerRHDLParseResult {
+            parsed: parsed,
+            id1: id1,
+            operator: operator,
+            id2: id2
+        }
+    }
 }
 
 struct InnerRHDL {
@@ -61,6 +82,30 @@ impl InnerRHDL {
             structure: ptr::null(),
             components: HashMap::new()
         }
+    }
+
+    fn parse(cmd: &str) -> InnerRHDLParseResult {
+        let cap = match REGEX_RHDD.captures(cmd) {
+            Some(v) => v,
+            None => return InnerRHDLParseResult::new(0, None, None, None)
+        };
+
+        let id1 = Some(match cap.get(1) {
+            None => return InnerRHDLParseResult::new(0, None, None, None),
+            Some(c) => c.as_str().trim()
+        });
+
+        let operator = Some(match cap.get(4) {
+            None => return InnerRHDLParseResult::new(1, id1, None, None),
+            Some(c) => c.as_str()
+        });
+
+        let id2 = Some(match cap.get(6) {
+            None => return InnerRHDLParseResult::new(2, id1, operator, None),
+            Some(c) => c.as_str().trim()
+        });
+
+        return InnerRHDLParseResult::new(3, id1, operator, id2)
     }
 
     fn define(&mut self, ename: &str, stateless: bool) -> bool {
@@ -205,24 +250,22 @@ impl interpreter::Interpreter for InnerRHDL {
     fn exec(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, orig: &str) 
         -> bool
     {
-        let cap = match REGEX_RHDD.captures(orig) {
-            Some(v) => v,
-            None => return false
-        };
-        
         self.assert_active();
 
-        //dbg!("{}", &cap);
+        let parsed = Self::parse(orig);
 
-        let mtch = cap.get(2).unwrap();
-        let (before, remainder) = orig.split_at(mtch.start());
-        let id1 = before.trim();
-       
-        match mtch.as_str() {
-            "->" => self.connect(id1, remainder[2..].trim()),
-            "<-" => self.connect(remainder[2..].trim(), id1),
-            ":" => self.instantiate(id1, remainder[1..].trim()),
-            _ => panic!()
+        if parsed.parsed != 3 {
+            return false;
+        }
+
+        let id1 = parsed.id1.unwrap();
+        let id2 = parsed.id2.unwrap();
+
+        match parsed.operator.unwrap() {
+            "->" => self.connect(id1, id2),
+            "<-" => self.connect(id2, id1),
+            ":" => self.instantiate(id1, id2),
+            _ => return false
         }
 
         return true;
@@ -231,6 +274,8 @@ impl interpreter::Interpreter for InnerRHDL {
 
 impl Completer for InnerRHDL {
     type Candidate = Pair;
+
+
 }
 
 struct OuterRHDL {
@@ -437,6 +482,13 @@ impl<'a> RHDC<'a> {
 
 impl<'a> Completer for RHDC<'a> {
     type Candidate = Pair;
+
+    fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
+            -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
+    {
+        let _ = (line, pos, ctx);
+        Ok((0, Vec::with_capacity(0)))
+    }
 }
 
 impl<'a> interpreter::Commands<'a> for RHDC<'a> {
@@ -535,3 +587,79 @@ impl CommandCompleter for ObjectCompleter {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::InnerRHDL;
+
+    #[test]
+    fn parse_empty() {
+        let result = InnerRHDL::parse("");
+        assert!(result.parsed == 0);
+        assert!(result.id1.is_none());
+        assert!(result.operator.is_none());
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_name() {
+        let result = InnerRHDL::parse("lol");
+        assert!(result.parsed == 1);
+        assert!(result.id1.unwrap() == "lol");
+        assert!(result.operator.is_none());
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_name_spaced() {
+        let result = InnerRHDL::parse("       lol  ");
+        assert!(result.parsed == 1);
+        assert!(result.id1.unwrap() == "lol");
+        assert!(result.operator.is_none());
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_qn() {
+        let result = InnerRHDL::parse("lol.bol");
+        assert!(result.parsed == 1);
+        assert!(result.id1.unwrap() == "lol.bol");
+        assert!(result.operator.is_none());
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_qn_spaced() {
+        let result = InnerRHDL::parse("  lol .  bol ");
+        assert!(result.parsed == 1);
+        assert!(result.id1.unwrap() == "lol .  bol");
+        assert!(result.operator.is_none());
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_with_halfop() {
+        let result = InnerRHDL::parse("lol.bol -");
+        assert!(result.parsed == 2);
+        assert!(result.id1.unwrap() == "lol.bol");
+        assert!(result.operator.unwrap() == "-");
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_with_fullop() {
+        let result = InnerRHDL::parse("lol.bol <-");
+        assert!(result.parsed == 2);
+        assert!(result.id1.unwrap() == "lol.bol");
+        assert!(result.operator.unwrap() == "<-");
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_complete() {
+        let result = InnerRHDL::parse("  alf.balf.lalf ->    ralf .schnalf   ");
+        assert!(result.parsed == 3);
+        assert!(result.id1.unwrap() == "alf.balf.lalf");
+        assert!(result.operator.unwrap() == "->");
+        assert!(result.id2.unwrap() == "ralf .schnalf");
+    }
+}
