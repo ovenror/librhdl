@@ -22,6 +22,7 @@ use std::ffi::CString;
 use std::ptr;
 use std::collections::hash_map::HashMap;
 use regex::Regex;
+use regex::Match;
 use const_format::formatcp;
 
 use rustyline::error::ReadlineError;
@@ -31,7 +32,7 @@ use rustyline::completion::{Completer, Pair};
 const ALPHA: &'static str = "A-Za-z";
 const IDENTIFIER: &'static str = formatcp!(r"[{0}][{0}0-9_]*", ALPHA);
 const IDENTIFIERW: &'static str = formatcp!(r"\s*{}\s*", IDENTIFIER);
-const QUALIFIED: &'static str = formatcp!(r"{0}(\.{0})*", IDENTIFIERW);
+const QUALIFIED: &'static str = formatcp!(r"{0}(\.({0})?)*", IDENTIFIERW);
 const OPERATOR: &'static str = r":|->?|<-?";
 const COMPLETE: &'static str = formatcp!(r"^({0})?(({1})(({0}))?)?$", QUALIFIED, OPERATOR);
 
@@ -43,15 +44,15 @@ lazy_static! {
 
 struct InnerRHDLParseResult<'a> {
     parsed: u8,
-    id1: Option<&'a str>,
-    operator: Option<&'a str>,
-    id2: Option<&'a str>
+    id1: Option<Match<'a>>,
+    operator: Option<Match<'a>>,
+    id2: Option<Match<'a>>
 }
 
 impl<'a> InnerRHDLParseResult<'a> {
     fn new(
-        parsed: u8, id1: Option<&'a str>, operator: Option<&'a str>,
-        id2: Option<&'a str>) -> InnerRHDLParseResult<'a>
+        parsed: u8, id1: Option<Match<'a>>, operator: Option<Match<'a>>,
+        id2: Option<Match<'a>>) -> InnerRHDLParseResult<'a>
     {
         InnerRHDLParseResult {
             parsed: parsed,
@@ -87,19 +88,33 @@ impl InnerRHDL {
             None => return InnerRHDLParseResult::new(0, None, None, None)
         };
 
+        /*
+        for c in cap .iter() {
+            println!("CAP: >>>{}<<<",
+                match c {
+                    None => "None",
+                    Some(m) => m.as_str()
+                });
+        }
+        */
+
         let id1 = Some(match cap.get(1) {
             None => return InnerRHDLParseResult::new(0, None, None, None),
-            Some(c) => c.as_str().trim()
+            Some(c) => if c.len() == cmd.len() || cap.get(5).is_some() {c} else {
+                return InnerRHDLParseResult::new(0, None, None, None)
+            }
         });
 
-        let operator = Some(match cap.get(4) {
+        let operator = Some(match cap.get(5) {
             None => return InnerRHDLParseResult::new(1, id1, None, None),
-            Some(c) => c.as_str()
+            Some(c) => c
         });
 
-        let id2 = Some(match cap.get(6) {
+        let id2 = Some(match cap.get(7) {
             None => return InnerRHDLParseResult::new(2, id1, operator, None),
-            Some(c) => c.as_str().trim()
+            Some(c) => if c.start() + c.len() == cmd.len() {c} else {
+                return InnerRHDLParseResult::new(0, None, None, None)
+            }
         });
 
         return InnerRHDLParseResult::new(3, id1, operator, id2)
@@ -255,10 +270,10 @@ impl interpreter::Interpreter for InnerRHDL {
             return false;
         }
 
-        let id1 = parsed.id1.unwrap();
-        let id2 = parsed.id2.unwrap();
+        let id1 = parsed.id1.unwrap().as_str();
+        let id2 = parsed.id2.unwrap().as_str();
 
-        match parsed.operator.unwrap() {
+        match parsed.operator.unwrap().as_str() {
             "->" => self.connect(id1, id2),
             "<-" => self.connect(id2, id1),
             ":" => self.instantiate(id1, id2),
@@ -603,7 +618,16 @@ mod tests {
     fn parse_name() {
         let result = InnerRHDL::parse("lol");
         assert!(result.parsed == 1);
-        assert!(result.id1.unwrap() == "lol");
+        assert!(result.id1.unwrap().as_str() == "lol");
+        assert!(result.operator.is_none());
+        assert!(result.id2.is_none());
+    }
+
+    #[test]
+    fn parse_name_with_period() {
+        let result = InnerRHDL::parse("lol.");
+        assert!(result.parsed == 1);
+        assert!(result.id1.unwrap().as_str() == "lol.");
         assert!(result.operator.is_none());
         assert!(result.id2.is_none());
     }
@@ -612,7 +636,7 @@ mod tests {
     fn parse_name_spaced() {
         let result = InnerRHDL::parse("       lol  ");
         assert!(result.parsed == 1);
-        assert!(result.id1.unwrap() == "lol");
+        assert!(result.id1.unwrap().as_str() == "       lol  ");
         assert!(result.operator.is_none());
         assert!(result.id2.is_none());
     }
@@ -621,7 +645,7 @@ mod tests {
     fn parse_qn() {
         let result = InnerRHDL::parse("lol.bol");
         assert!(result.parsed == 1);
-        assert!(result.id1.unwrap() == "lol.bol");
+        assert!(result.id1.unwrap().as_str() == "lol.bol");
         assert!(result.operator.is_none());
         assert!(result.id2.is_none());
     }
@@ -630,7 +654,7 @@ mod tests {
     fn parse_qn_spaced() {
         let result = InnerRHDL::parse("  lol .  bol ");
         assert!(result.parsed == 1);
-        assert!(result.id1.unwrap() == "lol .  bol");
+        assert!(result.id1.unwrap().as_str() == "  lol .  bol ");
         assert!(result.operator.is_none());
         assert!(result.id2.is_none());
     }
@@ -639,8 +663,8 @@ mod tests {
     fn parse_with_halfop() {
         let result = InnerRHDL::parse("lol.bol -");
         assert!(result.parsed == 2);
-        assert!(result.id1.unwrap() == "lol.bol");
-        assert!(result.operator.unwrap() == "-");
+        assert!(result.id1.unwrap().as_str() == "lol.bol ");
+        assert!(result.operator.unwrap().as_str() == "-");
         assert!(result.id2.is_none());
     }
 
@@ -648,8 +672,8 @@ mod tests {
     fn parse_with_fullop() {
         let result = InnerRHDL::parse("lol.bol <-");
         assert!(result.parsed == 2);
-        assert!(result.id1.unwrap() == "lol.bol");
-        assert!(result.operator.unwrap() == "<-");
+        assert!(result.id1.unwrap().as_str() == "lol.bol ");
+        assert!(result.operator.unwrap().as_str() == "<-");
         assert!(result.id2.is_none());
     }
 
@@ -657,8 +681,8 @@ mod tests {
     fn parse_complete() {
         let result = InnerRHDL::parse("  alf.balf.lalf ->    ralf .schnalf   ");
         assert!(result.parsed == 3);
-        assert!(result.id1.unwrap() == "alf.balf.lalf");
-        assert!(result.operator.unwrap() == "->");
-        assert!(result.id2.unwrap() == "ralf .schnalf");
+        assert!(result.id1.unwrap().as_str() == "  alf.balf.lalf ");
+        assert!(result.operator.unwrap().as_str() == "->");
+        assert!(result.id2.unwrap().as_str() == "    ralf .schnalf   ");
     }
 }

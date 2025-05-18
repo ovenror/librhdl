@@ -47,7 +47,7 @@ pub trait Commands<'a> : Sized where Self:'a {
     fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
-        let line_trimmed = line.trim();
+        let line_trimmed = line.trim_start();
         let (command, args) = match line_trimmed.split_once(' ') {
             Some((c, a)) => (c,a),
             None => {
@@ -76,7 +76,7 @@ pub trait Commands<'a> : Sized where Self:'a {
         
         match optcmd {
             Some(Command(_n, _action, completer)) => {
-                let args_trimmed = args.trim();
+                let args_trimmed = args.trim_start();
                 let veciter = completer.complete(args_trimmed).into_iter();
                 let result: Vec<Pair> = veciter.
                         map(|arg| {
