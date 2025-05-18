@@ -6,7 +6,6 @@ use crate::interpreter;
 use crate::interpreter::Command;
 use crate::interpreter::CommandCompleter;
 use crate::interpreter::Interpreter;
-use crate::cstrings::CStrings;
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::console::Commands;
@@ -546,10 +545,10 @@ impl CommandCompleter for ObjectCompleter {
             return Vec::<String>::new()
         }
 
-        let cs = CStrings::new(unsafe{*base}.members);
+        let cs = unsafe{(*base).members()};
         let mut result = Vec::<String>::new();
 
-        for name in cs.str_iter() {
+        for name in cs {
             if name.starts_with(&last) {
                 let cand = if most.is_empty() {
                     String::from(name)

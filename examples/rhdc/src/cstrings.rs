@@ -1,9 +1,9 @@
 use std::os::raw::c_char;
-use std::{slice,fmt};
+use std::{fmt, slice};
 use std::ffi::CStr;
 use std::iter::Map;
 
-type StrIter<'a> = Map<std::slice::Iter<'a, *const i8>, fn(&*const i8) -> &'a str>;
+pub type StrIter<'a> = Map<std::slice::Iter<'a, *const i8>, fn(&*const i8) -> &'a str>;
 
 pub struct CStrings {
     pub ptr: *const *const c_char
@@ -30,6 +30,11 @@ impl CStrings {
 
         sl = unsafe {slice::from_raw_parts(self.ptr, len)};
 
+        sl.iter().map(Self::ptr_to_str)
+    }
+
+    pub fn empty<'a>() -> StrIter<'a> {
+        let sl = unsafe {slice::from_raw_parts(std::ptr::null(), 0)};
         sl.iter().map(Self::ptr_to_str)
     }
 

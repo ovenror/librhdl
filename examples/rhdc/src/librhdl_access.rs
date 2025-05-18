@@ -1,3 +1,4 @@
+use crate::cstrings::StrIter;
 use crate::librhdl::*;
 use crate::cstrings::CStrings;
 
@@ -21,6 +22,7 @@ pub fn perror(err: &mut dyn Write) {
 
 pub trait Selectable : fmt::Display {
     fn select(&self, name: &str) -> *const Self;
+    fn members<'a>(&'a self) -> StrIter<'a>;
 }
 
 impl Selectable for rhdl_connector_t {
@@ -28,6 +30,9 @@ impl Selectable for rhdl_connector_t {
         let this: *const rhdl_connector_t = self;
         let tname = CString::new(name).unwrap();
         unsafe {rhdl_select(this, tname.as_ptr())}
+    }
+    fn members<'a>(&'a self) -> StrIter<'a> {
+        unsafe{(*self.iface).members()}
     }
 }
 
@@ -37,6 +42,15 @@ impl Selectable for rhdl_iface_t {
         let tname = CString::new(name).unwrap();
         unsafe {rhdl_iface(this, tname.as_ptr())}
     }
+    fn members<'a>(&'a self) -> StrIter<'a> {
+        let u = self.__bindgen_anon_1;
+        match self.type_ {
+            rhdl_iface_type_RHDL_SINGLE => CStrings::empty(),
+            rhdl_iface_type_RHDL_COMPOSITE => CStrings::new(unsafe{u.composite.interfaces}).str_iter(),
+            rhdl_iface_type_RHDL_UNSPECIFIED => CStrings::empty(),
+            _ => panic!("Unknown interface type")
+        }
+    }
 }
 
 impl Selectable for rhdl_object_t {
@@ -44,6 +58,9 @@ impl Selectable for rhdl_object_t {
         let this: *const rhdl_object_t = self;
         let tname = CString::new(name).unwrap();
         unsafe {rhdlo_get(this, tname.as_ptr())}
+    }
+    fn members<'a>(&'a self) -> StrIter<'a> {
+        CStrings::new(self.members).str_iter()
     }
 }
 
