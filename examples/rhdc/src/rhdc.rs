@@ -529,6 +529,30 @@ impl CommandCompleter for NoCompleter {
 
 struct ObjectCompleter {}
 
+impl ObjectCompleter {
+    fn complete_with_base<S: Selectable>(&self, base: *const S, base_qn: &str, last: &str) -> Vec<String>
+    {
+        assert!(!base.is_null());
+        //println!("  last: {}", last);
+        assert!(!last.contains("."));
+
+        let cs = unsafe{(*base).members()};
+        let mut result = Vec::<String>::new();
+
+        for name in cs {
+            if name.starts_with(&last) {
+                let cand = match base_qn {
+                    "" => name.to_string(),
+                    qn => format!("{}.{}", qn, name)
+                };
+                result.push(cand);
+            }
+        }
+
+        return result;
+    }
+}
+
 impl CommandCompleter for ObjectCompleter {
     fn complete(&self, text: &str) -> Vec<String>
     {
@@ -545,22 +569,7 @@ impl CommandCompleter for ObjectCompleter {
             return Vec::<String>::new()
         }
 
-        let cs = unsafe{(*base).members()};
-        let mut result = Vec::<String>::new();
-
-        for name in cs {
-            if name.starts_with(&last) {
-                let cand = if most.is_empty() {
-                    String::from(name)
-                } else {
-                    format!("{}.{}", most, name)
-                };
-
-                result.push(cand);
-            }
-        }
-
-        return result;
+        self.complete_with_base(base, most, last)
     }
 }
 
