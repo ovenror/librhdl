@@ -20,9 +20,7 @@ use std::str::SplitWhitespace;
 use std::io::Write;
 use std::process::exit;
 use std::ffi::CString;
-use std::ffi::CStr;
 use std::ptr;
-use std::slice;
 use std::collections::hash_map::HashMap;
 use regex::Regex;
 use const_format::formatcp;
@@ -549,41 +547,21 @@ impl CommandCompleter for ObjectCompleter {
         }
 
         let cs = CStrings::new(unsafe{*base}.members);
+        let mut result = Vec::<String>::new();
 
-        if cs.ptr.is_null() {
-            panic!("NUUULL");
+        for name in cs.str_iter() {
+            if name.starts_with(&last) {
+                let cand = if most.is_empty() {
+                    String::from(name)
+                } else {
+                    format!("{}.{}", most, name)
+                };
+
+                result.push(cand);
+            }
         }
 
-        let mut sl = unsafe {slice::from_raw_parts(cs.ptr, 1)};
-        let mut len = 0;
-
-        while !sl[len].is_null() {
-            len = len + 1;
-            sl = unsafe {slice::from_raw_parts(cs.ptr, len + 1)};
-        }
-
-        sl = unsafe {slice::from_raw_parts(cs.ptr, len)};
-        
-        let mut vec = Vec::<String>::new();
-
-        for ename in sl {
-            match unsafe {CStr::from_ptr(*ename)}.to_str() {
-                Ok(name) => {
-                    if name.starts_with(&last) {
-                        let cand = if most.is_empty() {
-                            String::from(name)
-                        } else {
-                            format!("{}.{}", most, name)
-                        };
-
-                        vec.push(cand);
-                    }
-                }
-                Err(_) => {panic!("doood")}
-            };
-        }
-
-        return vec;
+        return result;
     }
 }
 

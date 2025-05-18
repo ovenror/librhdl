@@ -1,6 +1,9 @@
 use std::os::raw::c_char;
 use std::{slice,fmt};
 use std::ffi::CStr;
+use std::iter::Map;
+
+type StrIter<'a> = Map<std::slice::Iter<'a, *const i8>, fn(&*const i8) -> &'a str>;
 
 pub struct CStrings {
     pub ptr: *const *const c_char
@@ -8,16 +11,15 @@ pub struct CStrings {
 
 impl CStrings {
     pub fn new(ptr: *const *const c_char) -> CStrings {
-        CStrings {ptr: ptr}
-    }
-}
-
-impl fmt::Display for CStrings {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result  {
-        if self.ptr.is_null() {
-            panic!();
+        if ptr.is_null() {
+            panic!("Cannot create CStrings from null pointer");
         }
 
+        CStrings {ptr: ptr}
+    }
+
+    pub fn str_iter<'a>(&self) -> StrIter<'a>
+    {
         let mut sl = unsafe {slice::from_raw_parts(self.ptr, 1)};
         let mut len = 0;
 
@@ -28,14 +30,25 @@ impl fmt::Display for CStrings {
 
         sl = unsafe {slice::from_raw_parts(self.ptr, len)};
 
-        for ename in sl {
-            let result = match unsafe {CStr::from_ptr(*ename)}.to_str() {
-                Ok(name) => writeln!(f, "  {}", name),
-                Err(_) => return Err(fmt::Error)
-            };
+        sl.iter().map(Self::ptr_to_str)
+    }
 
-            if let Err(fmt::Error) = result {
-                return Err(fmt::Error);
+    fn ptr_to_str<'a>(ptr: &*const i8) -> &'a str {
+        if ptr.is_null() {
+            panic!("Tried to dereference nullptr");
+        }
+
+        unsafe{CStr::from_ptr(*ptr).to_str().unwrap()}
+    }
+}
+
+impl fmt::Display for CStrings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result  {
+        for mname in self.str_iter() {
+            let result = writeln!(f, "  {}", mname);
+
+            if result.is_err() {
+                return result;
             }
         }
 
