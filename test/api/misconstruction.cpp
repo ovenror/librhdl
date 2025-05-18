@@ -54,6 +54,7 @@ TEST(ApiMisconstruction, incompatibleDirections)
 
 TEST(ApiMisconstruction, wrongOp)
 {
+	Structure s("WromgOp");
     Component inv0("Inverter");
     Component inv1("Inverter");
 
@@ -65,8 +66,18 @@ TEST(ApiMisconstruction, wrongOp)
         inv0["out"] << inv1["in"];
     });
 
+    test(Errorcode::E_DIRECTION_OPPOSES_OPERATOR, [&](){
+        s << inv1["in"];
+    });
+
+    test(Errorcode::E_DIRECTION_OPPOSES_OPERATOR, [&](){
+        s >> inv1["out"];
+    });
+
     inv0["in"] = inv1["out"];
     inv0["out"] = inv1["in"];
+
+    s.abort();
 }
 
 TEST(ApiMisconstruction, ambiguousConnection)

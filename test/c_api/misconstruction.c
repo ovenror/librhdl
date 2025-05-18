@@ -55,18 +55,26 @@ int incompatibleDirections()
 	REQUIRE(rhdl_connect(i1out, i0out) == E_INCOMPATIBLE_DIRECTIONS);
 	REQUIRE(rhdl_connect(i0in, i1in) == E_INCOMPATIBLE_DIRECTIONS);
 	REQUIRE(rhdl_connect(i1in, i0in) == E_INCOMPATIBLE_DIRECTIONS);
-	REQUIRE(rhdl_errno(s) == E_INCOMPATIBLE_DIRECTIONS);
+
+	REQUIRE_ERR(rhdl_errno(), E_INCOMPATIBLE_DIRECTIONS);
 
 	return SUCCESS;
 }
 
 int wrongOp()
 {
+	rhdl_structure_t *s;
 	rhdl_connector_t *i0in, *i0out, *i1in, *i1out;
 
-	REQUIRE(inv2("test2", 0, &i0in, &i0out, &i1in, &i1out) == SUCCESS);
+	REQUIRE(inv2("test2", &s, &i0in, &i0out, &i1in, &i1out) == SUCCESS);
 
-	return ACCEPT(rhdl_connect(i0in, i0out) == E_DIRECTION_OPPOSES_OPERATOR);
+	REQUIRE_ERR(rhdl_connect(i0in, i0out), E_DIRECTION_OPPOSES_OPERATOR);
+	REQUIRE_ERR(rhdl_connect(s -> connector, i0out), E_DIRECTION_OPPOSES_OPERATOR);
+	REQUIRE_ERR(rhdl_connect(i0in, s -> connector), E_DIRECTION_OPPOSES_OPERATOR);
+
+	REQUIRE_ERR(rhdl_errno(), E_DIRECTION_OPPOSES_OPERATOR);
+
+	return SUCCESS;
 }
 
 int ambiguousConnection()

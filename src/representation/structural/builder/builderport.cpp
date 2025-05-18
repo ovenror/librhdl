@@ -13,6 +13,7 @@
 #include "element.h"
 #include "newentitystructure.h"
 #include "cbuildersimple.h"
+#include "construction/interfacecompatexception.h"
 
 #include "interface/interface.h"
 #include "interface/cresult/ctrue.h"
@@ -135,6 +136,10 @@ std::array<Port*, 2> BuilderPort::findCompatibles(
 
 	if (found[0])
 		return found;
+
+	if (name() == Interface::anon_name) {
+		throw InterfaceCompatException(compat(peer, p));
+	}
 
 	auto &anonEnclosed = encloseNew();
 
