@@ -530,20 +530,33 @@ impl CommandCompleter for NoCompleter {
 struct ObjectCompleter {}
 
 impl ObjectCompleter {
-    fn complete_with_base<S: Selectable>(&self, base: *const S, base_qn: &str, last: &str) -> Vec<String>
+    fn complete_with_base<S: Selectable>(&self, base: *const S, base_qn: &str, component_qn: &str) -> Vec<String>
     {
         assert!(!base.is_null());
-        //println!("  last: {}", last);
-        assert!(!last.contains("."));
 
-        let cs = unsafe{(*base).members()};
+        let split = component_qn.rsplit_once('.');
+
+        let (most, last) = match split {
+            None => ("", component_qn),
+            Some((m, l)) => (m,l)
+        };
+
+        assert!(base_qn != "" || most == "");
+
+        let members = unsafe{(*base).members()};
         let mut result = Vec::<String>::new();
 
-        for name in cs {
-            if name.starts_with(&last) {
+        for name in members {
+            let last_trimmed = last.trim_start();
+            if name.starts_with(&last_trimmed) {
+                let name_lws =
+                    String::from_utf8(vec![b' '; last.len() - last_trimmed.len()]).unwrap() + name;
                 let cand = match base_qn {
-                    "" => name.to_string(),
-                    qn => format!("{}.{}", qn, name)
+                    "" => name_lws.to_string(),
+                    bqn => match most {
+                        "" => format!("{}.{}", bqn, name_lws),
+                        mqn => format!("{}.{}.{}", bqn, mqn, name_lws)
+                    }
                 };
                 result.push(cand);
             }

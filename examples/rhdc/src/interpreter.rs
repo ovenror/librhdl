@@ -76,10 +76,11 @@ pub trait Commands<'a> : Sized where Self:'a {
         
         match optcmd {
             Some(Command(_n, _action, completer)) => {
-                let veciter = completer.complete(args.trim()).into_iter();
+                let args_trimmed = args.trim();
+                let veciter = completer.complete(args_trimmed).into_iter();
                 let result: Vec<Pair> = veciter.
                         map(|arg| {
-                            let (_, new) = arg.split_at(args.len());
+                            let (_, new) = arg.split_at(args_trimmed.len());
                             new.to_string()}).
                         map(|rep| Pair {
                                 display: rep.to_string(),
