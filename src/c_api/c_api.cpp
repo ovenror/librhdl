@@ -268,8 +268,9 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 		auto &cpp_to = recover<Port>(to);
 
 		if (cpp_from.element().isTheStructure() &&
-				cpp_to.element().isTheStructure())
-			return static_cast<int>(rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH);
+				cpp_to.element().isTheStructure()) {
+			throw ConstructionException(rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH);
+		}
 
 		Port::connect(cpp_from, cpp_to);
 		return 0;
@@ -286,7 +287,7 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 		case rhdl::Errorcode::E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES:
 		case rhdl::Errorcode::E_STATEFUL_COMPONENT_IN_STATELESS_ENTITY:
 		case rhdl::Errorcode::E_ILLEGAL_RECONNECTION:
-		//case rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH:
+		case rhdl::Errorcode::E_ILLEGAL_PASSTHROUGH:
 			except(e);
 			return static_cast<int>(e.errorcode());
 		default:
