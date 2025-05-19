@@ -167,11 +167,12 @@ inline const typename DICT::ValueType &CObject::add(DICT &d, typename DICT::Valu
 
 	updateContainerFor(member);
 	typename DICT::ValueType *result ;
+	auto &mname = member -> name();
 
 	try {
 		result = &d.add(std::move(member));
 	} catch (std::out_of_range &e) {
-		throw ConstructionException(Errorcode::E_MEMBER_EXISTS, member -> name());
+		throw ConstructionException(Errorcode::E_MEMBER_EXISTS, mname);
 	}
 
 	if (dict_)
