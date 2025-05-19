@@ -37,6 +37,8 @@ rhdl_object_t *rhdlo_read_objref(const rhdl_object_t *);
 enum rhdl_direction rhdlo_read_direction(const rhdl_object_t *);
 enum rhdl_reptype rhdlo_read_reptype(const rhdl_object_t *);
 
+rhdl_entity_t *rhdlo_entity(rhdl_object_t *);
+
 const rhdl_object_t *rhdl_getn(const rhdl_object_t *, unsigned int member);
 const char *rhdl_lso(const rhdl_object_t *, enum rhdl_type typefilter);
 void rhdl_print(const rhdl_object_t *, unsigned int depth);

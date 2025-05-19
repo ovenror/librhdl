@@ -366,3 +366,14 @@ rhdl_direction rhdlo_read_direction(const rhdl_object_t *o) {
 enum rhdl_reptype rhdlo_read_reptype(const rhdl_object_t *o) {
 	return rhdl_read_value<rhdl_reptype>(o);
 }
+
+rhdl_entity_t* rhdlo_entity(rhdl_object_t *o)
+{
+	auto f = [=](){
+		const rhdl::Entity &e = recover<rhdl::CObject>(o);
+		return e.c_ptr();
+	};
+
+	return cerror<rhdl_entity_t *, 1>(f, std::array<int, 1>{E_WRONG_OBJECT_TYPE});
+}
+

@@ -12,14 +12,21 @@ add_executable(objectstest
 	objects.c objects.cpp utils.c
 )
 
+add_executable(object_classic_test
+	object_classic.c object_classic.cpp utils.c
+)
+
 target_include_directories(c_apitests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(lstest PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(objectstest PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(object_classic_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 target_link_libraries(c_apitests rhdl ${GTEST_BOTH_LIBRARIES} pthread) 
 target_link_libraries(lstest rhdl ${GTEST_BOTH_LIBRARIES} pthread)
 target_link_libraries(objectstest rhdl ${GTEST_BOTH_LIBRARIES} pthread)
+target_link_libraries(object_classic_test rhdl ${GTEST_BOTH_LIBRARIES} pthread)
 
 gtest_discover_tests(c_apitests)
 gtest_discover_tests(lstest)
 gtest_discover_tests(objectstest)
+gtest_discover_tests(object_classic_test)
