@@ -24,9 +24,8 @@ namespace builder {
 
 BuilderPort::BuilderPort(
 		NewEntityStructure &structure, BuilderPort *enclosing,
-		size_t index, std::string name)
-	: Port(name), structure_(structure), enclosing_(enclosing),
-	  orderIndex_(index)
+		std::string name)
+	: Port(name), structure_(structure), enclosing_(enclosing)
 {
 	Port::setDictionary(dictionary::DereferencingDictionaryAdapter<decltype(enclosed_), const CObject>(enclosed_));
 	PortContainer::setDictionary(dictionary::DereferencingDictionaryAdapter<decltype(enclosed_)>(enclosed_));
@@ -51,8 +50,7 @@ const Interface& BuilderPort::iface() const
 
 BuilderPort& BuilderPort::encloseNew(const std::string &ifaceName)
 {
-	auto newPort =std::make_unique<BuilderPort>(
-		structure_, this, enclosed_.size(), ifaceName);
+	auto newPort =std::make_unique<BuilderPort>(structure_, this, ifaceName);
 	auto &result = *newPort;
 
 	add(enclosed_, std::move(newPort));
@@ -144,7 +142,7 @@ std::array<Port*, 2> BuilderPort::findCompatibles(
 		throw InterfaceCompatException(compat(peer, p));
 	}
 
-	BuilderPort anon = BuilderPort(structure_, this, enclosed_.size(), Interface::anon_name);
+	BuilderPort anon = BuilderPort(structure_, this, Interface::anon_name);
 
 	if (anon.compatible(peer, p))
 		found = {&peer, &anon};

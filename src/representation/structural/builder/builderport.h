@@ -28,7 +28,7 @@ class BuilderPort : public Port, public PortContainer {
 public:
 	BuilderPort(
 			NewEntityStructure &structure, BuilderPort *enclosing,
-			size_t index, std::string name);
+			std::string name);
 	virtual ~BuilderPort();
 
 	virtual Port &operator[](const std::string &ifaceName);
@@ -85,7 +85,6 @@ private:
 
 	NewEntityStructure &structure_;
 	BuilderPort *enclosing_;
-	const size_t orderIndex_;
 	dictionary::FCFSDictionary<std::unique_ptr<Port>> enclosed_;
 	CompositeDirection direction_;
 	rhdl_iface_struct c_iface_;
