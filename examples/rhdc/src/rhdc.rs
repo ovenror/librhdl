@@ -212,6 +212,16 @@ impl InnerRHDL {
     }
 
     fn instantiate(&mut self, name: &str, ename: &str) {
+        if name == self.ename {
+            writeln!(self.outputs.err, "Cannot instantiate a component with the same name as the currently defined structure ({})", name).unwrap();
+            return
+        }
+
+        if self.components.contains_key(name) {
+            writeln!(self.outputs.err, "Component \"{}\" already exists", name).unwrap();
+            return
+        }
+
         let cename = CString::new(ename).unwrap();
 
         let entity = unsafe {rhdl_entity(ptr::null(), cename.as_ptr())};
