@@ -137,21 +137,22 @@ std::array<Port*, 2> BuilderPort::findCompatibles(
 	if (found[0])
 		return found;
 
+	/* FIXME: Avoid this by deriving an AnonymousBuilderPort
+	 * from BuilderPort that cannot create new AnonymousBuilderPorts
+	 */
 	if (name() == Interface::anon_name) {
 		throw InterfaceCompatException(compat(peer, p));
 	}
 
-	auto &anonEnclosed = encloseNew();
+	BuilderPort anon = BuilderPort(structure_, this, enclosed_.size(), Interface::anon_name);
 
-	if (anonEnclosed.compatible(peer, p))
-		found = {&peer, &anonEnclosed};
+	if (anon.compatible(peer, p))
+		found = {&peer, &anon};
 	else
-		found = peer.findCompatibles(anonEnclosed, p.reversed());
+		found = peer.findCompatibles(anon, p.reversed());
 
 	assert (!found[0] == !found[1]);
-	assert (!found[1] || found[1] == &anonEnclosed);
-
-	removeLastEnclosed(anonEnclosed);
+	assert (!found[1] || found[1] == &anon);
 
 	if (!found[0])
 		return {nullptr, nullptr};

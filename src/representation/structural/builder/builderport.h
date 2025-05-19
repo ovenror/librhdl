@@ -79,7 +79,7 @@ private:
 	Port &port() override {return *this;}
 	virtual const rhdl_iface_struct *c_ptr_iface() const override {return &c_iface_;}
 
-	BuilderPort &encloseNew(const std::string &ifaceName = Interface::anon_name);
+	BuilderPort &encloseNew(const std::string &ifaceName);
 	void removeLastEnclosed(const BuilderPort &);
 	void encloseDirection(CompositeDirection newDir);
 
