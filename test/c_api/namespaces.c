@@ -38,6 +38,15 @@ int createNamespace()
 	return SUCCESS;
 }
 
+int reCreateNamespace()
+{
+	rhdl_namespace_t *new = rhdl_create_namespace(0, "entities");
+	REQUIRE(!new);
+	REQUIRE_ERR(rhdl_errno(), E_MEMBER_EXISTS);
+
+	return SUCCESS;
+}
+
 int createEntityInNamespace()
 {
 	rhdl_namespace_t *entities = rhdl_namespace(0, "entities");

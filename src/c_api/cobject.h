@@ -166,19 +166,16 @@ inline const typename DICT::ValueType &CObject::add(DICT &d, typename DICT::Valu
 		assert(d.is_same_as(*dict_));
 
 	updateContainerFor(member);
-	typename DICT::ValueType *result ;
-	auto &mname = member -> name();
 
-	try {
-		result = &d.add(std::move(member));
-	} catch (std::out_of_range &e) {
-		throw ConstructionException(Errorcode::E_MEMBER_EXISTS, mname);
-	}
+	if (d.contains(member -> name()))
+		throw ConstructionException(Errorcode::E_MEMBER_EXISTS, member -> name());
+
+	auto &result = d.add(std::move(member));
 
 	if (dict_)
 		setMembers();
 
-	return *result;
+	return result;
 }
 
 template<class DICT>
@@ -188,18 +185,16 @@ inline const typename DICT::ValueType &CObject::replace(DICT &d, typename DICT::
 		assert(d.is_same_as(*dict_));
 
 	updateContainerFor(member);
-	typename DICT::ValueType *result ;
 
-	try {
-		result = &d.replace(std::move(member));
-	} catch (std::out_of_range &e) {
+	if (!d.contains(member -> name()))
 		throw ConstructionException(Errorcode::E_NO_SUCH_MEMBER, member -> name());
-	}
+
+	auto &result = d.replace(std::move(member));
 
 	if (dict_)
 		setMembers();
 
-	return *result;
+	return result;
 }
 
 namespace structural::builder { class Port; }
