@@ -34,7 +34,8 @@ impl CStrings {
     }
 
     pub fn empty<'a>() -> StrIter<'a> {
-        let sl = unsafe {slice::from_raw_parts(std::ptr::null(), 0)};
+        let nul: *const i8 = std::ptr::null();
+        let sl = unsafe {slice::from_raw_parts(&nul, 0)};
         sl.iter().map(Self::ptr_to_str)
     }
 
