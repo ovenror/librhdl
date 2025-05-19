@@ -43,13 +43,13 @@ int createEntityInNamespace()
 	rhdl_namespace_t *entities = rhdl_namespace(0, "entities");
 	REQUIRE(entities);
 
-	rhdl_namespace_t *ns = rhdl_create_namespace(entities, "new_namespace");
+	rhdl_namespace_t *ns = rhdl_create_namespace(entities, "new_namespace2");
 	REQUIRE(ns);
 
-	ns = rhdl_namespace(entities, "new_namespace");
+	ns = rhdl_namespace(entities, "new_namespace2");
 	REQUIRE(ns);
 
-	rhdl_structure_t *s = rhdl_begin_structure(entities, "Test", F_CREATE_STATELESS);
+	rhdl_structure_t *s = rhdl_begin_structure(ns, "Test", F_CREATE_STATELESS);
 	REQUIRE(s);
 
 	rhdl_connector_t *sc = s -> connector;
