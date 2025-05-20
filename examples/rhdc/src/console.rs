@@ -13,8 +13,6 @@ use rustyline_derive::{Helper, Completer, Highlighter, Hinter, Validator};
 use rustyline::error::ReadlineError;
 use rustyline::history::DefaultHistory;
 use rustyline::Editor;
-use rustyline::highlight::MatchingBracketHighlighter;
-use rustyline::validate::MatchingBracketValidator;
 use rustyline::hint::HistoryHinter;
 use rustyline::completion::{Completer, Pair};
 use rustyline::Context;
@@ -116,10 +114,10 @@ struct MyHelper<I: Interpreter> {
 //struct MyHelper<'a, C: Completer> {
     #[rustyline(Completer)]
     completer: I,
-    #[rustyline(Highlighter)]
-    highlighter: MatchingBracketHighlighter,
-    #[rustyline(Validator)]
-    validator: MatchingBracketValidator,
+    //#[rustyline(Highlighter)]
+    //highlighter: MatchingBracketHighlighter,
+    //#[rustyline(Validator)]
+    //validator: MatchingBracketValidator,
     #[rustyline(Hinter)]
     hinter: HistoryHinter,
     //colored_prompt: String,
@@ -139,16 +137,17 @@ impl Console {
         let mut rl = Editor::<MyHelper::<I>, DefaultHistory>::new().unwrap();
         let h = MyHelper::<I> {
             completer: interpreter,
-            highlighter: MatchingBracketHighlighter::new(),
+            //highlighter: MatchingBracketHighlighter::new(),
             hinter: HistoryHinter::new(),
             //colored_prompt: "".to_owned(),
-            validator: MatchingBracketValidator::new()
+            //validator: MatchingBracketValidator::new()
         };
         rl.set_helper(Some(h));
-        
+
+        /*
         if rl.load_history("history.txt").is_err() {
             println!("No previous history.");
-        }
+        }*/
 
         loop {
             if self.interactive {
