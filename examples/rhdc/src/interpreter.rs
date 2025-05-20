@@ -58,15 +58,15 @@ pub trait Commands<'a> : Sized where Self:'a {
                     let cmditer2 = Self::COMMANDS.into_iter();
                     let cmds : Vec<Pair> = cmditer2.
                             map(|Command(n,_a, _c)| n).
-                            filter(|cmd| cmd.starts_with(&line)).
-                            map(|cmd| {let (_, last) = cmd.split_at(pos); last}).
+                            filter(|cmd| cmd.starts_with(&line_trimmed)).
+                            map(|cmd| {let (_, last) = cmd.split_at(pos + line_trimmed.len() - line.len()); last}).
                             //map(|cmd| cmd.to_string()).
                             map(|cmd| Pair{
                                 display: cmd.to_string(),
                                 replacement: cmd.to_string()})
                             .collect();
  
-                    return Ok((0, cmds.to_vec()))
+                    return Ok((pos, cmds.to_vec()))
                 }
             }
         };
@@ -77,8 +77,12 @@ pub trait Commands<'a> : Sized where Self:'a {
         match optcmd {
             Some(Command(_n, _action, completer)) => {
                 let args_trimmed = args.trim_start();
-                let veciter = completer.complete(args_trimmed).into_iter();
-                let result: Vec<Pair> = veciter.
+                let argcand = completer.complete(args_trimmed);
+                /*
+                println!("args trimmed len is: {}", args_trimmed.len());
+                println!("first candidate is: {}", argcand.first().unwrap());
+                */
+                let result: Vec<Pair> = argcand.into_iter().
                         map(|arg| {
                             let (_, new) = arg.split_at(args_trimmed.len());
                             new.to_string()}).
@@ -111,6 +115,17 @@ impl<'a, C: Commands<'a>> SimpleInterpreter<'a, C> {
     pub fn get_commands(&self) -> &C {
         &self.commands
     }
+
+    fn crop_candidate(c: &Pair, by: usize) -> Pair {
+        let (_, d) = c.display.split_at(by);
+        let (_, r) = c.replacement.split_at(by);
+
+        Pair{display: d.to_string(), replacement: r.to_string()}
+    }
+
+    fn crop_candidates(v: &Vec<Pair>, by: usize) -> Vec<Pair> {
+        v.into_iter().map(|c| Self::crop_candidate(c, by)).collect()
+    }
 }
 
 impl<'a, C : Commands<'a>> Interpreter for SimpleInterpreter<'a, C> {
@@ -131,17 +146,34 @@ impl<'a, C : Commands<'a>> Completer for SimpleInterpreter<'a, C> {
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
     {
-        let mut vec = match self.commands.complete(line, pos, ctx) {
-            Ok((_, v)) => v,
-            _ => Vec::<Pair>::new()
+        let (mut p1, mut vec1) = match self.commands.complete(line, pos, ctx) {
+            Ok(result) => result,
+            _ => (0, Vec::<Pair>::new())
         };
         
-        let mut vec2 = match self.commands.complete_fb(line, pos, ctx) {
-            Ok((_, v)) => v,
-            _ => Vec::<Pair>::new()
+        let (p2, mut vec2) = match self.commands.complete_fb(line, pos, ctx) {
+            Ok(result) => result,
+            _ => (0, Vec::<Pair>::new())
         };
 
-        vec.append(&mut vec2);
-        return Ok((pos, vec))
+        if vec1.is_empty() {
+            return Ok((p2, vec2))
+        }
+
+        if vec2.is_empty() {
+            return Ok((p1, vec1))
+        }
+
+        if p1 < p2 {
+            vec1 = Self::crop_candidates(&vec1, p2 - p1);
+            p1 = p2;
+        }
+
+        if p2 < p1 {
+            vec2 = Self::crop_candidates(&vec2, p1 - p2);
+        }
+
+        vec1.append(&mut vec2);
+        return Ok((p1, vec1))
     }
 }
