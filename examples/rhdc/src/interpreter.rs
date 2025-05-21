@@ -44,6 +44,8 @@ pub trait Commands<'a> : Sized where Self:'a {
     fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &str)
         -> bool {false}
 
+    fn complete_object_contextually(&self, line: &str) -> Vec<String>;
+
     fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
@@ -75,13 +77,15 @@ pub trait Commands<'a> : Sized where Self:'a {
         let optcmd = cmditer.find(|Command(n,_a, _c)| n == &command); 
         
         match optcmd {
-            Some(Command(_n, _action, completer)) => {
+            Some(Command(name, _action, completer)) => {
                 let args_trimmed = args.trim_start();
-                let argcand = completer.complete(args_trimmed);
-                /*
-                println!("args trimmed len is: {}", args_trimmed.len());
-                println!("first candidate is: {}", argcand.first().unwrap());
-                */
+                let mut argcand = completer.complete(args_trimmed);
+
+                /* FIXME: Condition should be a member of Command */
+                if name == &"ls" {
+                    argcand.append(&mut self.complete_object_contextually(args_trimmed));
+                }
+
                 let result: Vec<Pair> = argcand.into_iter().
                         map(|arg| {
                             let (_, new) = arg.split_at(args_trimmed.len());
@@ -95,7 +99,7 @@ pub trait Commands<'a> : Sized where Self:'a {
             _ => ()
         }
 
-        return Ok((pos, Vec::<Pair>::new()))
+        return Ok((pos, Vec::new()))
     }
     
     fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)

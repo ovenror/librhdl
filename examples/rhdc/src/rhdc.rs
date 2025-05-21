@@ -84,14 +84,6 @@ impl InnerRHDL {
         }
     }
 
-    pub fn connectors(&self)
-        -> std::iter::Chain<std::iter::Once<(&String, &*const rhdl_connector)>,
-                std::collections::hash_map::Iter<'_, String, *const rhdl_connector>>
-    {
-        self.assert_active();
-        std::iter::once((&self.ename, unsafe {&(*self.structure).connector})).chain(self.components.iter())
-    }
-
     fn parse(cmd: &str) -> InnerRHDLParseResult {
         let cap = match REGEX_RHDD.captures(cmd) {
             Some(v) => v,
@@ -330,7 +322,7 @@ impl InnerRHDL {
         return cand;
     }
 
-    fn complete_any_object(&self, qn: &str, entity: bool) -> Vec<String> {
+    fn complete_2nd_operator(&self, qn: &str, entity: bool) -> Vec<String> {
         if entity {
             /*
             let (most, last) = match qn.rsplit_once(".") {
@@ -350,6 +342,15 @@ impl InnerRHDL {
             }
         } else {
             self.complete_own_object(qn)
+        }
+    }
+
+    fn complete_object_contextually(&self, line: &str) -> Vec<String>
+    {
+        if self.is_active() {
+            self.complete_own_object(line)
+        } else {
+            Vec::new()
         }
     }
 }
@@ -429,7 +430,7 @@ impl Completer for InnerRHDL {
                 }
 
                 if fullop {
-                    (pos, self.complete_any_object("", op == ":").
+                    (pos, self.complete_2nd_operator("", op == ":").
                             into_iter().
                             map(|o| " ".to_string() + &o ).
                             collect::<Vec<_>>())
@@ -447,7 +448,7 @@ impl Completer for InnerRHDL {
                 let id2str_trimmed = id2str.trim_start();
                 (
                     id2.start() + id2str.len() - id2str_trimmed.len(),
-                    self.complete_any_object(id2str_trimmed, parsed.operator.unwrap().as_str() == ":"))
+                    self.complete_2nd_operator(id2str_trimmed, parsed.operator.unwrap().as_str() == ":"))
             }
             _ => panic!("wat")
         };
@@ -540,6 +541,11 @@ impl<'a> interpreter::Commands<'a> for OuterRHDL {
         self.rhdd.exec(command, args, orig)
     }
     
+    fn complete_object_contextually(&self, line: &str) -> Vec<String>
+    {
+        return self.rhdd.complete_object_contextually(line);
+    }
+
     fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
@@ -560,10 +566,6 @@ impl<'a> Commands<'a> for OuterRHDL {
     }
 }
     
-impl<'a> Completer for OuterRHDL {
-    type Candidate = Pair;
-}
-
 pub struct RHDC<'a> {
     outputs: Outputs,
     rhdl: SimpleConsoleInterpreter<'a, OuterRHDL>
@@ -686,6 +688,11 @@ impl<'a> interpreter::Commands<'a> for RHDC<'a> {
         self.rhdl.exec(command, args, orig)
     }
     
+    fn complete_object_contextually(&self, line: &str) -> Vec<String>
+    {
+        return self.rhdl.get_commands().complete_object_contextually(line);
+    }
+
     fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
@@ -701,8 +708,6 @@ impl<'a> Commands<'a> for RHDC<'a> {
 
 static NO_COMPLETER : NoCompleter = NoCompleter{};
 static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
-static mut DEF_COMPLETER : DefCompleter =
-    DefCompleter{object_completer: &OBJECT_COMPLETER, rhdd: None};
 
 struct NoCompleter {}
 
@@ -814,36 +819,6 @@ impl CommandCompleter for ObjectCompleter {
         }
 
         self.complete_last_component(base, most, last)
-    }
-}
-
-struct DefCompleter<'a>
-{
-    object_completer: &'a ObjectCompleter,
-    rhdd: Option<&'a InnerRHDL>
-}
-
-impl<'a> DefCompleter<'a> {
-    pub fn activate_rhdd(&mut self, rhdd: &'a InnerRHDL) {
-        self.rhdd = Some(rhdd)
-    }
-
-    pub fn deactivate_rhdd(&mut self) {
-        self.rhdd = None;
-    }
-}
-
-impl<'a> CommandCompleter for DefCompleter<'a> {
-    fn complete(&self, qn: &str) -> Vec<String>
-    {
-        let mut candidates = self.object_completer.complete(qn);
-
-        match self.rhdd {
-            None => (),
-            Some(rhdd) => candidates.append(&mut rhdd.complete_own_object(qn))
-        }
-
-        candidates
     }
 }
 
