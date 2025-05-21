@@ -157,7 +157,6 @@ impl InnerRHDL {
             writeln!(self.outputs.out, "defining structure for entity {}", self.ename).unwrap();
             self.active = true;
             self.ename = ename.to_string();
-            DEF_COMPLETER.activate_rhdd(&self);
             true
         }
     }
@@ -173,8 +172,6 @@ impl InnerRHDL {
         self.active = false;
         self.components = HashMap::new();
         let ec;
-
-        DEF_COMPLETER.deactivate_rhdd();
 
         unsafe {
             ec = rhdl_finish_structure(self.structure);
@@ -679,7 +676,7 @@ impl<'a> interpreter::Commands<'a> for RHDC<'a> {
     const COMMANDS: &'a [Command<Self>] = &[
         Command::<Self>("quit", Self::quit, &NO_COMPLETER),
         Command::<Self>("panic",Self::panic, &NO_COMPLETER),
-        Command::<Self>("ls",Self::ls, &DEF_COMPLETER),
+        Command::<Self>("ls",Self::ls, &OBJECT_COMPLETER),
         Command::<Self>("synth",Self::synth, &OBJECT_COMPLETER)
         ];
     
@@ -821,7 +818,7 @@ impl CommandCompleter for ObjectCompleter {
 }
 
 struct DefCompleter<'a>
-{CONTEXTUAL
+{
     object_completer: &'a ObjectCompleter,
     rhdd: Option<&'a InnerRHDL>
 }
