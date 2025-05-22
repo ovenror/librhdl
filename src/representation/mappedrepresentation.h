@@ -57,7 +57,8 @@ inline void rhdl::MappedRepresentation<RepType, ELEMENT_REF>::remap(
 		InterfaceMap &mapping, std::map<ElementRef, ElementRef> changes)
 {
 	for (auto &kv : mapping) {
-		kv.second = changes.at(kv.second);
+		if (changes.contains(kv.second))
+			kv.second = changes.at(kv.second);
 	}
 }
 
