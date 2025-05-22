@@ -4,6 +4,11 @@ extern "C" {
 #include "namespaces.h"
 }
 
+TEST(CApi_namespacesTest,noSuchNamespace)
+{
+	EXPECT_TRUE(::noSuchNamespace());
+}
+
 TEST(CApi_namespacesTest,createToplevelNamespace)
 {
 	EXPECT_TRUE(::createToplevelNamespace());

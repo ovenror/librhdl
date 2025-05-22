@@ -9,6 +9,14 @@
 #include "rhdl/rhdl.h"
 #include "macros.h"
 
+int noSuchNamespace()
+{
+	REQUIRE(!rhdl_namespace(0, "olololol"));
+	REQUIRE_ERR(rhdl_errno(), E_NO_SUCH_MEMBER);
+
+	return SUCCESS;
+}
+
 int createToplevelNamespace()
 {
 	rhdl_namespace_t *new = rhdl_create_namespace(0, "new_namespace");
