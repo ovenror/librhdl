@@ -137,6 +137,26 @@ fn resolve_object(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_
     }
 }
 
+pub fn resolve_namespace_noerr(qn : &str) -> *const rhdl_namespace_t
+{
+    resolve_namespace(qn, Option::None)
+}
+
+pub fn resolve_namespace_err(qn : &str, err: &mut dyn Write) -> *const rhdl_namespace_t
+{
+    resolve_namespace(qn, Some(err))
+}
+
+fn resolve_namespace(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_namespace_t
+{
+    let root: *const rhdl_namespace_t = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
+    return match err {
+        Some(stream) => resolve_with_base(
+            root, qn, &mut PrintingResolveErrorHandler::new(stream, "root")),
+        None => resolve_with_base(root, qn, &mut NOPResolveErrorHandler::new())
+    }
+}
+
 pub fn resolve_with_object_noerr(base: *const rhdl_object_t, qn : &str) -> *const rhdl_object_t
 {
     resolve_with_base(base, qn, &mut NOPResolveErrorHandler::new())
@@ -154,6 +174,8 @@ pub fn resolve_with_base_err<S: Selectable>(base : *const S, qn : &str, basename
 
 fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn : &str, err: &mut E) -> *const S
 {
+    assert!(!base.is_null());
+
     if qn.trim().is_empty() {
         return base
     }
@@ -294,14 +316,12 @@ mod tests {
 
     #[test]
     fn resolve_namespace() {
-        let root = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
-        assert!(!resolve_with_base_noerr(root, "entities").is_null());
+        assert!(!resolve_namespace_noerr("entities").is_null());
     }
 
     #[test]
     fn resolve_nonexisting_namespace() {
-        let root = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
-        assert!(resolve_with_base_noerr(root, "olololol").is_null());
+        assert!(resolve_namespace_noerr("entities.olololol").is_null());
         assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
     }
 
