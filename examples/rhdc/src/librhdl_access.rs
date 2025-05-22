@@ -53,6 +53,17 @@ impl Selectable for rhdl_iface_t {
     }
 }
 
+impl Selectable for rhdl_namespace_t {
+    fn select(&self, name: &str) -> *const Self {
+        let this: *const rhdl_namespace_t = self;
+        let tname = CString::new(name).unwrap();
+        unsafe {rhdl_namespace(this, tname.as_ptr())}
+    }
+    fn members<'a>(&'a self) -> StrIter<'a> {
+        CStrings::new(self.members).str_iter()
+    }
+}
+
 impl Selectable for rhdl_object_t {
     fn select(&self, name: &str) -> *const Self {
         let this: *const rhdl_object_t = self;

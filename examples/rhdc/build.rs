@@ -15,10 +15,9 @@ fn main() {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     let items = [
-        "rhdl_entity", "rhdl_iface",
-        "rhdl_begin_structure",
+        "rhdl_entity", "rhdl_iface", "rhdl_namespace",
+        "rhdl_begin_structure", "rhdl_finish_structure",
         "rhdl_component", "rhdl_select", "rhdl_connect",
-        "rhdl_finish_structure",
         "rhdl_print_commands",
         "rhdlo_get",
         "rhdlo_read_cstring", "rhdlo_has_value",

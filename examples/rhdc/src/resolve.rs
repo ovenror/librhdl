@@ -291,4 +291,18 @@ mod tests {
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
             "Inverter.lol.bla", &mut stdout());
     }
+
+    #[test]
+    fn resolve_namespace() {
+        let root = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
+        assert!(!resolve_with_base_noerr(root, "entities").is_null());
+    }
+
+    #[test]
+    fn resolve_nonexisting_namespace() {
+        let root = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
+        assert!(resolve_with_base_noerr(root, "olololol").is_null());
+        assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
+    }
+
 }
