@@ -123,13 +123,24 @@ impl InnerRHDL {
         return InnerRHDLParseResult::new(3, id1, operator, id2)
     }
 
-    fn define(&mut self, ename: &str, stateless: bool) -> bool {
+    fn define(&mut self, qn: &str, stateless: bool) -> bool {
         if self.active {
             panic!("already defining {}", self.ename);
         }
 
-        if ename == "" {
+        if qn == "" {
             panic!("structure name cannot be empty");
+        }
+
+        let (ns_qn, ename) = match qn.rsplit_once(".") {
+            Some((ns, s)) => (ns, s),
+            None => ("" , qn)
+        };
+
+        let nspace = resolve_namespace_err(ns_qn, &mut self.outputs.err);
+
+        if nspace.is_null() && ns_qn != "" {
+            return true;
         }
 
         let cename = CString::new(ename).unwrap();
@@ -137,7 +148,7 @@ impl InnerRHDL {
         let mode = if stateless {Flags_F_CREATE_STATELESS} else {Flags_F_CREATE_STATEFUL};
 
         unsafe {    
-            self.structure = rhdl_begin_structure(ptr::null(), cename.as_ptr(), mode);
+            self.structure = rhdl_begin_structure(nspace, cename.as_ptr(), mode);
         }
 
         if self.structure.is_null() {
