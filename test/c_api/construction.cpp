@@ -34,3 +34,8 @@ TEST(CApi_constructionTest,exposeComposite)
 	EXPECT_TRUE(::exposeComposite());
 }
 
+TEST(CApi_constructionTest,unnamedComplexExposure)
+{
+	EXPECT_TRUE(::unnamedComplexExposure());
+}
+

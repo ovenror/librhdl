@@ -39,3 +39,10 @@ TEST(ApiConstructionTest,UnnamedExposure) {
 	test >> inv;
 }
 
+TEST(ApiConstructionTest,UnnamedComplexExposure) {
+	Structure test("Test5");
+	Component nand("NAND");
+
+	test >> nand;
+	nand >> test;
+}

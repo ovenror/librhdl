@@ -174,3 +174,34 @@ int exposeComposite()
 
 	return SUCCESS;
 }
+
+int unnamedComplexExposure()
+{
+	rhdl_structure_t *s = rhdl_begin_structure(0, "Test6", F_CREATE_STATELESS);
+	REQUIRE(s);
+
+	rhdl_connector_t *sc = s -> connector;
+	REQUIRE(sc);
+
+	rhdl_entity_t *enand = rhdl_entity(0, "NAND");
+	REQUIRE(enand);
+
+	rhdl_connector_t *nand = rhdl_component(s, enand);
+	REQUIRE(nand);
+
+	REQUIRE_NOERR(rhdl_connect(sc, nand));
+
+	rhdl_connector_t *s_in = rhdl_select(sc, "in");
+	REQUIRE(s_in);
+
+	rhdl_iface_t *i_in = s_in -> iface;
+	REQUIRE(i_in);
+	REQUIRE(i_in -> type == RHDL_COMPOSITE);
+
+	const char *const *list = i_in -> composite.interfaces;
+	CHECK(&list, "bit0");
+	CHECK(&list, "bit1");
+	END(list);
+
+	return SUCCESS;
+}

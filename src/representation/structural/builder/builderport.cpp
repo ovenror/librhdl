@@ -132,7 +132,10 @@ std::array<Port*, 2> BuilderPort::findCompatibles(
 
 	assert (!found[0] == !found[1]);
 
-	if (found[0])
+	/* FIXME: Maybe avoid this check (not only here), by deriving a
+	 * TopBuilderPort from BuilderPort.
+	 */
+	if (found[0] && found[0] -> enclosing())
 		return found;
 
 	/* FIXME: Avoid this by deriving an AnonymousBuilderPort
