@@ -42,6 +42,16 @@ using rhdl::structural::builder::Structure;
 using rhdl::structural::builder::Port;
 using rhdl::structural::builder::makeStructure;
 
+const char *const rhdl_type_names[RHDL_NUM_TYPES] = {
+		"ENTITY", "REPTYPE", "REPRESENTATION",
+		"TRANSFORMATION", "INTERFACE",
+		"RDHL_STRUCTURE", "OPTION", "NAMESPACE",
+		"DIRECTION",
+		"CSTRING", "I64", "U64",
+		"OBJREF",
+		"STRUCTURE_HANDLE", "CONNECTOR"
+};
+
 static ConstructionException lastException(rhdl::Errorcode::E_NO_ERROR);
 
 static void except(const ConstructionException &e)
