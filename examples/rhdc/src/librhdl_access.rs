@@ -23,6 +23,45 @@ pub fn perror(err: &mut dyn Write) {
 pub trait Selectable : fmt::Display {
     fn select(&self, name: &str) -> *const Self;
     fn members<'a>(&'a self) -> StrIter<'a>;
+
+/*
+    fn fmt_member(&self, member: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+        let mptr = self.select(member)
+    }
+*/
+
+    fn default_fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for m in self.members() {
+            match write!(f, "  {} : ", m) {
+                Ok(()) => (),
+                r => return r
+            }
+
+            let mp = self.select(m);
+
+            if mp.is_null() {
+                panic!("WTF, why does >>>{}<<< not exist?!: {}", m, unsafe{CStr::from_ptr(rhdl_errstr())}.to_str().unwrap() );
+            }
+
+            match unsafe{(*mp).fmt_short(f)} {
+                Ok(()) => (),
+                r => return r
+            }
+
+            match writeln!(f, "") {
+                Ok(()) => (),
+                r => return r
+            }
+        }
+
+        Ok(())
+    }
+
+    fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+        self.fmt(f)
+    }
 }
 
 impl Selectable for rhdl_connector_t {
@@ -31,8 +70,14 @@ impl Selectable for rhdl_connector_t {
         let tname = CString::new(name).unwrap();
         unsafe {rhdl_select(this, tname.as_ptr())}
     }
+
     fn members<'a>(&'a self) -> StrIter<'a> {
         unsafe{(*self.iface).members()}
+    }
+
+    fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+        unsafe{(*self.iface).fmt_short(f)}
     }
 }
 
@@ -42,6 +87,7 @@ impl Selectable for rhdl_iface_t {
         let tname = CString::new(name).unwrap();
         unsafe {rhdl_iface(this, tname.as_ptr())}
     }
+
     fn members<'a>(&'a self) -> StrIter<'a> {
         let u = self.__bindgen_anon_1;
         match self.type_ {
@@ -51,6 +97,33 @@ impl Selectable for rhdl_iface_t {
             _ => panic!("Unknown interface type")
         }
     }
+
+    fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let u = self.__bindgen_anon_1;
+        match self.type_ {
+            rhdl_iface_type_RHDL_SINGLE => unsafe{u.single}.fmt_short(f),
+            rhdl_iface_type_RHDL_COMPOSITE => unsafe{u.composite}.fmt_short(f),
+            rhdl_iface_type_RHDL_UNSPECIFIED => write!(f, "(unspecified)"),
+            _ => write!(f, "(error)")
+        }
+    }
+
+}
+
+impl rhdl_icomposite {
+    fn members<'a>(&'a self) -> StrIter<'a> {
+        CStrings::new(self.interfaces).str_iter()
+    }
+
+    fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Composite ({} members)", self.members().len())
+    }
+}
+
+impl rhdl_isingle {
+    fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Single ({})", self)
+    }
 }
 
 impl Selectable for rhdl_namespace_t {
@@ -59,9 +132,19 @@ impl Selectable for rhdl_namespace_t {
         let tname = CString::new(name).unwrap();
         unsafe {rhdl_namespace(this, tname.as_ptr())}
     }
+
     fn members<'a>(&'a self) -> StrIter<'a> {
         CStrings::new(self.members).str_iter()
     }
+
+    fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+        write!(f, "Namespace")
+    }
+}
+
+fn translate_otype<'a>(t: rhdl_type) -> &'a str {
+    unsafe{CStr::from_ptr(rhdl_type_names[t as usize])}.to_str().unwrap()
 }
 
 impl Selectable for rhdl_object_t {
@@ -70,8 +153,23 @@ impl Selectable for rhdl_object_t {
         let tname = CString::new(name).unwrap();
         unsafe {rhdlo_get(this, tname.as_ptr())}
     }
+
     fn members<'a>(&'a self) -> StrIter<'a> {
         CStrings::new(self.members).str_iter()
+    }
+
+    fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+        match write!(f, "{}", translate_otype(self.type_)) {
+            Ok(()) => (),
+            r => return r
+        }
+
+        if unsafe{rhdlo_has_value(self)} != 0 {
+            write!(f, " = {}", unsafe{CStr::from_ptr(rhdlo_read_cstring(self))}.to_str().unwrap())
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -91,25 +189,15 @@ impl fmt::Display for rhdl_isingle {
     }
 }
 
-impl fmt::Display for rhdl_icomposite {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", CStrings::new(self.interfaces))
-    }
-}
-
 impl fmt::Display for rhdl_namespace_t {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Err(fmt::Error) = writeln!(f, "Entities:") {
-            return Err(fmt::Error);
-        }
-
-        write!(f, "{}", CStrings::new(self.members))
+        self.default_fmt(f)
     }
 }
 
 impl fmt::Display for rhdl_entity_t {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &unsafe {*self.iface})
+        unsafe{*self.iface}.fmt(f)
     }
 }
 
@@ -117,8 +205,8 @@ impl fmt::Display for rhdl_iface_t {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let u = self.__bindgen_anon_1;
         match self.type_ {
-            rhdl_iface_type_RHDL_SINGLE => write!(f, "{}", unsafe {u.single}),
-            rhdl_iface_type_RHDL_COMPOSITE => write!(f, "{}", unsafe {u.composite}),
+            rhdl_iface_type_RHDL_SINGLE => unsafe{u.single}.fmt(f),
+            rhdl_iface_type_RHDL_COMPOSITE => self.default_fmt(f),
             rhdl_iface_type_RHDL_UNSPECIFIED => write!(f, "(unspecified)"),
             _ => write!(f, "(error)")
         }
@@ -127,11 +215,7 @@ impl fmt::Display for rhdl_iface_t {
 
 impl fmt::Display for rhdl_connector_t {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.iface.is_null() {
-            panic!()
-        }
-
-        write!(f, "{}", &unsafe {*self.iface})
+        self.default_fmt(f)
     }
 }
 
@@ -141,7 +225,7 @@ impl fmt::Display for rhdl_object_t {
             write!(f, "{}", unsafe{CStr::from_ptr(rhdlo_read_cstring(self))}.to_str().unwrap())
         }
         else {
-            write!(f, "{}", CStrings::new(self.members))
+            self.default_fmt(f)
         }
     }
 }

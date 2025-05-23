@@ -22,6 +22,7 @@ fn main() {
         "rhdlo_get",
         "rhdlo_read_cstring", "rhdlo_has_value",
         "rhdl_errno", "rhdl_errstr",
+        "rhdl_type_names",
 
 //        "Flags::F_CREATE_STATELESS", "Flags::F_CREATE_STATEFUL",
         "Flags",
