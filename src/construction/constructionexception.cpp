@@ -23,11 +23,19 @@ const char *ConstructionException::whatcode() const noexcept
 	switch (code_) {
 	case Errorcode::E_NO_ERROR: return "(no error)";
 
+	case Errorcode::E_UNKNOWN_STRUCT: return "Unknown struct.";
+	case Errorcode::E_WRONG_STRUCT_TYPE: return "Wrong struct type.";
 	case Errorcode::E_WRONG_OBJECT_TYPE: return "Wrong object type.";
 	case Errorcode::E_WRONG_VALUE_TYPE: return "Wrong value type.";
 
-	case Errorcode::E_CANNOT_GET_ANONYMOUS_INTERFACE: return "Cannot look a possibly existing anonymous interface up by name";
-	case Errorcode::E_NO_SUCH_INTERFACE: return "Interface does not exist.";
+	case Errorcode::E_INVALID_HANDLE: return "Invalid handle.";
+
+	case Errorcode::E_INCOMPATIBLE_DIRECTIONS: return "Incompatible directions.";
+	case Errorcode::E_DIRECTION_OPPOSES_OPERATOR: return "Direction opposes operator.";
+	case Errorcode::E_DIFFERENT_TYPES: return "Different types.";
+	case Errorcode::E_DIFFERENT_NUMBER_OF_COMPONENTS: return "Different number of components.";
+
+	case Errorcode::E_INTERFACES_NOT_COMPATIBLE: return "Interfaces are not compatible.";
 
 	case Errorcode::E_COMPATIBLE_INTERFACES_NOT_FOUND: return "No compatible interfaces found.";
 	case Errorcode::E_FOUND_MULTIPLE_COMPATIBLE_INTERFACES: return "Multiple combinations of compatible interfaces found. Connection is ambiguous.";
@@ -39,14 +47,15 @@ const char *ConstructionException::whatcode() const noexcept
 	case Errorcode::E_NETLIST_CONTAINS_CYCLES: return "The netlist (that was generated from the representation) you tried to add contains cycles, although the entity should be stateless";
 	case Errorcode::E_EMPTY_INTERFACE: return "The entities top interface or another composite interface is empty.";
 
+	case Errorcode::E_CANNOT_GET_ANONYMOUS_INTERFACE: return "Cannot look a possibly existing anonymous interface up by name";
+	case Errorcode::E_NO_SUCH_INTERFACE: return "Interface does not exist.";
 	case Errorcode::E_NO_SUCH_MEMBER: return "No member with that name exists.";
-	case Errorcode::E_MEMBER_EXISTS: return "An member with that name already exists.";
+	case Errorcode::E_MEMBER_EXISTS: return "A member with that name already exists.";
 
 	case Errorcode::E_WRONG_NAME: return "Fast Simulator interface does not match entity interface: wrong name.";
 	case Errorcode::E_WRONG_TYPE: return "Fast Simulator interface does not match entity interface: wrong type.";
 
-	default:
-		assert(0);
+	default: assert(0);
 	}
 
 	return "";
