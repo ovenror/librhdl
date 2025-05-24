@@ -23,9 +23,6 @@ public:
 	Namespace &cast() override {return *this;};
 
 private:
-	virtual operator Namespace &() override {return *this;}
-	virtual operator const Namespace &() const override {return *this;}
-
 	void setTypedMembers(const char *const *) override;
 };
 

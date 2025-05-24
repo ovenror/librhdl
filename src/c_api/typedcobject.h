@@ -67,6 +67,9 @@ public:
 
 	virtual ~TypedCObject() {}
 
+	operator CRTP &() {return cast();}
+	operator const CRTP &() const {return cast();}
+
 	static CRTP &recover(const C_Struct *c) {
 		TypedCObject &tco = rhdl::recover<TypedCObject>(c);
 		return tco.cast();
@@ -77,6 +80,7 @@ public:
 protected:
 	C_Struct *c_ptr() {return rhdl::c_ptr(*this);}
 	virtual CRTP &cast() = 0;
+	const CRTP &cast() const {return const_cast<TypedCObject &>(*this).cast();}
 
 private:
 	virtual void setTypedMembers(const char *const *) {}
