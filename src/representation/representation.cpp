@@ -19,9 +19,9 @@ namespace rhdl {
 
 Representation::Representation(
 		const Entity &entity, TypeID id, const Representation *parent,
-		const Timing *timing)
+		const Timing *timing, const std::string &name)
 	:
-	  Super(canonicalName(entity, id, parent)),
+	  Super(name == "" ? canonicalName(entity, id, parent) : name),
 	  typeID_(id), entity_(entity), timing_(timing),
 	  sibling_index_(parent ? parent -> num_descendants_ : 0),
 	  reptype_("type", *this, c_.content().type),

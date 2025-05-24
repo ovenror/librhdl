@@ -15,7 +15,7 @@ namespace rhdl::txt {
 
 class Commands : public RepresentationBase<Commands> {
 public:
-	Commands(const blocks::Blocks &blocks);
+	Commands(const blocks::Blocks &blocks, const std::string &name = "");
 
 	virtual ~Commands();
 

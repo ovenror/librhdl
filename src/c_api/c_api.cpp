@@ -378,6 +378,25 @@ enum rhdl_reptype rhdlo_read_reptype(const rhdl_object_t *o) {
 	return rhdl_read_value<rhdl_reptype>(o);
 }
 
+rhdl_object_t *rhdlo_transform(
+		rhdl_object_t *representation, rhdl_object_t *transformation,
+		const char *result_name)
+{
+	auto f = [=]() {
+		const rhdl::Representation &rep = recover<rhdl::CObject>(representation);
+		const rhdl::Transformation &trans = recover<rhdl::CObject>(transformation);
+
+		std::string name = result_name ? result_name : "";
+
+		const rhdl::CObject &result =
+				rep.entity().addRepresentation(trans.execute(rep, name));
+
+		return c_ptr(result);
+	};
+
+	return cerror<rhdl_object_t *, 1>(f, std::array<int, 1>{E_WRONG_OBJECT_TYPE});
+}
+
 rhdl_entity_t* rhdlo_entity(rhdl_object_t *o)
 {
 	auto f = [=](){

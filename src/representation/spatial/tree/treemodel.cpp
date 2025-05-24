@@ -155,10 +155,10 @@ static std::vector<const ISingle *> ifilter(const Netlist::InterfaceMap &nli, In
 
 TreeModel::TreeModel(
 		const Entity &entity, const Representation *parent,
-		const Timing *timing,
+		const Timing *timing, const std::string &name,
 		const std::vector<const ISingle *> &lower,
 		const std::vector<const ISingle *> &upper) :
-	RepresentationBase(entity, parent, timing),
+	RepresentationBase(entity, parent, timing, name),
 	Container(0), bottom_anchors_(*this, false, true), bottom_(*this, true),
 	lower_cross_(*this, false), top_anchors_(*this, false, true)
 {
@@ -166,27 +166,28 @@ TreeModel::TreeModel(
 	bottom_.addCrosser(bottom_anchors_);
 }
 
-TreeModel::TreeModel(const Entity &e)
-	: TreeModel(e, nullptr, &e.addTiming())
+TreeModel::TreeModel(const Entity &e, const std::string &name)
+	: TreeModel(e, nullptr, &e.addTiming(), name)
 {}
 
 TreeModel::TreeModel(
 		const Entity &entity, const Representation *parent,
-		const Timing *timing)
-	: TreeModel(entity, parent, timing, {}, {})
+		const Timing *timing, const std::string &name)
+	: TreeModel(entity, parent, timing, name, {}, {})
 {}
 
 TreeModel::~TreeModel() {}
 
-std::unique_ptr<TreeModel> TreeModel::make(const netlist::Netlist &source)
+std::unique_ptr<TreeModel> TreeModel::make(
+		const netlist::Netlist &source, const std::string &name)
 {
-	return make(source,
+	return make(source, name,
 			ifilter(source.ifaceMap(), SingleDirection::IN),
 			ifilter(source.ifaceMap(), SingleDirection::OUT));
 }
 
 std::unique_ptr<TreeModel> TreeModel::make(
-		const netlist::Netlist &netlist,
+		const netlist::Netlist &netlist, const std::string &name,
 		const std::vector<const ISingle*> &lower,
 		const std::vector<const ISingle*> &upper)
 {
@@ -197,7 +198,7 @@ std::unique_ptr<TreeModel> TreeModel::make(
 
 	while (true) {
 		result = std::make_unique<TreeModel>(
-				entity, &source.get(), source.get().timing(), lower, upper);
+				entity, &source.get(), source.get().timing(), name, lower, upper);
 		auto &model = *result;
 
 #if 0

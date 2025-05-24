@@ -14,10 +14,11 @@ namespace rhdl::netlist {
 Netlist::Netlist(
 		const Entity &entity,
 		Graph graph, InterfaceMap ifaceMap,
-		const Representation *parent, const Timing *timing)
+		const Representation *parent, const Timing *timing,
+		const std::string &name)
 	:
 		MappedRepresentation<Netlist, VertexRef>(
-				entity, parent, timing, std::move(ifaceMap)),
+				entity, parent, timing, std::move(ifaceMap), name),
 		graph_(std::move(graph))
 {
 	checkIfaceMap();
@@ -30,14 +31,16 @@ Netlist::Netlist(
 
 Netlist::Netlist(
 		const Entity &entity, const Representation *parent,
-		const Timing *timing)
+		const Timing *timing, const std::string &name)
 	:
-	  MappedRepresentation<Netlist, VertexRef>(entity, parent, timing)
+	  MappedRepresentation<Netlist, VertexRef>(entity, parent, timing, name)
 {}
 
-Netlist::Netlist(const Netlist &source, std::forward_list<VertexRef> toSplit)
+Netlist::Netlist(
+		const Netlist &source, std::forward_list<VertexRef> toSplit,
+		const std::string &name)
 	: MappedRepresentation(
-				source.entity(), &source, source.timing(), source.ifaceMap()),
+				source.entity(), &source, source.timing(), source.ifaceMap(), name),
 			graph_(source.graph())
 {
 	assert (!toSplit.empty());

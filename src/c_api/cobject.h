@@ -20,7 +20,9 @@
 namespace rhdl {
 
 class Entity;
+class Representation;
 class Namespace;
+class Transformation;
 
 class CObject
 {
@@ -88,11 +90,27 @@ public:
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
 	}
 
+	virtual operator Representation &() {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual operator const Representation &() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
 	virtual operator Namespace &() {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
 	}
 
 	virtual operator const Namespace &() const {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual operator Transformation &() {
+		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
+	}
+
+	virtual operator const Transformation &() const {
 		throw ConstructionException(Errorcode::E_WRONG_OBJECT_TYPE);
 	}
 

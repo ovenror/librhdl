@@ -24,7 +24,8 @@ public:
 	StructureToNetlist &cast() override {return *this;}
 
 	virtual std::unique_ptr<netlist::Netlist> execute(
-			const structural::Structure &source) const override;
+			const structural::Structure &source,
+			const std::string &result_name = "") const override;
 
 protected:
 	netlist::Netlist::InterfaceMap to_netlist_internal(

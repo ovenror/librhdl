@@ -17,7 +17,8 @@ using structural::Port;
 StructureToNetlist::StructureToNetlist() : TypedTransformation("Structure2Netlist") {}
 StructureToNetlist::~StructureToNetlist() {}
 
-std::unique_ptr<Netlist> StructureToNetlist::execute(const Structure &source) const
+std::unique_ptr<Netlist> StructureToNetlist::execute(
+		const Structure &source, const std::string &result_name) const
 {
 	Netlist::Graph graph;
 
@@ -26,7 +27,7 @@ std::unique_ptr<Netlist> StructureToNetlist::execute(const Structure &source) co
 
 	return std::make_unique<Netlist>(
 			source.entity(), std::move(graph), std::move(ifaceMap),
-			&source, source.timing());
+			&source, source.timing(), result_name);
 }
 
 Netlist::InterfaceMap StructureToNetlist::to_netlist_internal(

@@ -22,7 +22,9 @@ public:
 
 	BGTree &cast() override {return *this;}
 
-	virtual std::unique_ptr<blocks::Blocks> execute(const spatial::TreeModel &source) const override;
+	virtual std::unique_ptr<blocks::Blocks> execute(
+			const spatial::TreeModel &source,
+			const std::string &result_name = "") const override;
 
 	static boost::multi_array<char, 2> project(blocks::Cuboid blocks);
 

@@ -21,8 +21,8 @@ using blocks::Blocks;
 
 namespace txt {
 
-Commands::Commands(const Blocks &blocks)
-	: RepresentationBase(blocks.entity(), &blocks, blocks.timing()),
+Commands::Commands(const Blocks &blocks, const std::string &name)
+	: RepresentationBase(blocks.entity(), &blocks, blocks.timing(), name),
 	  blocks_(blocks), translation_{0,0,0}
 {}
 

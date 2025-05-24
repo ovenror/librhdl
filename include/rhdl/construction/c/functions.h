@@ -36,6 +36,9 @@ uint64_t rhdlo_read_u64(const rhdl_object_t *);
 rhdl_object_t *rhdlo_read_objref(const rhdl_object_t *);
 enum rhdl_direction rhdlo_read_direction(const rhdl_object_t *);
 enum rhdl_reptype rhdlo_read_reptype(const rhdl_object_t *);
+rhdl_object_t *rhdlo_transform(
+		rhdl_object_t *representation, rhdl_object_t *transformation,
+		const char *result_name);
 
 rhdl_entity_t *rhdlo_entity(rhdl_object_t *);
 

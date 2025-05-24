@@ -56,7 +56,7 @@ public:
 protected:
 	Representation(
 			const Entity &entity, TypeID id, const Representation *parent,
-			const Timing *timing = nullptr);
+			const Timing *timing = nullptr, const std::string &name = "");
 
 	Representation(const Entity &entity);
 

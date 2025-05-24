@@ -25,15 +25,19 @@ public:
 
 	virtual bool typeCheck() const override {return typeID() == ID;}
 
-	virtual std::unique_ptr<Representation> execute(const Representation &source) const override {
+	virtual std::unique_ptr<Representation> execute(
+			const Representation &source,
+			const std::string &result_name = "") const override
+	{
 		auto *typed_source = dynamic_cast<const FromRep *>(&source);
 		assert (typed_source);
 		assert (typed_source -> typeID() == FromRep::ID);
-		return execute(*typed_source);
+		return execute(*typed_source, std::move(result_name));
 	}
 
 protected:
-	virtual std::unique_ptr<ToRep> execute(const FromRep &source) const = 0;
+	virtual std::unique_ptr<ToRep> execute(
+			const FromRep &source, const std::string &result_name = "") const = 0;
 };
 
 }

@@ -49,11 +49,11 @@ class TreeModel : public RepresentationBase<TreeModel>, public Container
 {
 	static_assert(ID == RHDL_TREE);
 public:
-	TreeModel(const Entity &);
+	TreeModel(const Entity &, const std::string &name = "");
 
 	TreeModel(
 			const Entity &entity, const Representation *parent,
-			const Timing *timing,
+			const Timing *timing, const std::string &name,
 			const std::vector<const ISingle *> &lower,
 			const std::vector<const ISingle *> &upper);
 
@@ -61,10 +61,11 @@ public:
 
 	virtual ~TreeModel();
 
-	static std::unique_ptr<TreeModel> make(const netlist::Netlist &source);
+	static std::unique_ptr<TreeModel> make(
+			const netlist::Netlist &source, const std::string &name = "");
 
 	static std::unique_ptr<TreeModel> make(
-			const netlist::Netlist &source,
+			const netlist::Netlist &source, const std::string &name,
 			const std::vector<const ISingle *> &lower,
 			const std::vector<const ISingle *> &upper);
 
@@ -104,7 +105,7 @@ public:
 protected:
 	TreeModel(
 			const Entity &entity, const Representation *parent,
-			const Timing *timing);
+			const Timing *timing, const std::string &name = "");
 
 	void createShortcuts();
 

@@ -21,9 +21,10 @@ using spatial::TreeModel;
 
 BGTree::BGTree() : TypedTransformation("BGTree") {}
 
-std::unique_ptr<Blocks> BGTree::execute(const TreeModel &source) const
+std::unique_ptr<Blocks> BGTree::execute(
+		const TreeModel &source, const std::string &result_name) const
 {
-	auto result = std::make_unique<Blocks>(source.entity(), &source, source.timing());
+	auto result = std::make_unique<Blocks>(source.entity(), &source, source.timing(), result_name);
 	auto &target = *result;
 
 	target.resize({4, source.width(), source.height()});

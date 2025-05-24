@@ -5,9 +5,10 @@
 namespace rhdl::blocks {
 
 Blocks::Blocks(const Entity &entity, const Representation *parent,
-			   const Timing *timing)
+			   const Timing *timing, const std::string &name)
 	:
-	  MappedRepresentation<Blocks, BlockRef>(entity, parent, timing)
+	  MappedRepresentation<Blocks, BlockRef>(
+			  entity, parent, timing, name)
 {}
 
 Blocks::~Blocks() {

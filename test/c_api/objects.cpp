@@ -29,3 +29,8 @@ TEST(CApi_objectsTest,wrong)
 	EXPECT_TRUE(::wrong());
 }
 
+TEST(CApi_objectsTest,transform)
+{
+	EXPECT_TRUE(::transform());
+}
+

@@ -24,12 +24,15 @@ public:
 			const Entity &entity,
 			Graph graph, InterfaceMap ifaceMap,
 			const Representation *parent = nullptr,
-			const Timing *timing = nullptr);
+			const Timing *timing = nullptr, const std::string &name = "");
 
 	Netlist(const Entity &entity, const Representation *parent,
-			const Timing *timing);
+			const Timing *timing, const std::string &name = "");
 
-	Netlist(const Netlist &, std::forward_list<VertexRef> toSplit);
+	Netlist(
+			const Netlist &, std::forward_list<VertexRef> toSplit,
+			const std::string &name = "");
+
 	Netlist(Netlist &&) = default;
 
 	virtual ~Netlist() {}

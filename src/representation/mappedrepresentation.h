@@ -27,7 +27,7 @@ public:
 
 	MappedRepresentation(
 			const Entity &, const Representation *parent, const Timing *,
-			InterfaceMap);
+			InterfaceMap, const std::string &name = "");
 	MappedRepresentation(MappedRepresentation &&) = default;
 
 	using Super::Super;
@@ -47,8 +47,9 @@ protected:
 template<class RepType, class ELEMENT_REF>
 inline MappedRepresentation<RepType, ELEMENT_REF>::MappedRepresentation(
 		const Entity &entity, const Representation *parent,
-		const Timing *timing, InterfaceMap ifaceMap)
-	: RepresentationBase<RepType>(entity, parent, timing),
+		const Timing *timing, InterfaceMap ifaceMap,
+		const std::string &name)
+	: RepresentationBase<RepType>(entity, parent, timing, name),
 	  ifaceMap_(std::move(ifaceMap))
 {}
 

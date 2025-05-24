@@ -22,16 +22,17 @@ public:
 
 	DefaultTransformation &cast() override {return *this;}
 
-	std::unique_ptr<ToRep> execute(const FromRep &source) const override;
+	std::unique_ptr<ToRep> execute(
+			const FromRep &source, const std::string &result_name = "") const override;
 };
 
 } /* namespace rhdl */
 
 template<class FromRep, class ToRep>
 inline std::unique_ptr<ToRep> rhdl::DefaultTransformation<FromRep, ToRep>::execute(
-		const FromRep &source) const
+		const FromRep &source, const std::string &result_name) const
 {
-	return ToRep::make(source);
+	return ToRep::make(source, result_name);
 }
 
 #endif /* SRC_TRANSFORMATION_DEFAULTTRANSFORMATION_H_ */

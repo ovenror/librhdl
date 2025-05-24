@@ -17,9 +17,9 @@ struct RepresentationBase : public Representation {
 
 	RepresentationBase(
 			const Entity &entity, const Representation *parent,
-			const Timing *timing)
+			const Timing *timing, const std::string &name = "")
 		:
-		  Representation(entity, ID, parent, timing)
+		  Representation(entity, ID, parent, timing, name)
 	{
 		static_assert(RepType::ID == ID, "CRTP!");
 	}
@@ -28,15 +28,15 @@ struct RepresentationBase : public Representation {
 	virtual bool typeCheck() const override {return typeID() == ID;}
 
 	template <class SourceRep>
-	static std::unique_ptr<RepType> make(const SourceRep &);
+	static std::unique_ptr<RepType> make(const SourceRep &, const std::string &name = "");
 };
 
 template <class RepType>
 template <class SourceRep>
 inline std::unique_ptr<RepType> rhdl::RepresentationBase<RepType>::make(
-		const SourceRep &source)
+		const SourceRep &source, const std::string &name)
 {
-	return std::make_unique<RepType>(source);
+	return std::make_unique<RepType>(source, name);
 }
 
 }

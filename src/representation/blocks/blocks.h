@@ -26,7 +26,7 @@ class Blocks : public MappedRepresentation<Blocks, BlockRef>
 public:
 	Blocks(
 			const Entity &entity, const Representation *parent,
-			const Timing *timing);
+			const Timing *timing, const std::string &name);
 
 	virtual ~Blocks();
 

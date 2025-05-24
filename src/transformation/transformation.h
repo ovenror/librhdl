@@ -29,7 +29,8 @@ public:
 
 	virtual bool typeCheck() const = 0;
 
-	virtual std::unique_ptr<Representation> execute(const Representation &source) const = 0;
+	virtual std::unique_ptr<Representation> execute(
+			const Representation &source, const std::string &result_name = "") const = 0;
 
 private:
 	TypeID typeID_;

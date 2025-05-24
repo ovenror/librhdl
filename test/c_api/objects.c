@@ -112,8 +112,8 @@ int entity()
 
 int transformation()
 {
-	rhdl_object_t *entities = rhdlo_get(0, "transformations");
-	rhdl_object_t *s2n = rhdlo_get(entities, "Structure2Netlist");
+	rhdl_object_t *transformations = rhdlo_get(0, "transformations");
+	rhdl_object_t *s2n = rhdlo_get(transformations, "Structure2Netlist");
 
 	REQUIRE(s2n);
 
@@ -142,6 +142,34 @@ int wrong()
 
 	REQUIRE(!bananas);
 	REQUIRE_ERR(rhdl_errno(), E_NO_SUCH_MEMBER);
+
+	return SUCCESS;
+}
+
+int transform()
+{
+	rhdl_object_t *dff_structure = rhdlo_get(rhdlo_get(rhdlo_get(rhdlo_get(0,
+					"entities"), "D_Flipflop"), "representations"),
+					"D_Flipflop_Structure_0");
+	REQUIRE(dff_structure);
+
+	rhdl_object_t *s2n = rhdlo_get(rhdlo_get(0,
+					"transformations"), "Structure2Netlist");
+	REQUIRE(s2n);
+
+	rhdl_object_t *dff_netlist =
+			rhdlo_transform(dff_structure, s2n, "MyNetlist");
+	REQUIRE(dff_netlist);
+	REQUIRE(dff_netlist -> type == RHDL_REPRESENTATION);
+	REQUIRE_STREQ(dff_netlist -> name, "MyNetlist");
+
+	rhdl_object_t *dff_netlist_type = rhdlo_get(dff_netlist, "type");
+	REQUIRE(dff_netlist_type);
+	REQUIRE(rhdlo_read_reptype(dff_netlist_type) == RHDL_NETLIST);
+
+	rhdl_object_t *lookup = rhdlo_get(rhdlo_get(rhdlo_get(rhdlo_get(0,
+			"entities"), "D_Flipflop"), "representations"), "MyNetlist");
+	REQUIRE(lookup == dff_netlist);
 
 	return SUCCESS;
 }
