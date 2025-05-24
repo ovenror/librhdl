@@ -22,9 +22,9 @@ Netlist::Netlist(
 {
 	checkIfaceMap();
 	initIFaceProperties();
-	dot();
+	//dot();
 	removeUnnecessaryOneways();
-	dot(".opt");
+	//dot(".opt");
 }
 
 
