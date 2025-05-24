@@ -27,6 +27,10 @@ int rhdl_abort_structure(const rhdl_structure_t *structure);
 
 int rhdl_print_commands(const char *entity_name);
 
+rhdl_representation_t *rhdl_transform(
+		rhdl_representation_t *representation, rhdl_transformation_t *transformation,
+		const char *result_name);
+
 const rhdl_object_t *rhdlo_get(const rhdl_object_t *, const char *member);
 
 int rhdlo_has_value(const rhdl_object_t *);
