@@ -215,7 +215,13 @@ impl fmt::Display for rhdl_iface_t {
 
 impl fmt::Display for rhdl_connector_t {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.default_fmt(f)
+        if unsafe{*self.iface}.type_ == rhdl_iface_type_RHDL_COMPOSITE {
+            /* Because the structure during structure definition does not
+             * have a complete working interface */
+            self.default_fmt(f)
+        } else {
+            unsafe{*self.iface}.fmt(f)
+        }
     }
 }
 
