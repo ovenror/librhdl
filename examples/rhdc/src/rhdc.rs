@@ -367,12 +367,11 @@ impl InnerRHDL {
 }
 
 impl interpreter::Interpreter for InnerRHDL {
-    fn exec(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, orig: &str) 
-        -> bool
+    fn eat(&mut self, line: &String) -> bool
     {
         self.assert_active();
 
-        let parsed = Self::parse(orig);
+        let parsed = Self::parse(line);
 
         if parsed.parsed != 3 {
             return false;
@@ -542,14 +541,14 @@ impl<'a> interpreter::Commands<'a> for OuterRHDL {
         Command::<Self>("enddef",Self::enddef, &NO_COMPLETER)
         ];
 
-    fn exec_fb(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &str) 
+    fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, orig: &String)
         -> bool
     {
         if !self.rhdd.is_active() {
             return false;
         }
 
-        self.rhdd.exec(command, args, orig)
+        self.rhdd.eat(orig)
     }
     
     fn complete_object_contextually(&self, line: &str) -> Vec<String>
@@ -693,7 +692,7 @@ impl<'a> interpreter::Commands<'a> for RHDC<'a> {
         Command::<Self>("synth",Self::synth, &OBJECT_COMPLETER)
         ];
     
-    fn exec_fb(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &str)
+    fn exec_fb(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &String)
         -> bool 
     {
         self.rhdl.exec(command, args, orig)

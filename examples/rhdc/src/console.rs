@@ -82,8 +82,12 @@ impl<'a, C: Commands<'a>> ConsoleInterpreter for SimpleConsoleInterpreter<'a, C>
 }
 
 impl<'a, C: Commands<'a>> interpreter::Interpreter for SimpleConsoleInterpreter<'a, C> {
-    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &str)
-        -> bool 
+    fn eat(self : &mut Self, line: &String) -> bool
+    {
+        self.interpreter.eat(line)
+    }
+
+    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &String) -> bool
     {
         self.interpreter.exec(command, args, orig)
     }

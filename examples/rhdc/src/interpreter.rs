@@ -22,8 +22,10 @@ pub trait Interpreter : Completer {
         return self.exec(command, &mut args, line);
     }
 
-    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &str)
-        -> bool; 
+    fn exec(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &String) -> bool
+    {
+        true
+    }
 }
 
 pub trait Commands<'a> : Sized where Self:'a {
@@ -41,7 +43,7 @@ pub trait Commands<'a> : Sized where Self:'a {
         }
     }
     
-    fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &str)
+    fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &String)
         -> bool {false}
 
     fn complete_object_contextually(&self, line: &str) -> Vec<String>;
@@ -132,8 +134,9 @@ impl<'a, C: Commands<'a>> SimpleInterpreter<'a, C> {
     }
 }
 
-impl<'a, C : Commands<'a>> Interpreter for SimpleInterpreter<'a, C> {
-    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &str)
+impl<'a, C : Commands<'a>> Interpreter for SimpleInterpreter<'a, C>
+{
+    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &String)
         -> bool 
     {
         if self.commands.exec(command, args) {
