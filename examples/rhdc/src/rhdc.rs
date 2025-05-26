@@ -3,12 +3,15 @@ extern crate lazy_static;
 extern crate const_format;
 
 use crate::interpreter;
-use crate::interpreter::Command;
 use crate::interpreter::CommandCompleter;
 use crate::interpreter::Interpreter;
+use crate::interpreter::QualifiedName;
+use crate::interpreter::create_qn;
+use crate::interpreter::Commands;
+use crate::interpreter::{command0, command1, command1opt};
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
-use crate::console::Commands;
+use crate::console::Processor;
 use crate::util::split_qn_once;
 use crate::librhdl::*;
 use crate::resolve::*;
@@ -16,7 +19,6 @@ use crate::librhdl_access::*;
 
 use lazy_static::lazy_static;
 use std::iter;
-use std::str::SplitWhitespace;
 use std::io::Write;
 use std::process::exit;
 use std::ffi::CString;
@@ -30,18 +32,15 @@ use rustyline::error::ReadlineError;
 use rustyline::Context;
 use rustyline::completion::{Completer, Pair};
 
-const ALPHA: &'static str = "A-Za-z";
-const IDENTIFIER: &'static str = formatcp!(r"[{0}][{0}0-9_]*", ALPHA);
-const IDENTIFIERW: &'static str = formatcp!(r"\s*{}\s*", IDENTIFIER);
-const QUALIFIED: &'static str = formatcp!(r"{0}(\.({0})?)*", IDENTIFIERW);
 const OPERATOR: &'static str = r":|->?|<-?";
-const COMPLETE: &'static str = formatcp!(r"^({0})?(({1})(({0}))?)?$", QUALIFIED, OPERATOR);
+const COMPLETE: &'static str = formatcp!(r"^({0})?(({1})(({0}))?)?$", interpreter::QUALIFIED, OPERATOR);
 
 const OPERATORS: &'static [&'static str] = &["->","<-",":"];
 
 lazy_static! {
-    static ref REGEX_ID: Regex = Regex::new(formatcp!(r"^{}$", IDENTIFIER)).unwrap();
+    static ref REGEX_ID: Regex = Regex::new(formatcp!(r"^{}$", interpreter::IDENTIFIER)).unwrap();
     static ref REGEX_RHDD: Regex = Regex::new(COMPLETE).unwrap();
+    static ref REGEX_NONE: Regex = Regex::new(r"^$").unwrap();
 }
 
 struct InnerRHDLParseResult<'a> {
@@ -65,7 +64,7 @@ impl<'a> InnerRHDLParseResult<'a> {
     }
 }
 
-struct InnerRHDL {
+pub struct InnerRHDL {
     outputs: Outputs,
     active: bool,
     ename: String,
@@ -123,23 +122,18 @@ impl InnerRHDL {
         return InnerRHDLParseResult::new(3, id1, operator, id2)
     }
 
-    fn define(&mut self, qn: &str, stateless: bool) -> bool {
+    fn define(&mut self, qn: &QualifiedName, stateless: bool) -> bool {
         if self.active {
             panic!("already defining {}", self.ename);
         }
 
-        if qn == "" {
-            panic!("structure name cannot be empty");
-        }
+        assert!(qn.len() > 1);
 
-        let (ns_qn, ename) = match qn.rsplit_once(".") {
-            Some((ns, s)) => (ns, s),
-            None => ("" , qn)
-        };
+        let (&ename, ns_qn) = qn.split_last().unwrap();
 
         let nspace = resolve_namespace_err(ns_qn, &mut self.outputs.err);
 
-        if nspace.is_null() && ns_qn != "" {
+        if nspace.is_null() {
             return true;
         }
 
@@ -207,7 +201,7 @@ impl InnerRHDL {
             return ptr::null_mut(); 
         }
 
-        resolve_with_base_err(base, components, basename, &mut self.outputs.err)
+        resolve_with_base_err(base, &create_qn(components), basename, &mut self.outputs.err)
     }
     
     fn get_connector(&self, name: &str) -> *const rhdl_connector_t {
@@ -309,7 +303,8 @@ impl InnerRHDL {
                 Some((_, m)) => ((), m)
             };
 
-            let mosto = resolve_with_base_noerr(self.get_connector(basename_trimmed), most);
+            let mosto = resolve_with_base_noerr(
+                self.get_connector(basename_trimmed), &create_qn(most));
 
             if mosto.is_null() {
                 return Vec::new();
@@ -369,7 +364,9 @@ impl InnerRHDL {
 impl interpreter::Interpreter for InnerRHDL {
     fn eat(&mut self, line: &String) -> bool
     {
-        self.assert_active();
+        if !self.is_active() {
+            return true
+        }
 
         let parsed = Self::parse(line);
 
@@ -389,8 +386,11 @@ impl interpreter::Interpreter for InnerRHDL {
 
         return true;
     }
-}
 
+    fn exec(self : &mut Self, _command: &str, _args: &str, orig: &String) -> bool {
+        self.eat(orig)
+    }
+}
 
 impl Completer for InnerRHDL {
     type Candidate = Pair;
@@ -470,13 +470,13 @@ impl Completer for InnerRHDL {
     }
 }
 
-struct OuterRHDL {
+pub struct OuterRHDL {
     outputs: Outputs,
     rhdd: InnerRHDL
 }
 
 impl OuterRHDL {
-    fn new(outputs: Outputs) -> OuterRHDL {
+    fn new(outputs: Outputs) -> Self {
         let oc = outputs.clone();
 
         OuterRHDL {
@@ -485,33 +485,33 @@ impl OuterRHDL {
         }
     }
     
-    fn define(&mut self, args: &mut SplitWhitespace) -> bool {
-        self.define_internal(args, true)
+    fn define<'a>(&mut self, arg: &QualifiedName<'a>) -> bool {
+        self.define_internal(arg, true)
     }
 
-    fn stateful(&mut self, args: &mut SplitWhitespace) -> bool {
-        self.define_internal(args, false)
+    fn stateful(&mut self, arg: &QualifiedName) -> bool {
+        self.define_internal(arg, false)
     }
 
-    fn define_internal(&mut self, args: &mut SplitWhitespace, stateless: bool) -> bool {
+    fn define_internal(&mut self, arg: &QualifiedName, stateless: bool) -> bool {
         if self.rhdd.is_active() {
             writeln!(self.outputs.err, "Already defining {}", self.rhdd.get_ename()).unwrap();
             return true;
         }
 
-        let ename = match args.next() {
-            Some(s) => s,
-            None => {
-                writeln!(self.outputs.err, "usage: define <name>").unwrap();
-                return true;
-            }
-        };
+        assert!(arg.len() > 0);
+        assert!(!arg[0].is_empty());
 
-        self.rhdd.define(ename, stateless);
+        if arg.len() == 0 {
+            writeln!(self.outputs.err, "usage: define <qualified name>").unwrap();
+            return true;
+        }
+
+        self.rhdd.define(arg, stateless);
         return true;
     }
 
-    fn enddef(&mut self, _ : &mut SplitWhitespace) -> bool {
+    fn enddef(&mut self) -> bool {
         if self.rhdd.is_active() {
             self.rhdd.enddef();
         }
@@ -530,18 +530,31 @@ impl OuterRHDL {
             Err(())
         }
     }
-
 }
 
-impl<'a> interpreter::Commands<'a> for OuterRHDL {
-    const COMMANDS: &'a [Command<Self>] = &[
-        Command::<Self>("def",Self::define, &OBJECT_COMPLETER),
-        Command::<Self>("define",Self::define, &OBJECT_COMPLETER),
-        Command::<Self>("stateful",Self::stateful, &OBJECT_COMPLETER),
-        Command::<Self>("enddef",Self::enddef, &NO_COMPLETER)
-        ];
+impl interpreter::Processor for OuterRHDL {
+    type Fallback = InnerRHDL;
+            
+    fn commands() -> Commands<Self> {
+        HashMap::from([
+            ("def", command1::<'static, OuterRHDL, Vec<&str>>(Self::define)),
+            ("define", command1::<'static, OuterRHDL, Vec<&str>>(Self::define)),
+            ("stateful", command1::<'static, OuterRHDL, Vec<&str>>(Self::stateful)),
+            ("enddef", command0(Self::enddef))
+        ])        
+    }
 
-    fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, orig: &String)
+    fn fallback(&self) -> &Self::Fallback
+    {
+        &self.rhdd
+    }
+
+    fn fallback_mut(&mut self) -> &mut Self::Fallback
+    {
+        &mut self.rhdd
+    }
+
+    fn exec_fb(self : &mut Self, _command: &str, _args: &str, orig: &String)
         -> bool
     {
         if !self.rhdd.is_active() {
@@ -567,7 +580,7 @@ impl<'a> interpreter::Commands<'a> for OuterRHDL {
     }
 }
 
-impl<'a> Commands<'a> for OuterRHDL {
+impl Processor for OuterRHDL {
     fn prompt_info(&self) -> &str {
         match self.rhdd.active {
             true => &self.rhdd.get_ename(),
@@ -576,13 +589,13 @@ impl<'a> Commands<'a> for OuterRHDL {
     }
 }
     
-pub struct RHDC<'a> {
+pub struct RHDC {
     outputs: Outputs,
-    rhdl: SimpleConsoleInterpreter<'a, OuterRHDL>
+    rhdl: SimpleConsoleInterpreter<OuterRHDL>
 }
 
-impl<'a> RHDC<'a> {
-    pub fn new(outputs: Outputs) -> RHDC<'a> {
+impl RHDC {
+    pub fn new(outputs: Outputs) -> Self {
         let oc = outputs.clone();
 
         RHDC {
@@ -591,17 +604,17 @@ impl<'a> RHDC<'a> {
         }
     }
 
-    fn quit(&mut self, _ : &mut SplitWhitespace) -> bool {
+    fn quit(&mut self) -> bool {
         writeln!(self.outputs.out, "Quitting.").unwrap();
         exit(0);
     }
 
-    fn panic(&mut self, _ : &mut SplitWhitespace) -> bool {
+    fn panic(&mut self) -> bool {
         writeln!(self.outputs.out, "ok panic").unwrap();
         panic!();
     }
 
-    fn ls_internal<I: Selectable>(&mut self, basename: &str, base: *const I, qn: &str) -> bool {
+    fn ls_internal<I: Selectable>(&mut self, basename: &str, base: *const I, qn: &QNSlice) -> bool {
         let resolved = resolve_with_base_err(base, qn, basename, &mut self.outputs.err);
 
         if resolved.is_null() {
@@ -612,17 +625,23 @@ impl<'a> RHDC<'a> {
         true
     }
    
-    fn ls(&mut self, args : &mut SplitWhitespace) -> bool {
-        let name = args.fold(String::from(""), |acc, arg| {acc + arg});
-        
-        if name == "" {
-            let ns = resolve_object_err("", &mut self.outputs.err);
-            println!("{}", unsafe{&*ns});
-            return true;
-        }
+    fn ls(&mut self, arg : Option<&QualifiedName>) -> bool {
+        let qn = match arg {
+            Some(q) => q,
+            None => {
+                let ns = resolve_object_err(&[], &mut self.outputs.err);
+                println!("{}", unsafe{&*ns});
+                return true;
+            }
+        };
 
-        let (basename, components) = split_qn_once(&name);
-        
+        assert!(qn.len() >= 1);
+
+        let (basename, components) = match qn.split_first() {
+            Some((b,c)) => (*b,c),
+            None => panic!()
+        };
+
         let tname = CString::new(basename).unwrap();
         
         let entity = unsafe {rhdl_entity(ptr::null(), tname.as_ptr())};
@@ -653,27 +672,20 @@ impl<'a> RHDC<'a> {
         return self.ls_internal(basename, connector, components);
     }
 
-    fn synth(&mut self, args: &mut SplitWhitespace) -> bool {
-        match args.next() {
-            None => {
-                writeln!(self.outputs.err, "usage: synth <entity name>").unwrap();
-                true
-            },
-            Some(name) => {
-                let ec;
-                let tname = CString::new(name).unwrap();
-                unsafe {ec = rhdl_print_commands(tname.as_ptr());}
-                if ec != 0 {
-                    write!(self.outputs.err, "{}", name).unwrap();
-                    perror(&mut self.outputs.err);
-                }
-                true
-            }
+    fn synth(&mut self, qn: &QualifiedName) -> bool {
+        let ec;
+        let name = qn[0];
+        let tname = CString::new(name).unwrap();
+        unsafe {ec = rhdl_print_commands(tname.as_ptr());}
+        if ec != 0 {
+            write!(self.outputs.err, "{}", name).unwrap();
+            perror(&mut self.outputs.err);
         }
+        true
     }
 }
 
-impl<'a> Completer for RHDC<'a> {
+impl Completer for RHDC {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
@@ -684,51 +696,41 @@ impl<'a> Completer for RHDC<'a> {
     }
 }
 
-impl<'a> interpreter::Commands<'a> for RHDC<'a> {
-    const COMMANDS: &'a [Command<Self>] = &[
-        Command::<Self>("quit", Self::quit, &NO_COMPLETER),
-        Command::<Self>("panic",Self::panic, &NO_COMPLETER),
-        Command::<Self>("ls",Self::ls, &OBJECT_COMPLETER),
-        Command::<Self>("synth",Self::synth, &OBJECT_COMPLETER)
-        ];
-    
-    fn exec_fb(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &String)
-        -> bool 
-    {
-        self.rhdl.exec(command, args, orig)
+impl interpreter::Processor for RHDC {
+    type Fallback = SimpleConsoleInterpreter<OuterRHDL>;
+
+    fn fallback_mut(&mut self) -> &mut Self::Fallback {
+        &mut self.rhdl
     }
-    
+
+    fn fallback(&self) -> &Self::Fallback {
+        &self.rhdl
+    }
+
     fn complete_object_contextually(&self, line: &str) -> Vec<String>
     {
         return self.rhdl.get_commands().complete_object_contextually(line);
     }
-
-    fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
-            -> Result<(usize, Vec<Pair>), ReadlineError>
-    {
-        return self.rhdl.complete(line, pos, ctx)
+    
+    fn commands() -> Commands<Self> {
+        HashMap::from([
+            ("quit", command0(Self::quit)),
+            ("panic", command0(Self::panic)),
+            ("ls", command1opt::<'static, RHDC, Vec<&str>>(Self::ls)),
+            ("synth",command1::<'static, RHDC, Vec<&str>>(Self::synth))
+        ])
     }
 }
 
-impl<'a> Commands<'a> for RHDC<'a> {
+impl Processor for RHDC {
     fn prompt_info(&self) -> &str {
         self.rhdl.get_commands().prompt_info()
     }
 }
 
-static NO_COMPLETER : NoCompleter = NoCompleter{};
-static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
+pub static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
 
-struct NoCompleter {}
-
-impl CommandCompleter for NoCompleter {
-    fn complete(&self, _text: &str) -> Vec<String>
-    {
-        return Vec::<String>::new()
-    }
-}
-
-struct ObjectCompleter {}
+pub struct ObjectCompleter {}
 
 impl ObjectCompleter {
     fn complete_with_base<S: Selectable>(&self, base: *const S, base_qn: &str, qn: &str) -> Vec<String>
@@ -737,7 +739,7 @@ impl ObjectCompleter {
 
         let (most, mostbase, last) = match qn.rsplit_once(".") {
             Some((m, l)) => {
-                let mb = resolve_with_base_noerr(base, m);
+                let mb = resolve_with_base_noerr(base, &create_qn(m));
 
                 if mb.is_null() {
                     return Vec::new();
@@ -812,7 +814,7 @@ impl ObjectCompleter {
     }
 }
 
-impl CommandCompleter for ObjectCompleter {
+impl<'a> CommandCompleter for ObjectCompleter {
     fn complete(&self, text: &str) -> Vec<String>
     {
         let split = text.rsplit_once('.');
@@ -822,7 +824,7 @@ impl CommandCompleter for ObjectCompleter {
             Some((m, l)) => (m,l)
         };
 
-        let base = resolve_object_noerr(most);
+        let base = resolve_object_noerr(&create_qn(most));
 
         if base.is_null() {
             return Vec::<String>::new()
@@ -919,11 +921,13 @@ mod tests {
         assert!(result.id2.unwrap().as_str() == "    ralf .schnalf   ");
     }
 
+    use crate::rhdc::create_qn;
+
     #[test]
     fn object_completer_complete_last_single() {
         let base_qn = "entities.Inverter.interface";
         let cand = OBJECT_COMPLETER.complete_last_component(
-            resolve_object_noerr(base_qn), base_qn, "i");
+            resolve_object_noerr(&create_qn(base_qn)), base_qn, "i");
         assert!(cand.len() == 1);
         assert!(cand.last().unwrap() == "entities.Inverter.interface.in.direction");
     }
@@ -932,7 +936,7 @@ mod tests {
     fn object_completer_complete_last_none() {
         let base_qn = "entities.Inverter.interface.in.direction";
         let cand = OBJECT_COMPLETER.complete_last_component(
-            resolve_object_noerr(base_qn), base_qn, "");
+            resolve_object_noerr(&create_qn(base_qn)), base_qn, "");
         assert!(cand.is_empty());
     }
 }

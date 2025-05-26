@@ -1,54 +1,240 @@
-use std::str::SplitWhitespace;
-use std::marker::PhantomData;
+use std::collections::HashMap;
+use std::usize;
 
 use rustyline::Context;
 use rustyline::completion::{Completer,Pair};
 use rustyline::error::ReadlineError;
 
+use lazy_static::lazy_static;
+use regex::Regex;
+use const_format::formatcp;
+
+use crate::rhdc::{OBJECT_COMPLETER};
+
+const ALPHA: &'static str = "[A-Za-z]";
+pub const IDENTIFIER: &'static str = formatcp!(r"{0}[{0}0-9_]*", ALPHA);
+const IDENTIFIERW: &'static str = formatcp!(r"\s*{}\s*", IDENTIFIER);
+pub const QUALIFIED: &'static str = formatcp!(r"{0}(\.({0})?)*", IDENTIFIERW);
+const CMDLINE: &'static str = formatcp!(r"^\s*({}+)\s+", ALPHA);
+
+lazy_static! {
+    static ref REGEX_CMDLINE: Regex = Regex::new(CMDLINE).unwrap();
+    static ref REGEX_QN: Regex = Regex::new(formatcp!(r"^{}", QUALIFIED)).unwrap();
+}
+
+pub trait Parameter : Sized {
+    type Arg<'a> : Argument<'a, Self>;
+
+    fn regex() -> &'static Regex;
+
+    fn completer() -> &'static dyn CommandCompleter;
+
+    fn complete(args: &str) -> Vec<String>
+    {
+        Self::completer().complete(args)
+    }
+
+    fn ends_at(args: &str) -> usize {
+        match Self::regex().captures(args) {
+            Some(c) => c.get(0).unwrap().end(),
+            None => 0
+        }
+    }
+}
+
+pub trait Argument<'a, GArg: Parameter> : Sized + Parameter
+{
+    fn parse(arg: &'a str) -> Self;
+
+    fn extract(args: &'a str) -> Option<(Self, usize)>
+    {
+        match Self::regex().captures(args) {
+            Some(c) => {
+                let m = c.get(0).unwrap();
+                Some((Self::parse(m.as_str()), m.end()))
+            },
+            None => None
+        }
+    }
+}
+
+impl Parameter for Vec<&str> {
+    type Arg<'a> = QualifiedName<'a>;
+
+    fn regex() -> &'static Regex {
+        return &REGEX_QN
+    }
+
+
+    fn completer() -> &'static dyn CommandCompleter {
+        &OBJECT_COMPLETER
+    }
+}
+
+impl<'a> Argument<'a, Vec<&str>> for QualifiedName<'a>
+{
+    fn parse(arg: &'a str) -> Self {
+        create_qn(arg)
+    }
+}
 
 pub trait CommandCompleter {
     fn complete(&self, text: &str) -> Vec<String>;
 }
 
-type CommandFn<T> = fn(&mut T, &mut SplitWhitespace) -> bool;
-pub struct Command<T> (
-    pub &'static str, pub CommandFn<T>, pub &'static dyn CommandCompleter);
+pub type QualifiedName<'a> = Vec<&'a str>;
 
-pub trait Interpreter : Completer {
-    fn eat(self : &mut Self, line : &String) -> bool {
-        let mut args = line.trim().split_whitespace();
-        let command = args.next().unwrap_or("");
+pub trait AbstractCommand<T> {
+    fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool;
+    fn complete(&self, text: &str) -> Vec<String>;
+}
 
-        return self.exec(command, &mut args, line);
+type NullaryCommandFn<T> = fn(&mut T) -> bool;
+type UnaryCommandFn<T, Param> = for <'a> fn(&mut T, &<Param as Parameter>::Arg<'a>) -> bool;
+type OptUnaryCommandFn<T, Param> = for <'a> fn(&mut T, Option<&<Param as Parameter>::Arg<'a>>) -> bool;
+type BinaryCommandFn<T, Param0, Param1> = for <'a> fn(&mut T, &<Param0 as Parameter>::Arg<'a>, &<Param1 as Parameter>::Arg<'a>) -> bool;
+
+/* We need these structs to encapsulate the command function, because we
+* cannot simply implement AbstractCommand for *CommandFn, because then
+* GArg would be unconstrained */
+struct UnaryCommand<T, P: Parameter> {
+    func: UnaryCommandFn<T, P>,
+}
+
+struct OptUnaryCommand<T, P: Parameter> {
+    func: OptUnaryCommandFn<T, P>,
+}
+struct BinaryCommand<T, P0: Parameter, P1: Parameter> {
+    func: BinaryCommandFn<T, P0, P1>,
+}
+
+impl<T> AbstractCommand<T> for NullaryCommandFn<T> {
+    fn exec(&self, processor: &mut T, _args: &str) -> bool {
+        self(processor)
     }
 
-    fn exec(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &String) -> bool
-    {
-        true
+    fn complete(&self, _args: &str) -> Vec<String> {
+        Vec::new()
     }
 }
 
-pub trait Commands<'a> : Sized where Self:'a {
-    const COMMANDS: &'a [Command<Self>];
-    
-    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace)
-        -> bool 
-    {
-        let mut cmditer = Self::COMMANDS.into_iter();
-        let optcmd = cmditer.find(|Command(n,_a, _c)| n == &command); 
-        
-        match optcmd {
-            None => false,
-            Some(Command(_n, action, _completer)) => action(self, args)
+/* Here, GArg is constrained, because it is tied to self, which would not be
+ * the case if Self == UnaryCommandFn */
+impl<T, P: Parameter> AbstractCommand<T> for UnaryCommand<T, P> {
+    fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool {
+        let arg = P::Arg::<'a>::extract(args);
+
+        match arg {
+            Some((arg, _)) => (self.func)(processor, &arg),
+            None => false
         }
     }
-    
-    fn exec_fb(self : &mut Self, _command: &str, _args: &mut SplitWhitespace, _orig: &String)
-        -> bool {false}
+
+    fn complete(&self, args: &str) -> Vec<String> {
+        P::complete(args)
+    }
+}
+
+impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
+    fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool {
+        match P::Arg::<'a>::extract(args) {
+            Some((arg, _)) => (self.func)(processor, Some(&arg)),
+            None => (self.func)(processor, None)
+        }
+    }
+
+    fn complete(&self, args: &str) -> Vec<String> {
+        P::complete(args)
+    }
+}
+
+impl<T, P0: Parameter, P1 : Parameter> AbstractCommand<T> for BinaryCommand<T, P0, P1> {
+    fn exec(&self, processor: &mut T, args: &str) -> bool {
+        let (arg0, arg0end) = match P0::Arg::extract(args) {
+            Some((arg, pos)) => (arg, pos),
+            None => return false
+        };
+        match P1::Arg::extract(&args[arg0end..]) {
+            Some((arg1, _)) => (self.func)(processor, &arg0, &arg1),
+            None => false
+        }
+    }
+
+    fn complete(&self, args: &str) -> Vec<String> {
+        let arg0end = match P0::ends_at(args) {
+            0 => return P0::complete(args),
+            pos => pos,
+        };
+
+        if arg0end == args.len() {      
+            P0::complete(args)
+        } else {
+            P1::complete(args)
+        }
+    }
+}
+
+pub fn command0<'a, T: 'a> (
+    func: NullaryCommandFn<T>) -> Box<dyn AbstractCommand<T> +'a>
+{
+    Box::new(func)
+}
+
+pub fn command1<'a, T: 'a, P: Parameter + 'a> (
+    func: UnaryCommandFn<T, P>) -> Box<dyn AbstractCommand<T> + 'a>
+{
+    Box::new(UnaryCommand{func})
+}
+
+pub fn command1opt<'a, T: 'a, P: Parameter + 'a> (
+    func: OptUnaryCommandFn<T, P>) -> Box<dyn AbstractCommand<T> + 'a>
+{
+    Box::new(OptUnaryCommand{func})
+}
+
+pub fn command2<'a, T: 'a, P0 : Parameter + 'a, P1 : Parameter + 'a> (
+    func: BinaryCommandFn<T, P0, P1>) -> Box<dyn AbstractCommand<T> + 'a>
+{
+    Box::new(BinaryCommand{func})
+}
+
+pub trait Interpreter : Completer {
+    fn eat(self : &mut Self, line : &String) -> bool;
+    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool;
+}
+
+//pub type TheCommands<T, const N: usize> = [Box<dyn AbstractCommand<'static, T>>; N];
+pub type Commands<T> = HashMap<&'static str, Box<dyn AbstractCommand<T>>>;
+
+pub trait Processor : Sized {
+    type Fallback : Interpreter<Candidate = Pair>;
+
+    fn commands() -> Commands<Self>;
+
+    fn fallback_mut(&mut self) -> &mut Self::Fallback;
+    fn fallback(&self) -> &Self::Fallback;
+
+    fn exec(&mut self, cmds: &Commands<Self>, cmd: &str, args: &str, orig: &String) -> bool {
+        let command = match cmds.get(cmd) {
+            Some(c) => c.as_ref(),
+            None => return self.exec_fb(cmd, args, orig)
+        };
+
+        command.exec(self, args)
+    }
+
+    fn eat_fb(self : &mut Self, line: &String) -> bool
+    {
+        self.fallback_mut().eat(line)
+    }
+
+    fn exec_fb(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
+        self.fallback_mut().exec(cmd, args, orig)
+    }
 
     fn complete_object_contextually(&self, line: &str) -> Vec<String>;
 
-    fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>)
+    fn complete(&self, cmds: &Commands<Self>, line: &str, pos: usize, _ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
         let line_trimmed = line.trim_start();
@@ -59,9 +245,8 @@ pub trait Commands<'a> : Sized where Self:'a {
                     (line_trimmed, "")
                 }
                 else {
-                    let cmditer2 = Self::COMMANDS.into_iter();
+                    let cmditer2 = cmds.keys();
                     let cmds : Vec<Pair> = cmditer2.
-                            map(|Command(n,_a, _c)| n).
                             filter(|cmd| cmd.starts_with(&line_trimmed)).
                             map(|cmd| {let (_, last) = cmd.split_at(pos + line_trimmed.len() - line.len()); last}).
                             //map(|cmd| cmd.to_string()).
@@ -75,16 +260,15 @@ pub trait Commands<'a> : Sized where Self:'a {
             }
         };
 
-        let mut cmditer = Self::COMMANDS.into_iter();
-        let optcmd = cmditer.find(|Command(n,_a, _c)| n == &command); 
+        let optcmd = cmds.get(command); 
         
         match optcmd {
-            Some(Command(name, _action, completer)) => {
+            Some(cmd) => {
                 let args_trimmed = args.trim_start();
-                let mut argcand = completer.complete(args_trimmed);
+                let mut argcand = cmd.complete(args_trimmed);
 
-                /* FIXME: Condition should be a member of Command */
-                if name == &"ls" {
+                /* FIXME: Condition should be a member of (Abstract)Command */
+                if command == "ls" {
                     argcand.append(&mut self.complete_object_contextually(args_trimmed));
                 }
 
@@ -105,21 +289,28 @@ pub trait Commands<'a> : Sized where Self:'a {
     }
     
     fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
-            -> Result<(usize, Vec<Pair>), ReadlineError>;
+            -> Result<(usize, Vec<Pair>), ReadlineError>
+    {
+        self.fallback().complete(line, pos, ctx)
+    }
 }
 
-pub struct SimpleInterpreter<'a, C : Commands<'a>> {
-    commands : C,
-    phantom : PhantomData<&'a Self> 
+pub struct SimpleInterpreter<C : Processor> {
+    processor : C,
+    commands: Commands<C>
 }
 
-impl<'a, C: Commands<'a>> SimpleInterpreter<'a, C> {
-    pub fn new(commands : C) -> SimpleInterpreter<'a, C> {
-        SimpleInterpreter {commands : commands, phantom: PhantomData}
+impl<C: Processor> SimpleInterpreter<C> {
+    pub fn new(processor : C) -> Self {
+        Self {processor: processor, commands: C::commands()}
     }
 
-    pub fn get_commands(&self) -> &C {
-        &self.commands
+    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
+        self.processor.exec(&self.commands, cmd, args, orig)
+    }
+
+    pub fn get_processor(&self) -> &C {
+        &self.processor
     }
 
     fn crop_candidate(c: &Pair, by: usize) -> Pair {
@@ -134,31 +325,48 @@ impl<'a, C: Commands<'a>> SimpleInterpreter<'a, C> {
     }
 }
 
-impl<'a, C : Commands<'a>> Interpreter for SimpleInterpreter<'a, C>
+pub fn create_qn<'a>(qnstr: &'a str) -> QualifiedName<'a>
 {
-    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &String)
-        -> bool 
-    {
-        if self.commands.exec(command, args) {
+    qnstr.split(".").into_iter().map(|component| component.trim()).collect()
+}
+
+impl<C : Processor> Interpreter for SimpleInterpreter<C>
+{
+    fn eat(self : &mut Self, line : &String) -> bool {
+        let caps = match REGEX_CMDLINE.captures(line) {
+            Some(c) => c,
+            None => return self.processor.eat_fb(line)
+        };
+
+        if line.trim().is_empty() {
             return true;
         }
 
-        self.commands.exec_fb(command, args, orig)
+        let commandcap = caps.get(1);
+        assert!(caps.get(1).is_some());
+
+        let (commandstr, argsstr) = line.split_at(commandcap.unwrap().end());
+
+        self.exec(commandstr, argsstr, line)
+    }
+
+    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
+        self.processor.exec(&self.commands, cmd, args, orig)
     }
 }
 
-impl<'a, C : Commands<'a>> Completer for SimpleInterpreter<'a, C> {
+impl<'a, C : Processor> Completer for SimpleInterpreter<C> {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
     {
-        let (mut p1, mut vec1) = match self.commands.complete(line, pos, ctx) {
+        let (mut p1, mut vec1) = match self.processor.complete(&self.commands, line, pos, ctx) {
             Ok(result) => result,
             _ => (0, Vec::<Pair>::new())
         };
         
-        let (p2, mut vec2) = match self.commands.complete_fb(line, pos, ctx) {
+        let (p2, mut vec2) = match self.processor.complete_fb(line, pos, ctx) {
             Ok(result) => result,
             _ => (0, Vec::<Pair>::new())
         };

@@ -1,4 +1,3 @@
-use std::str::SplitWhitespace;
 use std::io;
 use std::io::Write;
 use std::process::exit;
@@ -43,7 +42,7 @@ impl std::clone::Clone for Outputs {
     }
 }
 
-pub trait Commands<'a> : interpreter::Commands<'a> {
+pub trait Processor : interpreter::Processor {
     fn prompt_info(&self) -> &str {
         ""
     }
@@ -59,41 +58,41 @@ pub trait ConsoleInterpreter : interpreter::Interpreter {
     fn prompt_info(&self) -> &str;
 }
 
-pub struct SimpleConsoleInterpreter<'a, C: Commands<'a>> {
-    interpreter: SimpleInterpreter<'a, C>
+pub struct SimpleConsoleInterpreter<C: Processor> {
+    interpreter: SimpleInterpreter<C>
 }
 
-impl<'a, C: Commands<'a>> SimpleConsoleInterpreter<'a, C> {
-    pub fn new(commands: C) -> SimpleConsoleInterpreter<'a, C> {
-        SimpleConsoleInterpreter {
-            interpreter: SimpleInterpreter::new(commands),
+impl<'a, P: Processor> SimpleConsoleInterpreter<P> {
+    pub fn new(processor: P) -> Self {
+        Self {
+            interpreter: SimpleInterpreter::new(processor),
         }
     }
     
-    pub fn get_commands(&self) -> &C {
-        self.interpreter.get_commands()
+    pub fn get_commands(&self) -> &P {
+        self.interpreter.get_processor()
     }
 }
 
-impl<'a, C: Commands<'a>> ConsoleInterpreter for SimpleConsoleInterpreter<'a, C> {
+impl<'a, C: Processor> ConsoleInterpreter for SimpleConsoleInterpreter<C> {
     fn prompt_info(&self) -> &str {
-        self.interpreter.get_commands().prompt_info()
+        self.interpreter.get_processor().prompt_info()
     }
 }
 
-impl<'a, C: Commands<'a>> interpreter::Interpreter for SimpleConsoleInterpreter<'a, C> {
+impl<'a, C: Processor> interpreter::Interpreter for SimpleConsoleInterpreter<C> {
     fn eat(self : &mut Self, line: &String) -> bool
     {
         self.interpreter.eat(line)
     }
 
-    fn exec(self : &mut Self, command: &str, args: &mut SplitWhitespace, orig: &String) -> bool
+    fn exec(self : &mut Self, command: &str, args: &str, orig: &String) -> bool
     {
         self.interpreter.exec(command, args, orig)
     }
 }
 
-impl<'a, C: Commands<'a>> Completer for SimpleConsoleInterpreter<'a, C> {
+impl<'a, C: Processor> Completer for SimpleConsoleInterpreter<C> {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)

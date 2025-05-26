@@ -115,17 +115,19 @@ impl ActiveResolveErrorHandler for DeferringResolveErrorHandler {
     fn accu(&mut self) -> &mut QNAccumulator {&mut self.accu}
 }
 
-pub fn resolve_object_noerr(qn : &str) -> *const rhdl_object_t
+pub type QNSlice<'a> = [&'a str];
+
+pub fn resolve_object_noerr(qn : &QNSlice) -> *const rhdl_object_t
 {
     resolve_object(qn, Option::None)
 }
 
-pub fn resolve_object_err(qn : &str, err: &mut dyn Write) -> *const rhdl_object_t
+pub fn resolve_object_err(qn : &QNSlice, err: &mut dyn Write) -> *const rhdl_object_t
 {
     resolve_object(qn, Some(err))
 }
 
-fn resolve_object(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_t
+fn resolve_object(qn : &QNSlice, err: Option<&mut dyn Write>) -> *const rhdl_object_t
 {
     let root: *const rhdl_object_t = unsafe{rhdlo_get(ptr::null(), ptr::null())};
     return match err {
@@ -137,17 +139,17 @@ fn resolve_object(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_object_
     }
 }
 
-pub fn resolve_namespace_noerr(qn : &str) -> *const rhdl_namespace_t
+pub fn resolve_namespace_noerr(qn : &QNSlice) -> *const rhdl_namespace_t
 {
     resolve_namespace(qn, Option::None)
 }
 
-pub fn resolve_namespace_err(qn : &str, err: &mut dyn Write) -> *const rhdl_namespace_t
+pub fn resolve_namespace_err(qn : &QNSlice, err: &mut dyn Write) -> *const rhdl_namespace_t
 {
     resolve_namespace(qn, Some(err))
 }
 
-fn resolve_namespace(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_namespace_t
+fn resolve_namespace(qn : &QNSlice, err: Option<&mut dyn Write>) -> *const rhdl_namespace_t
 {
     let root: *const rhdl_namespace_t = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
     return match err {
@@ -157,37 +159,37 @@ fn resolve_namespace(qn : &str, err: Option<&mut dyn Write>) -> *const rhdl_name
     }
 }
 
-pub fn resolve_with_object_noerr(base: *const rhdl_object_t, qn : &str) -> *const rhdl_object_t
+pub fn resolve_with_object_noerr(base: *const rhdl_object_t, qn : &QNSlice) -> *const rhdl_object_t
 {
     resolve_with_base(base, qn, &mut NOPResolveErrorHandler::new())
 }
 
-pub fn resolve_with_base_noerr<S: Selectable>(base : *const S, qn : &str) -> *const S
+pub fn resolve_with_base_noerr<S: Selectable>(base : *const S, qn : &QNSlice) -> *const S
 {
     resolve_with_base(base, qn, &mut NOPResolveErrorHandler::new())
 }
 
-pub fn resolve_with_base_err<S: Selectable>(base : *const S, qn : &str, basename: &str, err: &mut dyn Write) -> *const S
+pub fn resolve_with_base_err<S: Selectable>(base : *const S, qn : &QNSlice, basename: &str, err: &mut dyn Write) -> *const S
 {
     resolve_with_base(base, qn, &mut PrintingResolveErrorHandler::new(err, basename))
 }
 
-fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn : &str, err: &mut E) -> *const S
+fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn : &QNSlice, err: &mut E) -> *const S
 {
     assert!(!base.is_null());
 
-    if qn.trim().is_empty() {
+    if qn.len() == 0 {
         return base
     }
 
-    let components = qn.split('.');
+    assert!(qn[0] != "");
+
     let mut curbase = base;
-    let mut component_str : String;
 
-    for component in components {
-        component_str = component.trim().to_string();
+    for component in qn {
+        assert!(!component.contains(char::is_whitespace));
 
-        curbase = unsafe{(*curbase).select(&component_str)};
+        curbase = unsafe{(*curbase).select(component)};
 
         if curbase.is_null() {
             err.whine(component);
@@ -200,7 +202,7 @@ fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn 
     return curbase
 }
 
-pub fn resolve_with_bases<S: Selectable>(bases : &Vec<(*const S, &str)>, qn : &str, err: &mut dyn Write) -> *const S
+pub fn resolve_with_bases<S: Selectable>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut dyn Write) -> *const S
 {
     let mut handlers: Vec<DeferringResolveErrorHandler> = Vec::new();
 
@@ -230,55 +232,50 @@ mod tests {
 
     #[test]
     fn failed_resolve() {
-        assert!(resolve_object_noerr("doesnotexist") == ptr::null());
+        assert!(resolve_object_noerr(&["doesnotexist"]) == ptr::null());
         assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
     }
 
     #[test]
     fn failed_complex_resolve() {
-        assert!(resolve_object_noerr("entities.Inverter.interface.bernd") == ptr::null());
+        assert!(resolve_object_noerr(&["entities", "Inverter", "interface", "bernd"]) == ptr::null());
         assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
     }
 
     #[test]
     fn root_resolve() {
-        let root = resolve_object_noerr("");
+        let root = resolve_object_noerr(&[]);
         assert!(!root.is_null());
         assert!(unsafe{CStr::from_ptr((*root).name)}.to_str().unwrap() == "root");
     }
 
     #[test]
     fn toplevel_resolve() {
-        assert!(resolve_object_noerr("entities") != ptr::null());
+        assert!(resolve_object_noerr(&["entities"]) != ptr::null());
     }
 
     #[test]
     fn secondlevel_resolve() {
-        assert!(resolve_object_noerr("entities.Inverter") != ptr::null());
+        assert!(resolve_object_noerr(&["entities", "Inverter"]) != ptr::null());
     }
 
     #[test]
     fn complex_resolve() {
-        assert!(resolve_object_noerr("entities.AND.representations.AND_Structure_0.content") != ptr::null());
-    }
-
-    #[test]
-    fn spaced_resolve() {
-        assert!(resolve_object_noerr("   entities .AND.      representations .   AND_Structure_0. content  ") != ptr::null());
+        assert!(resolve_object_noerr(&["entities", "AND", "representations", "AND_Structure_0", "content"]) != ptr::null());
     }
 
     #[test]
     fn based_resolve() {
-        let entities = resolve_object_noerr("entities");
+        let entities = resolve_object_noerr(&["entities"]);
         assert!(!entities.is_null());
-        assert!(!resolve_with_object_noerr(entities, "ClockDiv2").is_null());
+        assert!(!resolve_with_object_noerr(entities, &["ClockDiv2"]).is_null());
     }
 
     #[test]
     fn typed_based_resolve() {
         let name = CString::new("NAND").unwrap();
         let entity = unsafe{rhdl_entity(ptr::null(), name.as_ptr())};
-        assert!(!resolve_with_base_noerr(unsafe{*entity}.iface, "in.bit1").is_null());
+        assert!(!resolve_with_base_noerr(unsafe{*entity}.iface, &["in", "bit1"]).is_null());
     }
 
     #[test]
@@ -287,7 +284,7 @@ mod tests {
         let entities = unsafe{rhdlo_get(ptr::null(), entities_cstr.as_ptr())};
         resolve_with_bases(
             &vec![(entities, "entities")],
-            "Inverter.in", &mut stdout());
+            &["Inverter", "in"], &mut stdout());
     }
 
     #[test]
@@ -299,7 +296,7 @@ mod tests {
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
         resolve_with_bases(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
-            "Inverter.in", &mut stdout());
+            &["Inverter", "in"], &mut stdout());
     }
 
     #[test]
@@ -311,17 +308,17 @@ mod tests {
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
         resolve_with_bases(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
-            "Inverter.lol.bla", &mut stdout());
+            &["Inverter", "lol", "bla"], &mut stdout());
     }
 
     #[test]
     fn resolve_namespace() {
-        assert!(!resolve_namespace_noerr("entities").is_null());
+        assert!(!resolve_namespace_noerr(&["entities"]).is_null());
     }
 
     #[test]
     fn resolve_nonexisting_namespace() {
-        assert!(resolve_namespace_noerr("entities.olololol").is_null());
+        assert!(resolve_namespace_noerr(&["entities", "olololol"]).is_null());
         assert!(unsafe{rhdl_errno()} == Errorcode_E_NO_SUCH_MEMBER);
     }
 
