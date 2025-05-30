@@ -23,7 +23,7 @@ lazy_static! {
 }
 
 pub trait Parameter : Sized {
-    type Arg<'a> : Argument<'a, Self>;
+    type Arg<'a> : Argument<'a>;
 
     fn regex() -> &'static Regex;
 
@@ -42,7 +42,7 @@ pub trait Parameter : Sized {
     }
 }
 
-pub trait Argument<'a, GArg: Parameter> : Sized + Parameter
+pub trait Argument<'a> : Sized + Parameter
 {
     fn parse(arg: &'a str) -> Self;
 
@@ -65,13 +65,12 @@ impl Parameter for Vec<&str> {
         return &REGEX_QN
     }
 
-
     fn completer() -> &'static dyn CommandCompleter {
         &OBJECT_COMPLETER
     }
 }
 
-impl<'a> Argument<'a, Vec<&str>> for QualifiedName<'a>
+impl<'a> Argument<'a> for QualifiedName<'a>
 {
     fn parse(arg: &'a str) -> Self {
         create_qn(arg)
