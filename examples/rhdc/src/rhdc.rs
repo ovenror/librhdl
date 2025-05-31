@@ -8,7 +8,7 @@ use crate::interpreter::Interpreter;
 use crate::interpreter::QualifiedName;
 use crate::interpreter::create_qn;
 use crate::interpreter::Commands;
-use crate::interpreter::{command0, command1, command1opt};
+use crate::interpreter::{command0, command1, command1opt, command2};
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::console::Processor;
@@ -485,7 +485,7 @@ impl OuterRHDL {
         }
     }
     
-    fn define<'a>(&mut self, arg: &QualifiedName<'a>) -> bool {
+    fn define(&mut self, arg: &QualifiedName) -> bool {
         self.define_internal(arg, true)
     }
 
@@ -532,16 +532,22 @@ impl OuterRHDL {
     }
 }
 
-impl interpreter::Processor for OuterRHDL {
+impl<'a> interpreter::Processor for OuterRHDL {
     type Fallback = InnerRHDL;
             
     fn commands() -> Commands<Self> {
-        HashMap::from([
-            ("def", command1::<'static, OuterRHDL, Vec<&str>>(Self::define)),
-            ("define", command1::<'static, OuterRHDL, Vec<&str>>(Self::define)),
-            ("stateful", command1::<'static, OuterRHDL, Vec<&str>>(Self::stateful)),
-            ("enddef", command0(Self::enddef))
-        ])        
+        let mut commands: Commands<Self> = HashMap::new();
+
+        command1::<OuterRHDL, Vec<&str>>("def", Self::define, &mut commands);
+        command1::<OuterRHDL, Vec<&str>>("define", Self::define, &mut commands);
+        command1::<OuterRHDL, Vec<&str>>("stateful", Self::stateful, &mut commands);
+        command0("enddef", Self::enddef, &mut commands);
+
+        commands
+    }
+
+    fn stderr(&mut self) -> &mut dyn Write {
+        self.outputs.err.as_mut()
     }
 
     fn fallback(&self) -> &Self::Fallback
@@ -580,7 +586,7 @@ impl interpreter::Processor for OuterRHDL {
     }
 }
 
-impl Processor for OuterRHDL {
+impl<'a> Processor for OuterRHDL {
     fn prompt_info(&self) -> &str {
         match self.rhdd.active {
             true => &self.rhdd.get_ename(),
@@ -683,9 +689,14 @@ impl RHDC {
         }
         true
     }
+
+    fn transform(&mut self, _rep: &QualifiedName, _trans: &QualifiedName) -> bool
+    {
+        true
+    }
 }
 
-impl Completer for RHDC {
+impl<'a> Completer for RHDC {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
@@ -698,6 +709,10 @@ impl Completer for RHDC {
 
 impl interpreter::Processor for RHDC {
     type Fallback = SimpleConsoleInterpreter<OuterRHDL>;
+
+    fn stderr(&mut self) -> &mut dyn Write {
+        self.outputs.err.as_mut()
+    }
 
     fn fallback_mut(&mut self) -> &mut Self::Fallback {
         &mut self.rhdl
@@ -713,12 +728,15 @@ impl interpreter::Processor for RHDC {
     }
     
     fn commands() -> Commands<Self> {
-        HashMap::from([
-            ("quit", command0(Self::quit)),
-            ("panic", command0(Self::panic)),
-            ("ls", command1opt::<'static, RHDC, Vec<&str>>(Self::ls)),
-            ("synth",command1::<'static, RHDC, Vec<&str>>(Self::synth))
-        ])
+        let mut commands: Commands<Self> = HashMap::new();
+
+        command0("quit", Self::quit, &mut commands);
+        command0("panic", Self::panic, &mut commands);
+        command1opt::<RHDC, Vec<&str>>("ls", Self::ls, &mut commands);
+        command1::<RHDC, Vec<&str>>("synth", Self::synth, &mut commands);
+        command2::<RHDC, Vec<&str>, Vec<&str>>("transform", Self::transform, &mut commands);
+
+        commands
     }
 }
 

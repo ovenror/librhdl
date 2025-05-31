@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::Write;
 use std::usize;
 
 use rustyline::Context;
@@ -26,6 +27,7 @@ pub trait Parameter : Sized {
     type Arg<'a> : Argument<'a>;
 
     fn regex() -> &'static Regex;
+    fn usage() -> &'static str;
 
     fn completer() -> &'static dyn CommandCompleter;
 
@@ -58,11 +60,37 @@ pub trait Argument<'a> : Sized + Parameter
     }
 }
 
+impl Parameter for () {
+    type Arg<'a> = ();
+
+    fn regex() -> &'static Regex {
+        todo!()
+    }
+
+    fn usage() -> &'static str {
+        todo!()
+    }
+
+    fn completer() -> &'static dyn CommandCompleter {
+        todo!()
+    }
+}
+
+impl<'a> Argument<'a> for () {
+    fn parse(_arg: &'a str) -> Self {
+        todo!()
+    }
+}
+
 impl Parameter for Vec<&str> {
     type Arg<'a> = QualifiedName<'a>;
 
     fn regex() -> &'static Regex {
         return &REGEX_QN
+    }
+
+    fn usage() -> &'static str {
+        "qualified name"
     }
 
     fn completer() -> &'static dyn CommandCompleter {
@@ -86,6 +114,14 @@ pub type QualifiedName<'a> = Vec<&'a str>;
 pub trait AbstractCommand<T> {
     fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool;
     fn complete(&self, text: &str) -> Vec<String>;
+    fn name(&self) -> &'static str;
+    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error>;
+    
+    fn usage(&self, err: &mut dyn Write) {
+        write!(err, "{} ", self.name()).unwrap();
+        self.param_usage(err).unwrap();
+        writeln!(err).unwrap();
+    }
 }
 
 type NullaryCommandFn<T> = fn(&mut T) -> bool;
@@ -96,24 +132,71 @@ type BinaryCommandFn<T, Param0, Param1> = for <'a> fn(&mut T, &<Param0 as Parame
 /* We need these structs to encapsulate the command function, because we
 * cannot simply implement AbstractCommand for *CommandFn, because then
 * GArg would be unconstrained */
+
+struct NullaryCommand<T> {
+    name: &'static str,
+    func: NullaryCommandFn<T>,
+}
+
+impl <T> NullaryCommand<T> {
+    fn new(name: &'static str, func: NullaryCommandFn<T>) -> Self
+    {
+        Self{name, func}
+    }
+}
+
 struct UnaryCommand<T, P: Parameter> {
+    name: &'static str,
     func: UnaryCommandFn<T, P>,
 }
 
+impl <T, P: Parameter> UnaryCommand<T, P> {
+    fn new(name: &'static str, func: UnaryCommandFn<T, P>) -> Self
+    {
+        Self{name, func}
+    }
+}
+
 struct OptUnaryCommand<T, P: Parameter> {
+    name: &'static str,
     func: OptUnaryCommandFn<T, P>,
 }
+
+impl <T, P: Parameter> OptUnaryCommand<T, P> {
+    fn new(name: &'static str, func: OptUnaryCommandFn<T, P>) -> Self
+    {
+        Self{name, func: func}
+    }
+
+}
 struct BinaryCommand<T, P0: Parameter, P1: Parameter> {
+    name: &'static str,
     func: BinaryCommandFn<T, P0, P1>,
 }
 
-impl<T> AbstractCommand<T> for NullaryCommandFn<T> {
+impl <T, P0: Parameter, P1: Parameter> BinaryCommand<T, P0, P1> {
+    fn new(name: &'static str, func: BinaryCommandFn<T, P0, P1>) -> Self
+    {
+        Self{name, func: func}
+    }
+}
+
+impl<T> AbstractCommand<T> for NullaryCommand<T> {
     fn exec(&self, processor: &mut T, _args: &str) -> bool {
-        self(processor)
+        (self.func)(processor)
     }
 
     fn complete(&self, _args: &str) -> Vec<String> {
         Vec::new()
+    }
+    
+    fn name(&self) -> &'static str {
+        self.name
+    }
+        
+    fn param_usage(&self, _err: &mut dyn Write) -> Result<(), std::io::Error>
+    {
+        Ok(())
     }
 }
 
@@ -132,6 +215,14 @@ impl<T, P: Parameter> AbstractCommand<T> for UnaryCommand<T, P> {
     fn complete(&self, args: &str) -> Vec<String> {
         P::complete(args)
     }
+
+    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
+        write!(err, "<{}>", P::usage())
+    }
+
+    fn name(&self) -> &'static str {
+        return self.name;
+    }
 }
 
 impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
@@ -144,6 +235,14 @@ impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
 
     fn complete(&self, args: &str) -> Vec<String> {
         P::complete(args)
+    }
+
+    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
+        write!(err, "[{}]", P::usage())
+    }
+
+    fn name(&self) -> &'static str {
+        return self.name;
     }
 }
 
@@ -171,30 +270,39 @@ impl<T, P0: Parameter, P1 : Parameter> AbstractCommand<T> for BinaryCommand<T, P
             P1::complete(args)
         }
     }
+
+    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
+        write!(err, "<{}> <{}>", P0::usage(), P1::usage())
+    }
+
+    fn name(&self) -> &'static str {
+        return self.name;
+    }
 }
 
-pub fn command0<'a, T: 'a> (
-    func: NullaryCommandFn<T>) -> Box<dyn AbstractCommand<T> +'a>
+pub fn command0<T: 'static> (
+    name: &'static str, func: NullaryCommandFn<T>, cmds: &mut Commands<T>)
 {
-    Box::new(func)
+    cmds.insert(name, Box::new(NullaryCommand::new(name, func)));
 }
 
-pub fn command1<'a, T: 'a, P: Parameter + 'a> (
-    func: UnaryCommandFn<T, P>) -> Box<dyn AbstractCommand<T> + 'a>
+pub fn command1<T: 'static, P: Parameter + 'static> (
+    name: &'static str, func: UnaryCommandFn<T, P>, cmds: &mut Commands<T>)
 {
-    Box::new(UnaryCommand{func})
+    cmds.insert(name, Box::new(UnaryCommand::new(name, func)));
 }
 
-pub fn command1opt<'a, T: 'a, P: Parameter + 'a> (
-    func: OptUnaryCommandFn<T, P>) -> Box<dyn AbstractCommand<T> + 'a>
+pub fn command1opt<T: 'static, P: Parameter + 'static> (
+    name: &'static str, func: OptUnaryCommandFn<T, P>, cmds: &mut Commands<T>)
 {
-    Box::new(OptUnaryCommand{func})
+    cmds.insert(name, Box::new(OptUnaryCommand::new(name, func)));
 }
 
-pub fn command2<'a, T: 'a, P0 : Parameter + 'a, P1 : Parameter + 'a> (
-    func: BinaryCommandFn<T, P0, P1>) -> Box<dyn AbstractCommand<T> + 'a>
+
+pub fn command2<T: 'static, P0 : Parameter + 'static, P1 : Parameter + 'static> (
+    name: &'static str, func: BinaryCommandFn<T, P0, P1>, cmds: &mut Commands<T>)
 {
-    Box::new(BinaryCommand{func})
+    cmds.insert(name, Box::new(BinaryCommand::new(name, func)));
 }
 
 pub trait Interpreter : Completer {
@@ -203,7 +311,7 @@ pub trait Interpreter : Completer {
 }
 
 //pub type TheCommands<T, const N: usize> = [Box<dyn AbstractCommand<'static, T>>; N];
-pub type Commands<T> = HashMap<&'static str, Box<dyn AbstractCommand<T>>>;
+pub type Commands<T> = HashMap<&'static str, Box<dyn AbstractCommand<T> + 'static>>;
 
 pub trait Processor : Sized {
     type Fallback : Interpreter<Candidate = Pair>;
@@ -212,6 +320,7 @@ pub trait Processor : Sized {
 
     fn fallback_mut(&mut self) -> &mut Self::Fallback;
     fn fallback(&self) -> &Self::Fallback;
+    fn stderr(&mut self) -> &mut dyn Write;
 
     fn exec(&mut self, cmds: &Commands<Self>, cmd: &str, args: &str, orig: &String) -> bool {
         let command = match cmds.get(cmd) {
@@ -219,7 +328,13 @@ pub trait Processor : Sized {
             None => return self.exec_fb(cmd, args, orig)
         };
 
-        command.exec(self, args)
+        match command.exec(self, args) {
+            true => true,
+            false => {
+                command.usage(self.stderr());
+                false
+            }
+        }
     }
 
     fn eat_fb(self : &mut Self, line: &String) -> bool
@@ -326,6 +441,10 @@ impl<C: Processor> SimpleInterpreter<C> {
 
 pub fn create_qn<'a>(qnstr: &'a str) -> QualifiedName<'a>
 {
+    if qnstr.trim() == "" {
+        return Vec::new();
+    }
+
     qnstr.split(".").into_iter().map(|component| component.trim()).collect()
 }
 
