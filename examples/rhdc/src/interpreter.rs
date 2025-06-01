@@ -10,17 +10,11 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use const_format::formatcp;
 
-use crate::rhdc::{OBJECT_COMPLETER};
-
-const ALPHA: &'static str = "[A-Za-z]";
-pub const IDENTIFIER: &'static str = formatcp!(r"{0}[{0}0-9_]*", ALPHA);
-const IDENTIFIERW: &'static str = formatcp!(r"\s*{}\s*", IDENTIFIER);
-pub const QUALIFIED: &'static str = formatcp!(r"{0}(\.({0})?)*", IDENTIFIERW);
+pub const ALPHA: &'static str = "[A-Za-z]";
 const CMDLINE: &'static str = formatcp!(r"^\s*({}+)\s+", ALPHA);
 
 lazy_static! {
     static ref REGEX_CMDLINE: Regex = Regex::new(CMDLINE).unwrap();
-    static ref REGEX_QN: Regex = Regex::new(formatcp!(r"^{}", QUALIFIED)).unwrap();
 }
 
 pub trait Parameter : Sized {
@@ -60,34 +54,9 @@ pub trait Argument<'a> : Sized + Parameter
     }
 }
 
-impl Parameter for Vec<&str> {
-    type Arg<'a> = QualifiedName<'a>;
-
-    fn regex() -> &'static Regex {
-        return &REGEX_QN
-    }
-
-    fn usage() -> &'static str {
-        "qualified name"
-    }
-
-    fn completer() -> &'static dyn CommandCompleter {
-        &OBJECT_COMPLETER
-    }
-}
-
-impl<'a> Argument<'a> for QualifiedName<'a>
-{
-    fn parse(arg: &'a str) -> Self {
-        create_qn(arg)
-    }
-}
-
 pub trait CommandCompleter {
     fn complete(&self, text: &str) -> Vec<String>;
 }
-
-pub type QualifiedName<'a> = Vec<&'a str>;
 
 pub trait AbstractCommand<T> {
     fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool;
@@ -415,15 +384,6 @@ impl<C: Processor> SimpleInterpreter<C> {
     fn crop_candidates(v: &Vec<Pair>, by: usize) -> Vec<Pair> {
         v.into_iter().map(|c| Self::crop_candidate(c, by)).collect()
     }
-}
-
-pub fn create_qn<'a>(qnstr: &'a str) -> QualifiedName<'a>
-{
-    if qnstr.trim() == "" {
-        return Vec::new();
-    }
-
-    qnstr.split(".").into_iter().map(|component| component.trim()).collect()
 }
 
 impl<C : Processor> Interpreter for SimpleInterpreter<C>

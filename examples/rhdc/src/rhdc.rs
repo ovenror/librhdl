@@ -5,8 +5,8 @@ extern crate const_format;
 use crate::interpreter;
 use crate::interpreter::CommandCompleter;
 use crate::interpreter::Interpreter;
-use crate::interpreter::QualifiedName;
-use crate::interpreter::create_qn;
+use crate::interpreter::Parameter;
+use crate::interpreter::Argument;
 use crate::interpreter::Commands;
 use crate::interpreter::{command0, command1, command1opt, command2};
 use crate::console::Outputs;
@@ -32,15 +32,53 @@ use rustyline::error::ReadlineError;
 use rustyline::Context;
 use rustyline::completion::{Completer, Pair};
 
+const IDENTIFIER: &'static str = formatcp!(r"{0}[{0}0-9_]*", interpreter::ALPHA);
+const IDENTIFIERW: &'static str = formatcp!(r"\s*{}\s*", IDENTIFIER);
+const QUALIFIED: &'static str = formatcp!(r"{0}(\.({0})?)*", IDENTIFIERW);
 const OPERATOR: &'static str = r":|->?|<-?";
-const COMPLETE: &'static str = formatcp!(r"^({0})?(({1})(({0}))?)?$", interpreter::QUALIFIED, OPERATOR);
+const COMPLETE: &'static str = formatcp!(r"^({0})?(({1})(({0}))?)?$", QUALIFIED, OPERATOR);
 
 const OPERATORS: &'static [&'static str] = &["->","<-",":"];
 
 lazy_static! {
-    static ref REGEX_ID: Regex = Regex::new(formatcp!(r"^{}$", interpreter::IDENTIFIER)).unwrap();
+    static ref REGEX_ID: Regex = Regex::new(formatcp!(r"^{}$", IDENTIFIER)).unwrap();
+    static ref REGEX_QN: Regex = Regex::new(formatcp!(r"^{}", QUALIFIED)).unwrap();
     static ref REGEX_RHDD: Regex = Regex::new(COMPLETE).unwrap();
     static ref REGEX_NONE: Regex = Regex::new(r"^$").unwrap();
+}
+
+pub type QualifiedName<'a> = Vec<&'a str>;
+
+pub fn create_qn<'a>(qnstr: &'a str) -> QualifiedName<'a>
+{
+    if qnstr.trim() == "" {
+        return Vec::new();
+    }
+
+    qnstr.split(".").into_iter().map(|component| component.trim()).collect()
+}
+
+impl Parameter for Vec<&str> {
+    type Arg<'a> = QualifiedName<'a>;
+
+    fn regex() -> &'static Regex {
+        return &REGEX_QN
+    }
+
+    fn usage() -> &'static str {
+        "qualified name"
+    }
+
+    fn completer() -> &'static dyn CommandCompleter {
+        &OBJECT_COMPLETER
+    }
+}
+
+impl<'a> Argument<'a> for QualifiedName<'a>
+{
+    fn parse(arg: &'a str) -> Self {
+        create_qn(arg)
+    }
 }
 
 struct InnerRHDLParseResult<'a> {
