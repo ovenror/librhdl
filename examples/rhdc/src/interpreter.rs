@@ -60,28 +60,6 @@ pub trait Argument<'a> : Sized + Parameter
     }
 }
 
-impl Parameter for () {
-    type Arg<'a> = ();
-
-    fn regex() -> &'static Regex {
-        todo!()
-    }
-
-    fn usage() -> &'static str {
-        todo!()
-    }
-
-    fn completer() -> &'static dyn CommandCompleter {
-        todo!()
-    }
-}
-
-impl<'a> Argument<'a> for () {
-    fn parse(_arg: &'a str) -> Self {
-        todo!()
-    }
-}
-
 impl Parameter for Vec<&str> {
     type Arg<'a> = QualifiedName<'a>;
 
@@ -116,7 +94,7 @@ pub trait AbstractCommand<T> {
     fn complete(&self, text: &str) -> Vec<String>;
     fn name(&self) -> &'static str;
     fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error>;
-    
+
     fn usage(&self, err: &mut dyn Write) {
         write!(err, "{} ", self.name()).unwrap();
         self.param_usage(err).unwrap();
@@ -189,11 +167,11 @@ impl<T> AbstractCommand<T> for NullaryCommand<T> {
     fn complete(&self, _args: &str) -> Vec<String> {
         Vec::new()
     }
-    
+
     fn name(&self) -> &'static str {
         self.name
     }
-        
+
     fn param_usage(&self, _err: &mut dyn Write) -> Result<(), std::io::Error>
     {
         Ok(())
