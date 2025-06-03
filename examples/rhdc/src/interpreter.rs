@@ -86,6 +86,9 @@ type NullaryCommandFn<T> = fn(&mut T);
 type UnaryCommandFn<T, Param> = for <'a> fn(&mut T, &<Param as Parameter>::Arg<'a>);
 type OptUnaryCommandFn<T, Param> = for <'a> fn(&mut T, Option<&<Param as Parameter>::Arg<'a>>);
 type BinaryCommandFn<T, Param0, Param1> = for <'a> fn(&mut T, &<Param0 as Parameter>::Arg<'a>, &<Param1 as Parameter>::Arg<'a>);
+type TernaryCommandFn<T, Param0, Param1, Param2> = for <'a> fn(
+    &mut T, &<Param0 as Parameter>::Arg<'a>, &<Param1 as Parameter>::Arg<'a>,
+    &<Param2 as Parameter>::Arg<'a>);
 
 /* We need these structs to encapsulate the command function, because we
 * cannot simply implement AbstractCommand for *CommandFn, because then
@@ -134,6 +137,17 @@ struct BinaryCommand<T, P0: Parameter, P1: Parameter> {
 
 impl <T, P0: Parameter, P1: Parameter> BinaryCommand<T, P0, P1> {
     fn new(name: &'static str, func: BinaryCommandFn<T, P0, P1>) -> Self
+    {
+        Self{name, func}
+    }
+}
+struct TernaryCommand<T, P0: Parameter, P1: Parameter, P2: Parameter> {
+    name: &'static str,
+    func: TernaryCommandFn<T, P0, P1, P2>,
+}
+
+impl <T, P0: Parameter, P1: Parameter, P2: Parameter> TernaryCommand<T, P0, P1, P2> {
+    fn new(name: &'static str, func: TernaryCommandFn<T, P0, P1, P2>) -> Self
     {
         Self{name, func}
     }
@@ -241,6 +255,58 @@ impl<T, P0: Parameter, P1 : Parameter> AbstractCommand<T> for BinaryCommand<T, P
     }
 }
 
+impl<T, P0: Parameter, P1 : Parameter, P2 : Parameter> AbstractCommand<T> for TernaryCommand<T, P0, P1, P2> {
+    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
+        let (arg0, arg0end) = match P0::Arg::extract(args) {
+            Ok((arg, pos)) => (arg, pos),
+            Err(e) => return Err(e)
+        };
+        let (arg1, arg1end) = match P1::Arg::extract(&args[arg0end..]) {
+            Ok((arg, pos)) => (arg, pos + arg0end),
+            Err(e) => return Err(e)
+        };
+
+        match P2::Arg::extract(&args[arg1end..]) {
+            Ok((arg2, _)) => Ok((self.func)(processor, &arg0, &arg1, &arg2)),
+            Err(e) => Err(e)
+        }
+    }
+
+    fn complete(&self, args: &str) -> (usize, Vec<String>) {
+        let (arg0start, arg0end) = match P0::position(args) {
+            (0, 0) => return (0, P0::complete(args)),
+            pos => pos
+        };
+
+        let args_after_0 = &args[arg0end..];
+
+        if args_after_0.len() == 0 {
+            return (arg0start, P0::complete(&args[arg0start..]))
+        }
+
+        let (arg1start, arg1end) = match P1::position(args_after_0) {
+            (0, 0) => return (arg0end, P1::complete(args_after_0)),
+            (start, end) => (start + arg0end, end + arg0end)
+        };
+
+        let args_after_1 = &args[arg1end..];
+
+        if args_after_1.len() == 0 {
+            (arg1start, P1::complete(&args[arg1start..]))
+        } else {
+            (arg1end, P2::complete(args_after_1))
+        }
+    }
+
+    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
+        write!(err, "<{}> <{}> <{}>", P0::usage(), P1::usage(), P2::usage())
+    }
+
+    fn name(&self) -> &'static str {
+        return self.name;
+    }
+}
+
 pub fn command0<T: 'static> (
     name: &'static str, func: NullaryCommandFn<T>, cmds: &mut Commands<T>)
 {
@@ -264,6 +330,12 @@ pub fn command2<T: 'static, P0 : Parameter + 'static, P1 : Parameter + 'static> 
     name: &'static str, func: BinaryCommandFn<T, P0, P1>, cmds: &mut Commands<T>)
 {
     cmds.insert(name, Box::new(BinaryCommand::new(name, func)));
+}
+
+pub fn command3<T: 'static, P0 : Parameter + 'static, P1 : Parameter + 'static, P2 : Parameter + 'static> (
+    name: &'static str, func: TernaryCommandFn<T, P0, P1, P2>, cmds: &mut Commands<T>)
+{
+    cmds.insert(name, Box::new(TernaryCommand::new(name, func)));
 }
 
 pub trait Interpreter : Completer {

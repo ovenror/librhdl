@@ -21,6 +21,7 @@ fn main() {
         "rhdl_print_commands",
         "rhdlo_get",
         "rhdlo_read_cstring", "rhdlo_has_value",
+        "rhdlo_transform",
         "rhdl_errno", "rhdl_errstr",
         "rhdl_type_names",
 

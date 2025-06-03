@@ -8,7 +8,7 @@ use crate::interpreter::Interpreter;
 use crate::interpreter::Parameter;
 use crate::interpreter::Argument;
 use crate::interpreter::Commands;
-use crate::interpreter::{command0, command1, command1opt, command2};
+use crate::interpreter::{command0, command1, command1opt, command3};
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::console::Processor;
@@ -58,6 +58,29 @@ pub fn create_qn<'a>(qnstr: &'a str) -> QualifiedName<'a>
     qnstr.split(".").into_iter().map(|component| component.trim()).collect()
 }
 
+impl Parameter for &str {
+    type Arg<'a> = &'a str;
+
+    fn regex() -> &'static Regex {
+        return &REGEX_ID
+    }
+
+    fn usage() -> &'static str {
+        "identifier"
+    }
+
+    fn completer() -> &'static dyn CommandCompleter {
+        &NO_COMPLETER
+    }
+}
+
+impl<'a> Argument<'a> for &'a str
+{
+    fn parse<'b>(arg: &'a str) -> Result<Self, &'b str> {
+        Ok(arg)
+    }
+}
+
 impl Parameter for Vec<&str> {
     type Arg<'a> = QualifiedName<'a>;
 
@@ -78,6 +101,44 @@ impl<'a> Argument<'a> for QualifiedName<'a>
 {
     fn parse<'b>(arg: &'a str) -> Result<Self, &'b str> {
         Ok(create_qn(arg))
+    }
+}
+
+impl Parameter for &rhdl_object_t {
+    type Arg<'a> = &'a rhdl_object_t;
+
+    fn regex() -> &'static Regex {
+        Vec::<&str>::regex()
+    }
+
+    fn usage() -> &'static str {
+        Vec::<&str>::usage()
+    }
+
+    fn completer() -> &'static dyn CommandCompleter {
+        Vec::<&str>::completer()
+    }
+}
+
+impl<'a> Argument<'a> for &'a rhdl_object_t {
+    fn parse<'b>(arg: &'a str) -> Result<Self, &'b str> {
+        let qn = create_qn(arg);
+        let root_resolved = resolve_object_noerr(&qn);
+
+        if root_resolved.is_null() {
+                let err = errstr();
+                let entities = resolve_object_noerr(&["entities"]);
+                assert!(!entities.is_null());
+                let entities_resolved = resolve_with_base_noerr(entities, &qn);
+
+                if entities_resolved.is_null() {
+                    Err(err)
+                } else {
+                    Ok(unsafe{&*entities_resolved})
+                }
+        } else {
+            Ok(unsafe{&*root_resolved})
+        }
     }
 }
 
@@ -720,8 +781,14 @@ impl RHDC {
         }
     }
 
-    fn transform(&mut self, _rep: &QualifiedName, _trans: &QualifiedName)
+    fn transform(&mut self, representation: &&rhdl_object_t, transformation: &&rhdl_object_t, name: &&str)
     {
+        let result_name = CString::new(*name).unwrap();
+        unsafe{rhdlo_transform(*representation, *transformation, result_name.as_ptr())};
+
+        if unsafe{rhdl_errno()} != Errorcode_E_NO_ERROR {
+            perror(&mut self.outputs.err);
+        }
     }
 }
 
@@ -763,7 +830,7 @@ impl interpreter::Processor for RHDC {
         command0("panic", Self::panic, &mut commands);
         command1opt::<RHDC, Vec<&str>>("ls", Self::ls, &mut commands);
         command1::<RHDC, Vec<&str>>("synth", Self::synth, &mut commands);
-        command2::<RHDC, Vec<&str>, Vec<&str>>("transform", Self::transform, &mut commands);
+        command3::<RHDC, &rhdl_object_t, &rhdl_object_t, &str>("transform", Self::transform, &mut commands);
 
         commands
     }
@@ -776,6 +843,15 @@ impl Processor for RHDC {
 }
 
 pub static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
+pub static NO_COMPLETER : NoCompleter =  NoCompleter{};
+
+pub struct NoCompleter {}
+
+impl CommandCompleter for NoCompleter {
+    fn complete(&self, _text: &str) -> Vec<String> {
+        Vec::new()
+    }
+}
 
 pub struct ObjectCompleter {}
 
