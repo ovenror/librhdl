@@ -25,15 +25,18 @@ pub trait Parameter : Sized {
 
     fn completer() -> &'static dyn CommandCompleter;
 
-    fn complete(args: &str) -> Vec<String>
+    fn complete(arg: &str) -> Vec<String>
     {
-        Self::completer().complete(args)
+        Self::completer().complete(arg)
     }
 
-    fn ends_at(args: &str) -> usize {
-        match Self::regex().captures(args) {
-            Some(c) => c.get(0).unwrap().end(),
-            None => 0
+    fn position(arg: &str) -> (usize, usize) {
+        match Self::regex().captures(arg) {
+            Some(c) => {
+                let arg = c.get(0).unwrap();
+                (arg.start(), arg.end())
+            },
+            None => (0, 0)
         }
     }
 }
@@ -68,7 +71,7 @@ pub trait CommandCompleter {
 
 pub trait AbstractCommand<T> {
     fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>>;
-    fn complete(&self, text: &str) -> Vec<String>;
+    fn complete(&self, text: &str) -> (usize, Vec<String>);
     fn name(&self) -> &'static str;
     fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error>;
 
@@ -142,8 +145,8 @@ impl<T> AbstractCommand<T> for NullaryCommand<T> {
         Ok(())
     }
 
-    fn complete(&self, _args: &str) -> Vec<String> {
-        Vec::new()
+    fn complete(&self, _args: &str) -> (usize, Vec<String>) {
+        (0, Vec::new())
     }
 
     fn name(&self) -> &'static str {
@@ -168,8 +171,8 @@ impl<T, P: Parameter> AbstractCommand<T> for UnaryCommand<T, P> {
         }
     }
 
-    fn complete(&self, args: &str) -> Vec<String> {
-        P::complete(args)
+    fn complete(&self, args: &str) -> (usize, Vec<String>) {
+        (0, P::complete(args))
     }
 
     fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
@@ -189,8 +192,8 @@ impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
         }
     }
 
-    fn complete(&self, args: &str) -> Vec<String> {
-        P::complete(args)
+    fn complete(&self, args: &str) -> (usize, Vec<String>) {
+        (0, P::complete(args))
     }
 
     fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
@@ -214,16 +217,18 @@ impl<T, P0: Parameter, P1 : Parameter> AbstractCommand<T> for BinaryCommand<T, P
         }
     }
 
-    fn complete(&self, args: &str) -> Vec<String> {
-        let arg0end = match P0::ends_at(args) {
-            0 => return P0::complete(args),
-            pos => pos,
+    fn complete(&self, args: &str) -> (usize, Vec<String>) {
+        let (arg0start, arg0end) = match P0::position(args) {
+            (0, 0) => return (0, P0::complete(args)),
+            pos => pos
         };
 
-        if arg0end == args.len() {      
-            P0::complete(args)
+        let args_after_0 = &args[arg0end..];
+
+        if args_after_0.len() == 0 {
+            (arg0start, P0::complete(&args[arg0start..]))
         } else {
-            P1::complete(args)
+            (arg0end, P1::complete(args_after_0))
         }
     }
 
@@ -339,16 +344,17 @@ pub trait Processor : Sized {
         match optcmd {
             Some(cmd) => {
                 let args_trimmed = args.trim_start();
-                let mut argcand = cmd.complete(args_trimmed);
+                let (argpos, mut argcand) = cmd.complete(args_trimmed);
 
                 /* FIXME: Condition should be a member of (Abstract)Command */
                 if command == "ls" {
+                    assert!(argpos == 0);
                     argcand.append(&mut self.complete_object_contextually(args_trimmed));
                 }
 
                 let result: Vec<Pair> = argcand.into_iter().
                         map(|arg| {
-                            let (_, new) = arg.split_at(args_trimmed.len());
+                            let (_, new) = arg.split_at(args_trimmed.len() - argpos);
                             new.to_string()}).
                         map(|rep| Pair {
                                 display: rep.to_string(),
