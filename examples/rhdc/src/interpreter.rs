@@ -11,7 +11,7 @@ use regex::Regex;
 use const_format::formatcp;
 
 pub const ALPHA: &'static str = "[A-Za-z]";
-const CMDLINE: &'static str = formatcp!(r"^\s*({}+)\s+", ALPHA);
+const CMDLINE: &'static str = formatcp!(r"^\s*({}+)\s*", ALPHA);
 
 lazy_static! {
     static ref REGEX_CMDLINE: Regex = Regex::new(CMDLINE).unwrap();
@@ -38,18 +38,26 @@ pub trait Parameter : Sized {
     }
 }
 
+pub enum ExtractErr<'a> {
+    Match,
+    Parse(&'a str)
+}
+
 pub trait Argument<'a> : Sized + Parameter
 {
-    fn parse(arg: &'a str) -> Self;
+    fn parse<'b>(arg: &'a str) -> Result<Self, &'b str>;
 
-    fn extract(args: &'a str) -> Option<(Self, usize)>
+    fn extract<'b>(args: &'a str) -> Result<(Self, usize), ExtractErr<'b>>
     {
         match Self::regex().captures(args) {
             Some(c) => {
                 let m = c.get(0).unwrap();
-                Some((Self::parse(m.as_str()), m.end()))
+                match Self::parse(m.as_str()) {
+                    Ok(arg) => Ok((arg, m.end())),
+                    Err(e) => Err(ExtractErr::Parse(e))
+                }
             },
-            None => None
+            None => Err(ExtractErr::Match)
         }
     }
 }
@@ -59,22 +67,22 @@ pub trait CommandCompleter {
 }
 
 pub trait AbstractCommand<T> {
-    fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool;
+    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>>;
     fn complete(&self, text: &str) -> Vec<String>;
     fn name(&self) -> &'static str;
     fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error>;
 
     fn usage(&self, err: &mut dyn Write) {
-        write!(err, "{} ", self.name()).unwrap();
+        write!(err, "usage: {} ", self.name()).unwrap();
         self.param_usage(err).unwrap();
         writeln!(err).unwrap();
     }
 }
 
-type NullaryCommandFn<T> = fn(&mut T) -> bool;
-type UnaryCommandFn<T, Param> = for <'a> fn(&mut T, &<Param as Parameter>::Arg<'a>) -> bool;
-type OptUnaryCommandFn<T, Param> = for <'a> fn(&mut T, Option<&<Param as Parameter>::Arg<'a>>) -> bool;
-type BinaryCommandFn<T, Param0, Param1> = for <'a> fn(&mut T, &<Param0 as Parameter>::Arg<'a>, &<Param1 as Parameter>::Arg<'a>) -> bool;
+type NullaryCommandFn<T> = fn(&mut T);
+type UnaryCommandFn<T, Param> = for <'a> fn(&mut T, &<Param as Parameter>::Arg<'a>);
+type OptUnaryCommandFn<T, Param> = for <'a> fn(&mut T, Option<&<Param as Parameter>::Arg<'a>>);
+type BinaryCommandFn<T, Param0, Param1> = for <'a> fn(&mut T, &<Param0 as Parameter>::Arg<'a>, &<Param1 as Parameter>::Arg<'a>);
 
 /* We need these structs to encapsulate the command function, because we
 * cannot simply implement AbstractCommand for *CommandFn, because then
@@ -112,7 +120,7 @@ struct OptUnaryCommand<T, P: Parameter> {
 impl <T, P: Parameter> OptUnaryCommand<T, P> {
     fn new(name: &'static str, func: OptUnaryCommandFn<T, P>) -> Self
     {
-        Self{name, func: func}
+        Self{name, func}
     }
 
 }
@@ -124,13 +132,14 @@ struct BinaryCommand<T, P0: Parameter, P1: Parameter> {
 impl <T, P0: Parameter, P1: Parameter> BinaryCommand<T, P0, P1> {
     fn new(name: &'static str, func: BinaryCommandFn<T, P0, P1>) -> Self
     {
-        Self{name, func: func}
+        Self{name, func}
     }
 }
 
 impl<T> AbstractCommand<T> for NullaryCommand<T> {
-    fn exec(&self, processor: &mut T, _args: &str) -> bool {
-        (self.func)(processor)
+    fn exec<'a>(&self, processor: &mut T, _args: &str) -> Result<(), ExtractErr<'a>> {
+        (self.func)(processor);
+        Ok(())
     }
 
     fn complete(&self, _args: &str) -> Vec<String> {
@@ -150,12 +159,12 @@ impl<T> AbstractCommand<T> for NullaryCommand<T> {
 /* Here, GArg is constrained, because it is tied to self, which would not be
  * the case if Self == UnaryCommandFn */
 impl<T, P: Parameter> AbstractCommand<T> for UnaryCommand<T, P> {
-    fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool {
-        let arg = P::Arg::<'a>::extract(args);
+    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
+        let arg = P::Arg::extract(args);
 
         match arg {
-            Some((arg, _)) => (self.func)(processor, &arg),
-            None => false
+            Ok((arg, _)) => Ok((self.func)(processor, &arg)),
+            Err(e) => Err(e)
         }
     }
 
@@ -173,10 +182,10 @@ impl<T, P: Parameter> AbstractCommand<T> for UnaryCommand<T, P> {
 }
 
 impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
-    fn exec<'a>(&'a self, processor: &'a mut T, args: &'a str) -> bool {
-        match P::Arg::<'a>::extract(args) {
-            Some((arg, _)) => (self.func)(processor, Some(&arg)),
-            None => (self.func)(processor, None)
+    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
+        match P::Arg::extract(args) {
+            Ok((arg, _)) => Ok((self.func)(processor, Some(&arg))),
+            Err(_) => Ok((self.func)(processor, None))
         }
     }
 
@@ -194,14 +203,14 @@ impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
 }
 
 impl<T, P0: Parameter, P1 : Parameter> AbstractCommand<T> for BinaryCommand<T, P0, P1> {
-    fn exec(&self, processor: &mut T, args: &str) -> bool {
+    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
         let (arg0, arg0end) = match P0::Arg::extract(args) {
-            Some((arg, pos)) => (arg, pos),
-            None => return false
+            Ok((arg, pos)) => (arg, pos),
+            Err(e) => return Err(e)
         };
         match P1::Arg::extract(&args[arg0end..]) {
-            Some((arg1, _)) => (self.func)(processor, &arg0, &arg1),
-            None => false
+            Ok((arg1, _)) => Ok((self.func)(processor, &arg0, &arg1)),
+            Err(e) => Err(e)
         }
     }
 
@@ -276,12 +285,16 @@ pub trait Processor : Sized {
         };
 
         match command.exec(self, args) {
-            true => true,
-            false => {
-                command.usage(self.stderr());
-                false
+            Ok(_) => (),
+            Err(e) => match e {
+                ExtractErr::Match => command.usage(self.stderr()),
+                ExtractErr::Parse(reason) => {
+                    writeln!(self.stderr(), "{} failed: {}", cmd, reason).unwrap();
+                }
             }
         }
+
+        true
     }
 
     fn eat_fb(self : &mut Self, line: &String) -> bool

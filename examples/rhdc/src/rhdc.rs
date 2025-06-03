@@ -76,8 +76,8 @@ impl Parameter for Vec<&str> {
 
 impl<'a> Argument<'a> for QualifiedName<'a>
 {
-    fn parse(arg: &'a str) -> Self {
-        create_qn(arg)
+    fn parse<'b>(arg: &'a str) -> Result<Self, &'b str> {
+        Ok(create_qn(arg))
     }
 }
 
@@ -523,18 +523,17 @@ impl OuterRHDL {
         }
     }
     
-    fn define(&mut self, arg: &QualifiedName) -> bool {
+    fn define(&mut self, arg: &QualifiedName) {
         self.define_internal(arg, true)
     }
 
-    fn stateful(&mut self, arg: &QualifiedName) -> bool {
+    fn stateful(&mut self, arg: &QualifiedName) {
         self.define_internal(arg, false)
     }
 
-    fn define_internal(&mut self, arg: &QualifiedName, stateless: bool) -> bool {
+    fn define_internal(&mut self, arg: &QualifiedName, stateless: bool) {
         if self.rhdd.is_active() {
             writeln!(self.outputs.err, "Already defining {}", self.rhdd.get_ename()).unwrap();
-            return true;
         }
 
         assert!(arg.len() > 0);
@@ -542,22 +541,18 @@ impl OuterRHDL {
 
         if arg.len() == 0 {
             writeln!(self.outputs.err, "usage: define <qualified name>").unwrap();
-            return true;
         }
 
         self.rhdd.define(arg, stateless);
-        return true;
     }
 
-    fn enddef(&mut self) -> bool {
+    fn enddef(&mut self) {
         if self.rhdd.is_active() {
             self.rhdd.enddef();
         }
         else {
             writeln!(self.outputs.err, "not currently defining a structure").unwrap();
         }
-
-        return true;
     }
     
     fn get_connector(&self, name: &str) -> std::result::Result<*const rhdl_connector_t, ()> {
@@ -648,34 +643,32 @@ impl RHDC {
         }
     }
 
-    fn quit(&mut self) -> bool {
+    fn quit(&mut self) {
         writeln!(self.outputs.out, "Quitting.").unwrap();
         exit(0);
     }
 
-    fn panic(&mut self) -> bool {
+    fn panic(&mut self) {
         writeln!(self.outputs.out, "ok panic").unwrap();
         panic!();
     }
 
-    fn ls_internal<I: Selectable>(&mut self, basename: &str, base: *const I, qn: &QNSlice) -> bool {
+    fn ls_internal<I: Selectable>(&mut self, basename: &str, base: *const I, qn: &QNSlice) {
         let resolved = resolve_with_base_err(base, qn, basename, &mut self.outputs.err);
 
         if resolved.is_null() {
-            return true;
+            return;
         }
         println!("{}", unsafe{&*resolved});
-
-        true
     }
    
-    fn ls(&mut self, arg : Option<&QualifiedName>) -> bool {
+    fn ls(&mut self, arg : Option<&QualifiedName>) {
         let qn = match arg {
             Some(q) => q,
             None => {
                 let ns = resolve_object_err(&[], &mut self.outputs.err);
                 println!("{}", unsafe{&*ns});
-                return true;
+                return;
             }
         };
 
@@ -704,19 +697,19 @@ impl RHDC {
             Err(_) => {
                 write!(self.outputs.err, "Unknown entity {}", basename).unwrap();
                 perror(&mut self.outputs.err);
-                return true;
+                return;
             }
         };
 
         if connector.is_null() {
             writeln!(self.outputs.err, "{} is neither a known entity, nor an identifier used in the current structure definition", basename).unwrap();
-            return true;
+            return;
         }
             
         return self.ls_internal(basename, connector, components);
     }
 
-    fn synth(&mut self, qn: &QualifiedName) -> bool {
+    fn synth(&mut self, qn: &QualifiedName) {
         let ec;
         let name = qn[0];
         let tname = CString::new(name).unwrap();
@@ -725,12 +718,10 @@ impl RHDC {
             write!(self.outputs.err, "{}", name).unwrap();
             perror(&mut self.outputs.err);
         }
-        true
     }
 
-    fn transform(&mut self, _rep: &QualifiedName, _trans: &QualifiedName) -> bool
+    fn transform(&mut self, _rep: &QualifiedName, _trans: &QualifiedName)
     {
-        true
     }
 }
 
