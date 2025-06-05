@@ -161,6 +161,11 @@ macro_rules! cmdimpl {
                         last_end = arg_end;
                     )*
 
+                    //More arguments than expected is an error
+                    if (last_end < args.len()) {
+                        return Err(ExtractErr::Match);
+                    }
+
                     //Prevent compiler from whining when there are no parameters
                     let _ignore = (args, last_end);
                     last_end = 0;
