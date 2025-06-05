@@ -54,7 +54,11 @@ pub trait Argument<'a> : Sized + Parameter
 {
     fn parse<'b>(arg: &'a str) -> Result<Self, &'b str>;
 
-    fn extract<'b>(args: &'a str) -> Result<(Self, usize), ExtractErr<'b>>
+    fn extract<'b>(args: &'a str) -> Result<(Self, usize), ExtractErr<'b>> {
+        Self::do_extract(args)
+    }
+
+    fn do_extract<'b>(args: &'a str) -> Result<(Self, usize), ExtractErr<'b>>
     {
         match Self::regex().captures(args) {
             Some(c) => {
@@ -65,6 +69,38 @@ pub trait Argument<'a> : Sized + Parameter
                 }
             },
             None => Err(ExtractErr::Match)
+        }
+    }
+}
+
+impl<P: Parameter> Parameter for Option<P> {
+    type Arg<'a> = Option<P::Arg<'a>>;
+
+    fn regex() -> &'static Regex {
+        P::regex()
+    }
+
+    fn usage() -> &'static str {
+        P::usage() //FIXME: wrong, need [] instead of <>
+    }
+
+    fn completer() -> &'static dyn CommandCompleter {
+        P::completer()
+    }
+}
+
+impl<'a, A: Argument<'a>> Argument<'a> for Option<A> {
+    fn extract<'b>(args: &'a str) -> Result<(Self, usize), ExtractErr<'b>> {
+        match Self::do_extract(args) {
+            Err(_) => Ok((None, 0)),
+            ok => ok
+        }
+    }
+
+    fn parse<'b>(arg: &'a str) -> Result<Self, &'b str> {
+        match A::parse(arg) {
+            Ok(arg) => Ok(Some(arg)),
+            Err(e) => Err(e)
         }
     }
 }
@@ -86,46 +122,6 @@ pub trait AbstractCommand<T> {
     }
 }
 
-type OptUnaryCommandFn<T, Param> = for <'a> fn(&mut T, Option<&<Param as Parameter>::Arg<'a>>);
-
-/* We need these structs to encapsulate the command function, because we
-* cannot simply implement AbstractCommand for *CommandFn, because then
-* GArg would be unconstrained */
-
-struct OptUnaryCommand<T, P: Parameter> {
-    name: &'static str,
-    func: OptUnaryCommandFn<T, P>,
-}
-
-impl <T, P: Parameter> OptUnaryCommand<T, P> {
-    fn new(name: &'static str, func: OptUnaryCommandFn<T, P>) -> Self
-    {
-        Self{name, func}
-    }
-
-}
-
-impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
-    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
-        match P::Arg::extract(args) {
-            Ok((arg, _)) => Ok((self.func)(processor, Some(&arg))),
-            Err(_) => Ok((self.func)(processor, None))
-        }
-    }
-
-    fn complete(&self, args: &str) -> (usize, Vec<String>) {
-        (0, P::complete(args))
-    }
-
-    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
-        write!(err, "[{}]", P::usage())
-    }
-
-    fn name(&self) -> &'static str {
-        return self.name;
-    }
-}
-
 macro_rules! cmdimpl {
     ($param_count:expr) => {
         cmdimpl!($param_count, );
@@ -144,9 +140,6 @@ macro_rules! cmdimpl {
                     Self{name, func}
                 }
             }
-
-
-
 
             pub fn [<command $param_count>]<T: 'static, $($param: Parameter + 'static),*>(
                 name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>, cmds: &mut Commands<T>)
@@ -229,21 +222,6 @@ cmdimpl!(0);
 cmdimpl!(1, P0);
 cmdimpl!(2, P0, P1);
 cmdimpl!(3, P0, P1, P2);
-
-/*
-pub fn command0<T: 'static> (
-    name: &'static str, func: NullaryCommandFn<T>, cmds: &mut Commands<T>)
-{
-    cmds.insert(name, Box::new(NullaryCommand::new(name, func)));
-}
-    */
-
-pub fn command1opt<T: 'static, P: Parameter + 'static> (
-    name: &'static str, func: OptUnaryCommandFn<T, P>, cmds: &mut Commands<T>)
-{
-    cmds.insert(name, Box::new(OptUnaryCommand::new(name, func)));
-}
-
 
 pub trait Interpreter : Completer {
     fn eat(self : &mut Self, line : &String) -> bool;

@@ -8,7 +8,7 @@ use crate::interpreter::Interpreter;
 use crate::interpreter::Parameter;
 use crate::interpreter::Argument;
 use crate::interpreter::Commands;
-use crate::interpreter::{command0, command1, command1opt, command2, command3};
+use crate::interpreter::{command0, command1, command2, command3};
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::console::Processor;
@@ -723,7 +723,7 @@ impl RHDC {
         println!("{}", unsafe{&*resolved});
     }
    
-    fn ls(&mut self, arg : Option<&QualifiedName>) {
+    fn ls(&mut self, arg : &Option<QualifiedName>) {
         let qn = match arg {
             Some(q) => q,
             None => {
@@ -830,7 +830,7 @@ impl interpreter::Processor for RHDC {
 
         command0("quit", Self::quit, &mut commands);
         command0("panic", Self::panic, &mut commands);
-        command1opt::<RHDC, Vec<&str>>("ls", Self::ls, &mut commands);
+        command1::<RHDC, Option<Vec<&str>>>("ls", Self::ls, &mut commands);
         command1::<RHDC, Vec<&str>>("synth", Self::synth, &mut commands);
         command2::<RHDC, &rhdl_object_t, &rhdl_object_t>("test", Self::test, &mut commands);
         command3::<RHDC, &rhdl_object_t, &rhdl_object_t, &str>("transform", Self::transform, &mut commands);
