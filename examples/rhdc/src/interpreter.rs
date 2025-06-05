@@ -1,3 +1,5 @@
+extern crate paste;
+
 use std::collections::HashMap;
 use std::io::Write;
 use std::usize;
@@ -9,6 +11,8 @@ use rustyline::error::ReadlineError;
 use lazy_static::lazy_static;
 use regex::Regex;
 use const_format::formatcp;
+
+use paste::paste;
 
 pub const ALPHA: &'static str = "[A-Za-z]";
 const CMDLINE: &'static str = formatcp!(r"^\s*({}+)\s*", ALPHA);
@@ -82,41 +86,11 @@ pub trait AbstractCommand<T> {
     }
 }
 
-type NullaryCommandFn<T> = fn(&mut T);
-type UnaryCommandFn<T, Param> = for <'a> fn(&mut T, &<Param as Parameter>::Arg<'a>);
 type OptUnaryCommandFn<T, Param> = for <'a> fn(&mut T, Option<&<Param as Parameter>::Arg<'a>>);
-type BinaryCommandFn<T, Param0, Param1> = for <'a> fn(&mut T, &<Param0 as Parameter>::Arg<'a>, &<Param1 as Parameter>::Arg<'a>);
-type TernaryCommandFn<T, Param0, Param1, Param2> = for <'a> fn(
-    &mut T, &<Param0 as Parameter>::Arg<'a>, &<Param1 as Parameter>::Arg<'a>,
-    &<Param2 as Parameter>::Arg<'a>);
 
 /* We need these structs to encapsulate the command function, because we
 * cannot simply implement AbstractCommand for *CommandFn, because then
 * GArg would be unconstrained */
-
-struct NullaryCommand<T> {
-    name: &'static str,
-    func: NullaryCommandFn<T>,
-}
-
-impl <T> NullaryCommand<T> {
-    fn new(name: &'static str, func: NullaryCommandFn<T>) -> Self
-    {
-        Self{name, func}
-    }
-}
-
-struct UnaryCommand<T, P: Parameter> {
-    name: &'static str,
-    func: UnaryCommandFn<T, P>,
-}
-
-impl <T, P: Parameter> UnaryCommand<T, P> {
-    fn new(name: &'static str, func: UnaryCommandFn<T, P>) -> Self
-    {
-        Self{name, func}
-    }
-}
 
 struct OptUnaryCommand<T, P: Parameter> {
     name: &'static str,
@@ -129,73 +103,6 @@ impl <T, P: Parameter> OptUnaryCommand<T, P> {
         Self{name, func}
     }
 
-}
-struct BinaryCommand<T, P0: Parameter, P1: Parameter> {
-    name: &'static str,
-    func: BinaryCommandFn<T, P0, P1>,
-}
-
-impl <T, P0: Parameter, P1: Parameter> BinaryCommand<T, P0, P1> {
-    fn new(name: &'static str, func: BinaryCommandFn<T, P0, P1>) -> Self
-    {
-        Self{name, func}
-    }
-}
-struct TernaryCommand<T, P0: Parameter, P1: Parameter, P2: Parameter> {
-    name: &'static str,
-    func: TernaryCommandFn<T, P0, P1, P2>,
-}
-
-impl <T, P0: Parameter, P1: Parameter, P2: Parameter> TernaryCommand<T, P0, P1, P2> {
-    fn new(name: &'static str, func: TernaryCommandFn<T, P0, P1, P2>) -> Self
-    {
-        Self{name, func}
-    }
-}
-
-impl<T> AbstractCommand<T> for NullaryCommand<T> {
-    fn exec<'a>(&self, processor: &mut T, _args: &str) -> Result<(), ExtractErr<'a>> {
-        (self.func)(processor);
-        Ok(())
-    }
-
-    fn complete(&self, _args: &str) -> (usize, Vec<String>) {
-        (0, Vec::new())
-    }
-
-    fn name(&self) -> &'static str {
-        self.name
-    }
-
-    fn param_usage(&self, _err: &mut dyn Write) -> Result<(), std::io::Error>
-    {
-        Ok(())
-    }
-}
-
-/* Here, GArg is constrained, because it is tied to self, which would not be
- * the case if Self == UnaryCommandFn */
-impl<T, P: Parameter> AbstractCommand<T> for UnaryCommand<T, P> {
-    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
-        let arg = P::Arg::extract(args);
-
-        match arg {
-            Ok((arg, _)) => Ok((self.func)(processor, &arg)),
-            Err(e) => Err(e)
-        }
-    }
-
-    fn complete(&self, args: &str) -> (usize, Vec<String>) {
-        (0, P::complete(args))
-    }
-
-    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
-        write!(err, "<{}>", P::usage())
-    }
-
-    fn name(&self) -> &'static str {
-        return self.name;
-    }
 }
 
 impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
@@ -219,105 +126,117 @@ impl<T, P: Parameter> AbstractCommand<T> for OptUnaryCommand<T, P> {
     }
 }
 
-impl<T, P0: Parameter, P1 : Parameter> AbstractCommand<T> for BinaryCommand<T, P0, P1> {
-    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
-        let (arg0, arg0end) = match P0::Arg::extract(args) {
-            Ok((arg, pos)) => (arg, pos),
-            Err(e) => return Err(e)
-        };
-        match P1::Arg::extract(&args[arg0end..]) {
-            Ok((arg1, _)) => Ok((self.func)(processor, &arg0, &arg1)),
-            Err(e) => Err(e)
+macro_rules! cmdimpl {
+    ($param_count:expr) => {
+        cmdimpl!($param_count, );
+    };
+    ($param_count:expr, $($param:ident),*) => {
+        paste! {
+            type [<CmdFn $param_count>]<T, $($param),*> = for <'a> fn(&mut T, $(&<$param as Parameter>::Arg<'a>),*);
+
+            struct [<Cmd $param_count>]<T, $($param: Parameter),*> {
+                name: &'static str,
+                func: [<CmdFn $param_count>]<T, $($param),*>
+            }
+
+            impl <T, $($param: Parameter),*> [<Cmd $param_count>]<T, $($param),*> {
+                pub fn new(name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>) -> Self {
+                    Self{name, func}
+                }
+            }
+
+
+
+
+            pub fn [<command $param_count>]<T: 'static, $($param: Parameter + 'static),*>(
+                name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>, cmds: &mut Commands<T>)
+            {
+                cmds.insert(name, Box::new([<Cmd $param_count>]::new(name, func)));
+            }
+
+            impl <T, $($param: Parameter),*> AbstractCommand<T> for [<Cmd $param_count>]<T, $($param),*> {
+                fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
+                    let mut last_end = 0;
+
+                    $(
+                        let ([<arg_ $param:lower>], arg_end) = match $param::Arg::extract(&args[last_end..]) {
+                            Ok((arg, end)) => (arg, last_end + end),
+                            Err(e) => return Err(e)
+                        };
+
+                        let [<argref_ $param:lower>] = &[<arg_ $param:lower>];
+                        last_end = arg_end;
+                    )*
+
+                    //Prevent compiler from whining when there are no parameters
+                    let _ignore = (args, last_end);
+                    last_end = 0;
+                    let _ignore2 = last_end;
+
+                    Ok((self.func)(processor, $([<argref_ $param:lower>],)* ))
+                }
+
+                fn complete(&self, args: &str) -> (usize, Vec<String>) {
+                    let mut remaining_args = args;
+                    let mut last_end = 0;
+
+                    $(
+                        let (arg_start, arg_end) = match $param::position(remaining_args) {
+                            (0, 0) => return (last_end, $param::complete(remaining_args)),
+                            (start, end) => (last_end + start, last_end + end)
+                        };
+
+                        assert!(arg_end <= args.len());
+
+                        if arg_end == args.len() {
+                            return (arg_start, $param::complete(remaining_args));
+                        }
+
+                        last_end = arg_end;
+                        remaining_args = &args[last_end..];
+                    )*
+
+                    //Prevent compiler from whining when there are no parameters
+                    let _ignore = (args, remaining_args, last_end);
+                    remaining_args = &args;
+                    last_end = 0;
+                    let _ignore2 = (remaining_args, last_end);
+
+                    (0, Vec::new())
+                }
+
+                fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
+                    $(
+                        match write!(err, "<{}> ", $param::usage()) {
+                            Ok(()) => (),
+                            Err(e) => return Err(e)
+                        }
+                    )*
+
+                    let _ignore = err;
+                    return Ok(())
+                }
+
+                fn name(&self) -> &'static str {
+                    return self.name;
+                }
+            }
         }
-    }
-
-    fn complete(&self, args: &str) -> (usize, Vec<String>) {
-        let (arg0start, arg0end) = match P0::position(args) {
-            (0, 0) => return (0, P0::complete(args)),
-            pos => pos
-        };
-
-        let args_after_0 = &args[arg0end..];
-
-        if args_after_0.len() == 0 {
-            (arg0start, P0::complete(&args[arg0start..]))
-        } else {
-            (arg0end, P1::complete(args_after_0))
-        }
-    }
-
-    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
-        write!(err, "<{}> <{}>", P0::usage(), P1::usage())
-    }
-
-    fn name(&self) -> &'static str {
-        return self.name;
-    }
+    };
 }
 
-impl<T, P0: Parameter, P1 : Parameter, P2 : Parameter> AbstractCommand<T> for TernaryCommand<T, P0, P1, P2> {
-    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), ExtractErr<'a>> {
-        let (arg0, arg0end) = match P0::Arg::extract(args) {
-            Ok((arg, pos)) => (arg, pos),
-            Err(e) => return Err(e)
-        };
-        let (arg1, arg1end) = match P1::Arg::extract(&args[arg0end..]) {
-            Ok((arg, pos)) => (arg, pos + arg0end),
-            Err(e) => return Err(e)
-        };
+cmdimpl!(0);
+cmdimpl!(1, P0);
+cmdimpl!(2, P0, P1);
+cmdimpl!(3, P0, P1, P2);
 
-        match P2::Arg::extract(&args[arg1end..]) {
-            Ok((arg2, _)) => Ok((self.func)(processor, &arg0, &arg1, &arg2)),
-            Err(e) => Err(e)
-        }
-    }
-
-    fn complete(&self, args: &str) -> (usize, Vec<String>) {
-        let (arg0start, arg0end) = match P0::position(args) {
-            (0, 0) => return (0, P0::complete(args)),
-            pos => pos
-        };
-
-        let args_after_0 = &args[arg0end..];
-
-        if args_after_0.len() == 0 {
-            return (arg0start, P0::complete(&args[arg0start..]))
-        }
-
-        let (arg1start, arg1end) = match P1::position(args_after_0) {
-            (0, 0) => return (arg0end, P1::complete(args_after_0)),
-            (start, end) => (start + arg0end, end + arg0end)
-        };
-
-        let args_after_1 = &args[arg1end..];
-
-        if args_after_1.len() == 0 {
-            (arg1start, P1::complete(&args[arg1start..]))
-        } else {
-            (arg1end, P2::complete(args_after_1))
-        }
-    }
-
-    fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
-        write!(err, "<{}> <{}> <{}>", P0::usage(), P1::usage(), P2::usage())
-    }
-
-    fn name(&self) -> &'static str {
-        return self.name;
-    }
-}
-
+/*
 pub fn command0<T: 'static> (
     name: &'static str, func: NullaryCommandFn<T>, cmds: &mut Commands<T>)
 {
     cmds.insert(name, Box::new(NullaryCommand::new(name, func)));
 }
-
-pub fn command1<T: 'static, P: Parameter + 'static> (
-    name: &'static str, func: UnaryCommandFn<T, P>, cmds: &mut Commands<T>)
-{
-    cmds.insert(name, Box::new(UnaryCommand::new(name, func)));
-}
+    */
 
 pub fn command1opt<T: 'static, P: Parameter + 'static> (
     name: &'static str, func: OptUnaryCommandFn<T, P>, cmds: &mut Commands<T>)
@@ -325,18 +244,6 @@ pub fn command1opt<T: 'static, P: Parameter + 'static> (
     cmds.insert(name, Box::new(OptUnaryCommand::new(name, func)));
 }
 
-
-pub fn command2<T: 'static, P0 : Parameter + 'static, P1 : Parameter + 'static> (
-    name: &'static str, func: BinaryCommandFn<T, P0, P1>, cmds: &mut Commands<T>)
-{
-    cmds.insert(name, Box::new(BinaryCommand::new(name, func)));
-}
-
-pub fn command3<T: 'static, P0 : Parameter + 'static, P1 : Parameter + 'static, P2 : Parameter + 'static> (
-    name: &'static str, func: TernaryCommandFn<T, P0, P1, P2>, cmds: &mut Commands<T>)
-{
-    cmds.insert(name, Box::new(TernaryCommand::new(name, func)));
-}
 
 pub trait Interpreter : Completer {
     fn eat(self : &mut Self, line : &String) -> bool;
@@ -423,6 +330,14 @@ pub trait Processor : Sized {
                     assert!(argpos == 0);
                     argcand.append(&mut self.complete_object_contextually(args_trimmed));
                 }
+
+                /*
+                 * "cmd    lol  gna"
+                 *     ~~~~~~~~~~~~ <- args, len() = 11
+                 *         ~~~~~~~~ <- args_trimmed, len() = 7
+                 *              ^   <- argpos = 5
+                 *
+                 */
 
                 let result: Vec<Pair> = argcand.into_iter().
                         map(|arg| {
