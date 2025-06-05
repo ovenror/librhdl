@@ -29,6 +29,10 @@ pub trait Parameter : Sized {
 
     fn completer() -> &'static dyn CommandCompleter;
 
+    fn usage_gr() -> String {
+        return "<".to_string() + Self::usage() + ">"
+    }
+
     fn complete(arg: &str) -> Vec<String>
     {
         Self::completer().complete(arg)
@@ -80,8 +84,12 @@ impl<P: Parameter> Parameter for Option<P> {
         P::regex()
     }
 
+    fn usage_gr() -> String {
+        return "[".to_string() + Self::usage() + "]"
+    }
+
     fn usage() -> &'static str {
-        P::usage() //FIXME: wrong, need [] instead of <>
+        P::usage()
     }
 
     fn completer() -> &'static dyn CommandCompleter {
@@ -205,7 +213,7 @@ macro_rules! cmdimpl {
 
                 fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error> {
                     $(
-                        match write!(err, "<{}> ", $param::usage()) {
+                        match write!(err, "{} ", $param::usage_gr()) {
                             Ok(()) => (),
                             Err(e) => return Err(e)
                         }
