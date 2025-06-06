@@ -315,6 +315,7 @@ pub trait Processor : Sized {
                 let prompt_size = if self.interactive() {
                     self.prompt_size()
                 } else {
+                    writeln!(self.stderr(), "{}", orig).unwrap();
                     0
                 };
 
