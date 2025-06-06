@@ -50,6 +50,7 @@ pub trait Parameter : Sized {
 }
 
 pub enum ExtractErr<'a> {
+    Missing,
     Match,
     Parse(&'a str)
 }
@@ -60,13 +61,13 @@ pub trait Argument<'a> : Sized + Parameter
 
     fn extract<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>> {
         if from >= args.len() {
-            Err(ExtractErr::Match)
+            Err(ExtractErr::Missing)
         } else {
-            Self::do_extract(args, from)
+            Self::extract_something(args, from)
         }
     }
 
-    fn do_extract<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>>
+    fn extract_something<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>>
     {
         assert!(from < args.len());
 
@@ -74,7 +75,15 @@ pub trait Argument<'a> : Sized + Parameter
             Some(c) => {
                 let m = c.get(0).unwrap();
                 match Self::parse(m.as_str()) {
-                    Ok(arg) => Ok((arg, from + m.end())),
+                    Ok(arg) => {
+                        let end = from + m.end();
+                        let mut delim = args[end - 1..].chars();
+                        if delim.next().unwrap().is_whitespace() || delim.next().unwrap_or(' ').is_whitespace() {
+                            Ok((arg, end))
+                        } else {
+                            Err(ExtractErr::Match)
+                        }
+                    },
                     Err(e) => Err(ExtractErr::Parse(e))
                 }
             },
@@ -109,10 +118,7 @@ impl<'a, A: Argument<'a>> Argument<'a> for Option<A> {
             return Ok((None, from))
         }
 
-        match Self::do_extract(args, from) {
-            Err(_) => Ok((None, 0)),
-            ok => ok
-        }
+        Self::extract_something(args, from)
     }
 
     fn parse<'b>(arg: &'a str) -> Result<Self, &'b str> {
@@ -202,12 +208,8 @@ macro_rules! cmdimpl {
                         let ([<arg_ $param:lower>], arg_end) = match $param::Arg::extract(&args, next_at) {
                             Ok(result) => result,
                             Err(e) => return Err(match e {
-                                ExtractErr::Match =>
-                                    if next_at == args.len() {
-                                        (expect_next_at, ExecErr::TooFew)
-                                    } else {
-                                        (next_at, ExecErr::Match)
-                                    },
+                                ExtractErr::Missing => (expect_next_at, ExecErr::TooFew),
+                                ExtractErr::Match => (next_at, ExecErr::Match),
                                 ExtractErr::Parse(reason) => (next_at, ExecErr::Parse(reason))
                             })
                         };

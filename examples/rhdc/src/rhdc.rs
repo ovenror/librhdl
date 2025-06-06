@@ -41,7 +41,8 @@ const COMPLETE: &'static str = formatcp!(r"^({0})?(({1})(({0}))?)?$", QUALIFIED,
 const OPERATORS: &'static [&'static str] = &["->","<-",":"];
 
 lazy_static! {
-    static ref REGEX_ID: Regex = Regex::new(formatcp!(r"^{}$", IDENTIFIER)).unwrap();
+    static ref REGEX_ID_ONLY: Regex = Regex::new(formatcp!(r"^{}$", IDENTIFIER)).unwrap();
+    static ref REGEX_ID: Regex = Regex::new(formatcp!(r"^{}", IDENTIFIER)).unwrap();
     static ref REGEX_QN: Regex = Regex::new(formatcp!(r"^{}", QUALIFIED)).unwrap();
     static ref REGEX_RHDD: Regex = Regex::new(COMPLETE).unwrap();
     static ref REGEX_NONE: Regex = Regex::new(r"^$").unwrap();
@@ -226,7 +227,7 @@ impl InnerRHDL {
             panic!("already defining {}", self.ename);
         }
 
-        assert!(qn.len() > 1);
+        assert!(qn.len() >= 1);
 
         let (&ename, ns_qn) = qn.split_last().unwrap();
 
@@ -513,7 +514,7 @@ impl Completer for InnerRHDL {
                 let ocandstart = id1str.len() - id1str_trimmed.len();
 
                 match ocand.len() {
-                    0 => if REGEX_ID.is_match(line) {
+                    0 => if REGEX_ID_ONLY.is_match(line) {
                             (pos, vec![" : ".to_string()])
                         } else {
                             (0, Vec::new())
