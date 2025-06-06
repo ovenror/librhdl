@@ -300,6 +300,8 @@ pub trait Processor : Sized {
     fn fallback_mut(&mut self) -> &mut Self::Fallback;
     fn fallback(&self) -> &Self::Fallback;
     fn stderr(&mut self) -> &mut dyn Write;
+    fn interactive(&self) -> bool;
+    fn prompt_size(&self) -> usize;
 
     fn exec(&mut self, cmds: &Commands<Self>, cmd: &str, args: &str, orig: &String) -> bool {
         let command = match cmds.get(cmd) {
@@ -309,7 +311,15 @@ pub trait Processor : Sized {
 
         match command.exec(self, args) {
             Ok(_) => (),
-            Err(e) => command.error(self.stderr(), e, 2)
+            Err(e) => {
+                let prompt_size = if self.interactive() {
+                    self.prompt_size()
+                } else {
+                    0
+                };
+
+                command.error(self.stderr(), e, prompt_size)
+            }
         }
 
         true

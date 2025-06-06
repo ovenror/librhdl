@@ -679,6 +679,14 @@ impl<'a> interpreter::Processor for OuterRHDL {
 
         return self.rhdd.complete(line, pos, ctx)
     }
+
+    fn prompt_size(&self) -> usize {
+        self.prompt_info().len() + 2
+    }
+
+    fn interactive(&self) -> bool {
+        self.outputs.interactive
+    }
 }
 
 impl<'a> Processor for OuterRHDL {
@@ -837,6 +845,14 @@ impl interpreter::Processor for RHDC {
         command3::<RHDC, &rhdl_object_t, &rhdl_object_t, &str>("transform", Self::transform, &mut commands);
 
         commands
+    }
+
+    fn prompt_size(&self) -> usize {
+        self.prompt_info().len() + 2
+    }
+
+    fn interactive(&self) -> bool {
+        self.outputs.interactive
     }
 }
 
