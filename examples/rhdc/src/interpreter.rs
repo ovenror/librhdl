@@ -38,13 +38,36 @@ pub trait Parameter : Sized {
         Self::completer().complete(&args[from..])
     }
 
-    fn position(args: &str, from: usize) -> (usize, usize) {
-        match Self::regex().captures(&args[from..]) {
+    fn extract<'a, 'b>(args: &'a str, from: usize) -> Result<(&'a str, usize), ExtractErr<'b>>
+    {
+        if from >= args.len() {
+            return Err(ExtractErr::Missing)
+        }
+
+        let args_from = &args[from..];
+
+        match Self::regex().captures(args_from) {
             Some(c) => {
-                let arg = c.get(0).unwrap();
-                (from + arg.start(), from + arg.end())
+                let m = c.get(0).unwrap();
+                assert!(m.start() == 0);
+                let end = m.end();
+
+                assert!(end <= args_from.len());
+
+                if end == args_from.len() || args_from[end..].chars().next().unwrap().is_whitespace() {
+                    Ok((&args_from[..end], from + end))
+                } else {
+                    Err(ExtractErr::Match)
+                }
             },
-            None => (0, 0)
+            None => Err(ExtractErr::Match)
+        }
+    }
+
+    fn position(args: &str, from: usize) -> (usize, usize) {
+        match Self::extract(args, from) {
+            Ok((_, end)) => (from, end),
+            Err(_) => (0, 0)
         }
     }
 }
@@ -57,37 +80,16 @@ pub enum ExtractErr<'a> {
 
 pub trait Argument<'a> : Sized + Parameter
 {
-    fn parse<'b>(arg: &'a str) -> Result<Self, &'b str>;
+    fn parse_extracted<'b>(arg: &'a str) -> Result<Self, &'b str>;
 
-    fn extract<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>> {
-        if from >= args.len() {
-            Err(ExtractErr::Missing)
-        } else {
-            Self::extract_something(args, from)
-        }
-    }
-
-    fn extract_something<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>>
+    fn parse<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>>
     {
-        assert!(from < args.len());
-
-        match Self::regex().captures(&args[from..]) {
-            Some(c) => {
-                let m = c.get(0).unwrap();
-                match Self::parse(m.as_str()) {
-                    Ok(arg) => {
-                        let end = from + m.end();
-                        let mut delim = args[end - 1..].chars();
-                        if delim.next().unwrap().is_whitespace() || delim.next().unwrap_or(' ').is_whitespace() {
-                            Ok((arg, end))
-                        } else {
-                            Err(ExtractErr::Match)
-                        }
-                    },
-                    Err(e) => Err(ExtractErr::Parse(e))
-                }
-            },
-            None => Err(ExtractErr::Match)
+        match Self::extract(args, from) {
+            Err(e) => Err(e),
+            Ok((argstr, end)) => match Self::parse_extracted(argstr) {
+                Ok(arg) => Ok((arg, end)),
+                Err(e) => Err(ExtractErr::Parse(e))
+            }
         }
     }
 }
@@ -113,16 +115,19 @@ impl<P: Parameter> Parameter for Option<P> {
 }
 
 impl<'a, A: Argument<'a>> Argument<'a> for Option<A> {
-    fn extract<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>> {
-        if from >= args.len() {
-            return Ok((None, from))
+    fn parse<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>> {
+        match Self::extract(args, from) {
+            Ok((argstr, end)) => match Self::parse_extracted(argstr) {
+                Err(e) => Err(ExtractErr::Parse(e)),
+                Ok(arg) => Ok((arg, end))
+            }
+            Err(ExtractErr::Missing) => Ok((None, from)),
+            Err(e) => Err(e)
         }
-
-        Self::extract_something(args, from)
     }
 
-    fn parse<'b>(arg: &'a str) -> Result<Self, &'b str> {
-        match A::parse(arg) {
+    fn parse_extracted<'b>(arg: &'a str) -> Result<Self, &'b str> {
+        match A::parse_extracted(arg) {
             Ok(arg) => Ok(Some(arg)),
             Err(e) => Err(e)
         }
@@ -168,7 +173,7 @@ pub trait AbstractCommand<T> {
     }
 }
 
-fn lws(text: &str) -> usize {
+pub fn lws(text: &str) -> usize {
     text.len() - text.trim_start().len()
 }
 
@@ -205,7 +210,7 @@ macro_rules! cmdimpl {
                     $(
                         assert!(next_at <= args.len());
 
-                        let ([<arg_ $param:lower>], arg_end) = match $param::Arg::extract(&args, next_at) {
+                        let ([<arg_ $param:lower>], arg_end) = match $param::Arg::parse(&args, next_at) {
                             Ok(result) => result,
                             Err(e) => return Err(match e {
                                 ExtractErr::Missing => (expect_next_at, ExecErr::TooFew),
@@ -235,7 +240,6 @@ macro_rules! cmdimpl {
 
                 fn complete(&self, args: &str) -> (usize, Vec<String>) {
                     let mut last_end = 0;
-
                     $(
                         let (arg_start, arg_end) = match $param::position(args, last_end) {
                             (0, 0) => return (last_end, $param::complete(args, last_end)),
