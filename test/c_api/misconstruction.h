@@ -10,3 +10,4 @@ int entityExists();
 int unknownStruct();
 int wrongStruct();
 int passThrough();
+int updateCPPptrInCStruct();

@@ -28,7 +28,10 @@ Port::Port(std::string name)
 			  c_(std::make_unique<Wrapper<Port>>(*this)) {}
 
 Port::Port(std::string name, std::unique_ptr<Wrapper<Port>> c)
-			: Super(RHDL_CONNECTOR, std::move(name)), c_(std::move(c)) {}
+			: Super(RHDL_CONNECTOR, std::move(name)), c_(std::move(c))
+{
+	c_ -> updateCPP(this);
+}
 
 Port::~Port()
 {

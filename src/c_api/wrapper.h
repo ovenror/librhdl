@@ -25,7 +25,7 @@ public:
 	using C_Struct = typename CPP_Class::C_Struct;
 	using Super = Wropper<C_Struct>;
 
-	Wrapper(CPP_Class &cpp) : cpp_(cpp) {}
+	Wrapper(CPP_Class &cpp) : cpp_(&cpp) {}
 	Wrapper(Wrapper &&moved, CPP_Class &cpp);
 	~Wrapper() {magic_ = 0;}
 
@@ -61,6 +61,10 @@ public:
 		return cpp ? &cpp -> c_.content() : nullptr;
 	}
 
+	void updateCPP(CPP_Class *cpp) {
+		cpp_ = cpp;
+	}
+
 private:
 	CPP_Class &recover() {
 		if (magic_ != Magic)
@@ -69,13 +73,13 @@ private:
 		if (id_ != CPP_Class::C_ID)
 			throw ConstructionException(Errorcode::E_WRONG_STRUCT_TYPE);
 
-		return cpp_;
+		return *cpp_;
 	}
 
 	static constexpr long int Magic = 0x04D100A61C000B30;
 	long int magic_ = Magic;
 	const long int id_ = CPP_Class::C_ID;
-	CPP_Class &cpp_;
+	CPP_Class *cpp_;
 };
 
 template <class CPP_Class>
@@ -110,7 +114,7 @@ typename CPP_Class::C_Struct *c_ptr(CPP_Class *cpp)
 
 template<class CPP_Class>
 Wrapper<CPP_Class>::Wrapper(Wrapper &&moved, CPP_Class &cpp)
-	: cpp_(cpp)
+	: cpp_(&cpp)
 {
 	cpp.c_.content_ = moved.content_;
 }

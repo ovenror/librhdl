@@ -64,3 +64,8 @@ TEST(CApi_misconstructionTest,passThrough)
 	EXPECT_TRUE(::passThrough());
 }
 
+TEST(CApi_misconstructionTest,updateCPPptrInCStruct)
+{
+	EXPECT_TRUE(::updateCPPptrInCStruct());
+}
+

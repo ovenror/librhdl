@@ -182,3 +182,30 @@ int passThrough()
 
 	return ACCEPT(rhdl_connect(in, out) == E_ILLEGAL_PASSTHROUGH);
 }
+
+int updateCPPptrInCStruct()
+{
+	rhdl_structure_t *s = rhdl_begin_structure(0, "test", F_CREATE_STATELESS);
+	REQUIRE(s);
+
+	rhdl_connector_t *sc = s -> connector;
+	REQUIRE(sc);
+
+	rhdl_entity_t *i = rhdl_entity(0, "Inverter");
+	REQUIRE(i);
+
+	rhdl_connector_t *ic = rhdl_component(s, i);
+	REQUIRE(ic);
+
+	rhdl_connector_t *i_out = rhdl_select(ic, "out");
+	REQUIRE(i_out);
+
+	REQUIRE_NOERR(rhdl_connect(i_out, sc));
+
+	rhdl_connector_t *s_out = rhdl_select(sc, "out");
+	REQUIRE(s_out);
+
+	REQUIRE_ERR(rhdl_connect(s_out, ic), E_DIFFERENT_TYPES);
+
+	return SUCCESS;
+}
