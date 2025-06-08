@@ -280,7 +280,9 @@ impl InnerRHDL {
 
         let (&ename, ns_qn) = qn.split_last().unwrap();
 
-        let nspace = resolve_namespace_err(ns_qn, &mut self.outputs.err);
+        let nspace = resolve_namespace_err(
+            if ns_qn.is_empty() {&["entities"]} else {ns_qn},
+            &mut self.outputs.err);
 
         if nspace.is_null() {
             return true;
