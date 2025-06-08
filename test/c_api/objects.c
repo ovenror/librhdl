@@ -134,6 +134,8 @@ int transformation()
 
 	REQUIRE(srctype_str);
 	REQUIRE(dsttype_str);
+
+	return SUCCESS;
 }
 
 int wrong()

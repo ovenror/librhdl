@@ -23,7 +23,7 @@ public:
 
 	Transformation(TypeID id, std::string name);
 	Transformation(Transformation &&);
-	//Transformation();
+	virtual ~Transformation() {}
 
 	TypeID typeID() const;
 
