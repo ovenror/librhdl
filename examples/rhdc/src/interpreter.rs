@@ -46,16 +46,19 @@ pub trait Parameter : Sized {
 
         let args_from = &args[from..];
 
+        assert!(lws(args_from) == 0);
+
         match Self::regex().captures(args_from) {
             Some(c) => {
                 let m = c.get(0).unwrap();
                 assert!(m.start() == 0);
-                let end = m.end();
+                let extracted = args_from[..m.end()].trim_end();
+                let extr_len = extracted.len();
 
-                assert!(end <= args_from.len());
+                assert!(extr_len <= args_from.len());
 
-                if end == args_from.len() || args_from[end..].chars().next().unwrap().is_whitespace() {
-                    Ok((&args_from[..end], from + end))
+                if extr_len == args_from.len() || args_from[extr_len..].chars().next().unwrap().is_whitespace() {
+                    Ok((extracted, from + extr_len))
                 } else {
                     Err(ExtractErr::Match)
                 }
@@ -64,10 +67,10 @@ pub trait Parameter : Sized {
         }
     }
 
-    fn position(args: &str, from: usize) -> (usize, usize) {
+    fn ends_at(args: &str, from: usize) -> usize {
         match Self::extract(args, from) {
-            Ok((_, end)) => (from, end),
-            Err(_) => (0, 0)
+            Ok((_, end)) => end,
+            Err(_) => 0
         }
     }
 }
@@ -239,26 +242,27 @@ macro_rules! cmdimpl {
                 }
 
                 fn complete(&self, args: &str) -> (usize, Vec<String>) {
-                    let mut last_end = 0;
+                    let mut next_at = lws(args);
+
                     $(
-                        let (arg_start, arg_end) = match $param::position(args, last_end) {
-                            (0, 0) => return (last_end, $param::complete(args, last_end)),
+                        let arg_end = match $param::ends_at(args, next_at) {
+                            0 => return (next_at, $param::complete(args, next_at)),
                             pos => pos
                         };
 
                         assert!(arg_end <= args.len());
 
                         if arg_end == args.len() {
-                            return (arg_start, $param::complete(args, last_end));
+                            return (next_at, $param::complete(args, next_at));
                         }
 
-                        last_end = arg_end;
+                        next_at = arg_end + lws(&args[arg_end..]);
                     )*
 
                     //Prevent compiler from whining when there are no parameters
-                    let _ignore = (args, last_end);
-                    last_end = 0;
-                    let _ignore2 = last_end;
+                    let _ignore = (args, next_at);
+                    next_at = 0;
+                    let _ignore2 = next_at;
 
                     (0, Vec::new())
                 }
