@@ -4,3 +4,4 @@ int entity();
 int transformation();
 int wrong();
 int transform();
+int transformWrongReptype();

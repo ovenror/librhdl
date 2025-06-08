@@ -386,13 +386,16 @@ rhdl_object_t *rhdlo_transform(
 		const rhdl::Representation &rep = recover<rhdl::CObject>(representation);
 		const rhdl::Transformation &trans = recover<rhdl::CObject>(transformation);
 
-		const rhdl::CObject &result = rhdl::Representation::recover(
-				rhdl_transform(rep.c_ptr(), trans.c_ptr(), result_name));
+		rhdl_representation_t *dst = rhdl_transform(rep.c_ptr(), trans.c_ptr(), result_name);
 
+		if (!dst)
+			return static_cast<rhdl_object_t *>(nullptr);
+
+		const rhdl::CObject &result = rhdl::Representation::recover(dst);
 		return c_ptr(result);
 	};
 
-	return cerror<rhdl_object_t *, 1>(f, std::array<int, 1>{E_WRONG_OBJECT_TYPE});
+	return cerror<rhdl_object_t *, 2>(f, std::array<int, 2>{E_WRONG_OBJECT_TYPE, E_TRANSFORMATION_NOT_APPLICABLE});
 }
 
 rhdl_representation_t* rhdl_transform(rhdl_representation_t *representation,
@@ -407,7 +410,7 @@ rhdl_representation_t* rhdl_transform(rhdl_representation_t *representation,
 		return rep.entity().addRepresentation(trans.execute(rep, name)).c_ptr();
 	};
 
-	return cerror<rhdl_representation_t *, 1>(f, std::array<int, 1>{E_WRONG_OBJECT_TYPE});
+	return cerror<rhdl_representation_t *, 2>(f, std::array<int, 2>{E_WRONG_OBJECT_TYPE, E_TRANSFORMATION_NOT_APPLICABLE});
 }
 
 rhdl_entity_t* rhdlo_entity(rhdl_object_t *o)

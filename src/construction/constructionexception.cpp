@@ -52,6 +52,8 @@ const char *ConstructionException::whatcode() const noexcept
 	case Errorcode::E_NO_SUCH_MEMBER: return "No member with that name exists.";
 	case Errorcode::E_MEMBER_EXISTS: return "A member with that name already exists.";
 
+	case Errorcode::E_TRANSFORMATION_NOT_APPLICABLE: return "The transformation cannot be applied to this representation type";
+
 	case Errorcode::E_WRONG_NAME: return "Fast Simulator interface does not match entity interface: wrong name.";
 	case Errorcode::E_WRONG_TYPE: return "Fast Simulator interface does not match entity interface: wrong type.";
 

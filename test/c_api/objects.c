@@ -173,3 +173,23 @@ int transform()
 
 	return SUCCESS;
 }
+
+int transformWrongReptype()
+{
+	rhdl_object_t *i_netlist = rhdlo_get(rhdlo_get(rhdlo_get(rhdlo_get(0,
+					"entities"), "Inverter"), "representations"),
+					"Inverter_Netlist_0");
+	REQUIRE(i_netlist);
+
+	rhdl_object_t *bgtree = rhdlo_get(rhdlo_get(0,
+					"transformations"), "BGTree");
+	REQUIRE(bgtree);
+
+	rhdl_object_t *dff_tree =
+			rhdlo_transform(i_netlist, bgtree, "MyTree");
+
+	REQUIRE(!dff_tree);
+	REQUIRE_ERR(rhdl_errno(), E_TRANSFORMATION_NOT_APPLICABLE);
+
+	return SUCCESS;
+}

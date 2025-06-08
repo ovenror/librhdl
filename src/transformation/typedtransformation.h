@@ -30,7 +30,10 @@ public:
 			const std::string &result_name = "") const override
 	{
 		auto *typed_source = dynamic_cast<const FromRep *>(&source);
-		assert (typed_source);
+
+		if (!typed_source)
+			throw ConstructionException(rhdl::Errorcode::E_TRANSFORMATION_NOT_APPLICABLE);
+
 		assert (typed_source -> typeID() == FromRep::ID);
 		return execute(*typed_source, std::move(result_name));
 	}

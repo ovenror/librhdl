@@ -34,3 +34,8 @@ TEST(CApi_objectsTest,transform)
 	EXPECT_TRUE(::transform());
 }
 
+TEST(CApi_objectsTest,transformWrongReptype)
+{
+	EXPECT_TRUE(::transformWrongReptype());
+}
+
