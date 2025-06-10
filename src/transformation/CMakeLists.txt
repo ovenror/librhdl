@@ -1,6 +1,7 @@
 target_sources(rhdl_obj
 	PRIVATE
 		bgtree.cpp
+		netlist2tree.cpp
 		structure2netlist.cpp
 		transformation.cpp
 		transformations.cpp

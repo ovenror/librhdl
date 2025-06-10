@@ -181,54 +181,11 @@ TreeModel::~TreeModel() {}
 std::unique_ptr<TreeModel> TreeModel::make(
 		const netlist::Netlist &source, const std::string &name)
 {
-	return make(source, name,
+	return std::make_unique<TreeModel>(
+			source, &source, source.timing(), name,
 			ifilter(source.ifaceMap(), SingleDirection::IN),
 			ifilter(source.ifaceMap(), SingleDirection::OUT));
 }
-
-std::unique_ptr<TreeModel> TreeModel::make(
-		const netlist::Netlist &netlist, const std::string &name,
-		const std::vector<const ISingle*> &lower,
-		const std::vector<const ISingle*> &upper)
-{
-	std::unique_ptr<TreeModel> result;
-	const auto &entity = netlist.entity();
-	auto source = std::cref(netlist);
-	size_t count = 0;
-
-	while (true) {
-		result = std::make_unique<TreeModel>(
-				entity, &source.get(), source.get().timing(), name, lower, upper);
-		auto &model = *result;
-
-#if 0
-		std::stringstream filename;
-		filename << entity.name() << count << ".dot";
-		std::ofstream dotfile(filename.str());
-		dotfile << source.get().graph();
-#endif
-
-		auto vertexMap = model.createModel(source, lower, upper);
-		model.computeSpatial();
-		model.createSegments();
-
-		auto unsynthesizableVertices = model.fixBrokenLinks(vertexMap);
-
-		if (unsynthesizableVertices.empty())
-			break;
-
-		LOG(DEBUG) << source.get().name() << " has unsynthesizable vertices" << std::endl;
-
-		for (auto v : unsynthesizableVertices)
-			LOG(DEBUG) << "split " << v << std::endl;
-
-		source = entity.addRepresentation(Netlist(source, unsynthesizableVertices));
-		++count;
-	}
-
-	return std::move(result);
-}
-
 
 std::map<const Connection *, netlist::VertexRef> TreeModel::createModel(
 		const netlist::Netlist &netlist,
@@ -956,6 +913,14 @@ TreeModel::LayerNodesIterator TreeModel::nodes_begin() const
 TreeModel::LayerNodesIterator TreeModel::nodes_end() const
 {
 	return boost::make_transform_iterator(layers_.cend(), unwrap);
+}
+
+std::map<const Connection*, netlist::VertexRef> TreeModel::createModel(
+		const netlist::Netlist &netlist)
+{
+	return createModel(
+		netlist, ifilter(netlist.ifaceMap(), SingleDirection::IN),
+		ifilter(netlist.ifaceMap(), SingleDirection::OUT));
 }
 
 TreeModel::NodesIterable TreeModel::nodes() const

@@ -57,17 +57,16 @@ public:
 			const std::vector<const ISingle *> &lower,
 			const std::vector<const ISingle *> &upper);
 
+	TreeModel(
+			const Entity &entity, const Representation *parent,
+			const Timing *timing, const std::string &name = "");
+
 	const TreeModel &getModel() const override {return *this;}
 
 	virtual ~TreeModel();
 
 	static std::unique_ptr<TreeModel> make(
 			const netlist::Netlist &source, const std::string &name = "");
-
-	static std::unique_ptr<TreeModel> make(
-			const netlist::Netlist &source, const std::string &name,
-			const std::vector<const ISingle *> &lower,
-			const std::vector<const ISingle *> &upper);
 
 	//TreeModel &getModel() override {return *this;}
 
@@ -102,11 +101,10 @@ public:
 	bool isInterfaceWire(const SingleWire &wire) const;
 	Node &makeInverter(NodeGroup &ng, netlist::EdgeRef edge);
 
-protected:
-	TreeModel(
-			const Entity &entity, const Representation *parent,
-			const Timing *timing, const std::string &name = "");
+	std::map<const Connection *, netlist::VertexRef> createModel(
+			const netlist::Netlist &netlist);
 
+protected:
 	void createShortcuts();
 
 	bool isTopLayer(const ConstructionData &data);

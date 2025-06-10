@@ -13,7 +13,9 @@
 
 // transformations
 #include "transformation/structure2netlist.h"
+#include "transformation/netlist2tree.h"
 // destination types
+#include "representation/spatial/tree/treemodel.h"
 #include "representation/txt/commands.h"
 
 /*
@@ -44,7 +46,7 @@ Transformations::Transformations()
 {
 	Init<
 		StructureToNetlist,
-		DefaultTransformation<netlist::Netlist, spatial::TreeModel>,
+		Netlist2Tree,
 		BGTree,
 		DefaultTransformation<blocks::Blocks, txt::Commands>
 	>::init(*this);
