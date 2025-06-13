@@ -375,27 +375,42 @@ pub trait Processor : Sized {
         
         match optcmd {
             Some(cmd) => {
-                let args_trimmed = args.trim_start();
-                let (argpos, mut argcand) = cmd.complete(args_trimmed);
+                let cursor_pos_in_line_trimmed = pos + line.len() - line_trimmed.len();
+                let args_lws = lws(args);
+                let cursor_pos_in_args = cursor_pos_in_line_trimmed + args.len() - line_trimmed.len();
+                let to_complete = &args[args_lws..cursor_pos_in_args];
+                let (argpos, mut argcand) = cmd.complete(to_complete);
+                let arglen_upto_cursor = to_complete.len() - argpos;
 
                 /* FIXME: Condition should be a member of (Abstract)Command */
                 if command == "ls" {
                     assert!(argpos == 0);
-                    argcand.append(&mut self.complete_object_contextually(args_trimmed));
+                    argcand.append(&mut self.complete_object_contextually(to_complete));
                 }
 
-                /*
-                 * "cmd    lol  gna"
-                 *     ~~~~~~~~~~~~ <- args, len() = 11
-                 *         ~~~~~~~~ <- args_trimmed, len() = 7
-                 *              ^   <- argpos = 5
+                /*            1         2
+                 *  01234567890123456789012
                  *
+                 * "  cmd    lol  gnarf bla"
+                 *  ~~~~~~~~~~~~~~~~~~~~~~~      <- line, len() = 23
+                 *  ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- pos = 17 (cursor position)
+                 *    ~~~~~~~~~~~~~~~~~~~~~      <- line_trimmed, len() = 21
+                 *    ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_line_trimmed = 15
+                 *       ~~~~~~~~~~~~~~~~~~      <- args, len() = 18
+                 *       ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_args = 12
+                 *       ~~~~                    <- args_lws = 4
+                 *           ~~~~~~~~~~~~~~      <- args_trimmed, len() = 14
+                 *           ⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_args_trimmed = 8
+                 *           ~~~~~~~~            <- to_complete, len() = 8
+                 *                   ~~~~~~      <- remainder, len() = 6
+                 *           ⁻⁻⁻⁻⁻^              <- argpos = 5
+                 *               "gnaftl"        <- argcand[0]
+                 *                ~~~            <- arglen_upto_cursor = 3
+                 *                  "ftl"        <- argcand[0][arglen_upto_cursor..]
                  */
 
-                let result: Vec<Pair> = argcand.into_iter().
-                        map(|arg| {
-                            let (_, new) = arg.split_at(args_trimmed.len() - argpos);
-                            new.to_string()}).
+                let result: Vec<Pair> = argcand.iter().
+                        map(|arg| {&arg[arglen_upto_cursor..]}).
                         map(|rep| Pair {
                                 display: rep.to_string(),
                                 replacement: rep.to_string()}).
