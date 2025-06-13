@@ -846,9 +846,9 @@ impl RHDC {
     fn transform(&mut self, representation: &&rhdl_object_t, transformation: &&rhdl_object_t, name: &&str)
     {
         let result_name = CString::new(*name).unwrap();
-        unsafe{rhdlo_transform(*representation, *transformation, result_name.as_ptr())};
+        let result = unsafe{rhdlo_transform(*representation, *transformation, result_name.as_ptr())};
 
-        if unsafe{rhdl_errno()} != Errorcode_E_NO_ERROR {
+        if result.is_null() {
             perror(&mut self.outputs.err);
         }
     }
