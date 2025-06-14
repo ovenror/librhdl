@@ -33,9 +33,10 @@ pub trait Parameter : Sized {
         return "<".to_string() + Self::usage() + ">"
     }
 
-    fn complete(args: &str, from: usize) -> Vec<String>
+    fn complete(args: &str, from: usize) -> (usize, Vec<String>)
     {
-        Self::completer().complete(&args[from..])
+        let (pos, cand) = Self::completer().complete(&args[from..]);
+        (from + pos, cand)
     }
 
     fn extract<'a, 'b>(args: &'a str, from: usize) -> Result<(&'a str, usize), ExtractErr<'b>>
@@ -138,7 +139,7 @@ impl<'a, A: Argument<'a>> Argument<'a> for Option<A> {
 }
 
 pub trait CommandCompleter {
-    fn complete(&self, text: &str) -> Vec<String>;
+    fn complete(&self, text: &str) -> (usize, Vec<String>);
 }
 
 pub enum ExecErr<'a> {
@@ -246,14 +247,14 @@ macro_rules! cmdimpl {
 
                     $(
                         let arg_end = match $param::ends_at(args, next_at) {
-                            0 => return (next_at, $param::complete(args, next_at)),
+                            0 => return $param::complete(args, next_at),
                             pos => pos
                         };
 
                         assert!(arg_end <= args.len());
 
                         if arg_end == args.len() {
-                            return (next_at, $param::complete(args, next_at));
+                            return $param::complete(args, next_at);
                         }
 
                         next_at = arg_end + lws(&args[arg_end..]);
@@ -343,7 +344,7 @@ pub trait Processor : Sized {
         self.fallback_mut().exec(cmd, args, orig)
     }
 
-    fn complete_object_contextually(&self, line: &str) -> Vec<String>;
+    fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>);
 
     fn complete(&self, cmds: &Commands<Self>, line: &str, pos: usize, _ctx: &Context<'_>)
             -> Result<(usize, Vec<Pair>), ReadlineError>
@@ -358,12 +359,14 @@ pub trait Processor : Sized {
                 else {
                     let cmditer2 = cmds.keys();
                     let cmds : Vec<Pair> = cmditer2.
-                            filter(|cmd| cmd.starts_with(&line_trimmed)).
-                            map(|cmd| {let (_, last) = cmd.split_at(pos + line_trimmed.len() - line.len()); last}).
-                            //map(|cmd| cmd.to_string()).
-                            map(|cmd| Pair{
-                                display: cmd.to_string(),
-                                replacement: cmd.to_string()})
+                            filter(|cmd| cmd.starts_with(&line_trimmed))
+                            .map(|cmd| {
+                                let (_, repl) = cmd.split_at(pos + line_trimmed.len() - line.len());
+                                Pair{
+                                    display: cmd.to_string(),
+                                    replacement: repl.to_string()
+                                }
+                            })
                             .collect();
  
                     return Ok((pos, cmds.to_vec()))
@@ -379,41 +382,49 @@ pub trait Processor : Sized {
                 let args_lws = lws(args);
                 let cursor_pos_in_args = cursor_pos_in_line_trimmed + args.len() - line_trimmed.len();
                 let to_complete = &args[args_lws..cursor_pos_in_args];
-                let (argpos, mut argcand) = cmd.complete(to_complete);
-                let arglen_upto_cursor = to_complete.len() - argpos;
+                let (argcand_pos, mut argcand) = cmd.complete(to_complete);
 
                 /* FIXME: Condition should be a member of (Abstract)Command */
-                if command == "ls" {
-                    assert!(argpos == 0);
-                    argcand.append(&mut self.complete_object_contextually(to_complete));
-                }
+                let (allcand_pos, allcand) = if command == "ls" {
+                    let (ctxcand_pos, mut ctxcand) = self.complete_object_contextually(to_complete);
+                    //dbg!(&argcand);
+                    //dbg!(&ctxcand);
+                    assert!(ctxcand.len() == 0 || argcand.len() == 0 || argcand_pos == ctxcand_pos);
+
+                    if ctxcand.is_empty() {
+                        (argcand_pos, argcand)
+                    } else {
+                        argcand.append(&mut ctxcand);
+                        (ctxcand_pos, argcand)
+                    }
+                } else {
+                    (argcand_pos, argcand)
+                };
+
+                let arglen_upto_cursor = to_complete.len() - allcand_pos;
 
                 /*            1         2
                  *  01234567890123456789012
                  *
-                 * "  cmd    lol  gnarf bla"
-                 *  ~~~~~~~~~~~~~~~~~~~~~~~      <- line, len() = 23
-                 *  ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- pos = 17 (cursor position)
-                 *    ~~~~~~~~~~~~~~~~~~~~~      <- line_trimmed, len() = 21
-                 *    ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_line_trimmed = 15
-                 *       ~~~~~~~~~~~~~~~~~~      <- args, len() = 18
-                 *       ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_args = 12
-                 *       ~~~~                    <- args_lws = 4
-                 *           ~~~~~~~~~~~~~~      <- args_trimmed, len() = 14
-                 *           ⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_args_trimmed = 8
-                 *           ~~~~~~~~            <- to_complete, len() = 8
-                 *                   ~~~~~~      <- remainder, len() = 6
-                 *           ⁻⁻⁻⁻⁻^              <- argpos = 5
-                 *               "gnaftl"        <- argcand[0]
-                 *                ~~~            <- arglen_upto_cursor = 3
-                 *                  "ftl"        <- argcand[0][arglen_upto_cursor..]
+                 * "  cmd    lol  hmpf.gnarf bla"
+                 *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~      <- line, len() = 28
+                 *  ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- pos = 22 (cursor position)
+                 *    ~~~~~~~~~~~~~~~~~~~~~~~~~~      <- line_trimmed, len() = 26
+                 *    ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_line_trimmed = 20
+                 *       ~~~~~~~~~~~~~~~~~~~~~~~      <- args, len() = 23
+                 *       ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_args = 17
+                 *       ~~~~                         <- args_lws = 4
+                 *           ~~~~~~~~~~~~~            <- to_complete, len() = 13
+                 *           ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^              <- argcand_pos = 10
+                 *                    "gnaftl"        <- argcand[0]
+                 *                     ~~~            <- arglen_upto_cursor = 3
+                 *                       "ftl"        <- argcand[0][arglen_upto_cursor..]
                  */
 
-                let result: Vec<Pair> = argcand.iter().
-                        map(|arg| {&arg[arglen_upto_cursor..]}).
-                        map(|rep| Pair {
-                                display: rep.to_string(),
-                                replacement: rep.to_string()}).
+                let result: Vec<Pair> = allcand.iter().
+                        map(|arg| Pair {
+                                display: arg.to_string(),
+                                replacement: arg[arglen_upto_cursor..].to_string()}).
                         collect();
                 return Ok((pos, result))
             }

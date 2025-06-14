@@ -3,7 +3,6 @@ extern crate lazy_static;
 extern crate const_format;
 
 use crate::interpreter;
-use crate::interpreter::lws;
 use crate::interpreter::CommandCompleter;
 use crate::interpreter::Interpreter;
 use crate::interpreter::Parameter;
@@ -441,15 +440,13 @@ impl InnerRHDL {
         name == self.ename || self.components.contains_key(name)
     }
 
-    pub fn complete_own_object(&self, qn_str: &str) -> Vec<String> {
-        assert!(lws(qn_str) == 0);
-
+    pub fn complete_own_object(&self, qn_str: &str) -> (usize, Vec<String>) {
         let (basename, basename_trimmed, components) = match qn_str.split_once('.') {
-            None => (qn_str, qn_str.trim_end(), ""),
+            None => (qn_str, qn_str.trim(), ""),
             Some((b, c)) => {
-                let b_trimmed = b.trim_end();
+                let b_trimmed = b.trim();
                 if b_trimmed == "" {
-                    return Vec::new()
+                    return (0, Vec::new())
                 } else {
                     (b, b_trimmed, c)
                 }
@@ -458,7 +455,7 @@ impl InnerRHDL {
 
         if self.is_symbol(basename_trimmed) {
             let (basedmost, last) = match qn_str.rsplit_once(".") {
-                None => (qn_str, ""),
+                None => return (0, vec![qn_str.to_string()]),
                 Some((m,l)) => (m,l)
             };
 
@@ -469,35 +466,37 @@ impl InnerRHDL {
 
             let most_qn = match QualifiedName::try_from(most) {
                 Ok(qn) => qn,
-                Err(_) => return Vec::new()
+                Err(_) => return (0, Vec::new())
             };
 
-            let mosto = resolve_with_base_noerr(
+            let most_resolved = resolve_with_base_noerr(
                 self.get_connector(basename_trimmed), most_qn.slice());
 
-            if mosto.is_null() {
-                return Vec::new();
+            if most_resolved.is_null() {
+                return (0, Vec::new());
             }
 
-            return OBJECT_COMPLETER.complete_last_component(mosto, basedmost, last)
+            return OBJECT_COMPLETER.complete_last_component(most_resolved, basedmost.len(), last)
         }
 
         if components != "" {
-            return Vec::new();
+            return (0, Vec::new());
         }
 
         let mut cand = Vec::<String>::new();
 
         for symbol in self.symbols() {
-            if symbol.starts_with(basename) {
+            if symbol.starts_with(basename_trimmed) {
                 cand.push(symbol.to_string());
             }
         }
 
-        return cand;
+        assert!(basename_trimmed.len() == basename.trim_start().len());
+
+        return (basename.len() - basename_trimmed.len(), cand);
     }
 
-    fn complete_2nd_id(&self, qn: &str, entity: bool) -> Vec<String> {
+    fn complete_2nd_id(&self, qn: &str, entity: bool) -> (usize, Vec<String>) {
         if entity {
             /*
             let (most, last) = match qn.rsplit_once(".") {
@@ -508,24 +507,24 @@ impl InnerRHDL {
 
             let entities_name = CString::new("entities").unwrap();
             let entities = unsafe{rhdlo_get(ptr::null(), entities_name.as_ptr())};
-            let cand_entity = OBJECT_COMPLETER.complete_with_base(entities, "", qn);
+            let (pos, cand_entity) = OBJECT_COMPLETER.complete_with_base(entities, qn);
 
             if cand_entity.is_empty() {
                 OBJECT_COMPLETER.complete(qn)
             } else {
-                cand_entity
+                (pos, cand_entity)
             }
         } else {
             self.complete_own_object(qn)
         }
     }
 
-    fn complete_object_contextually(&self, line: &str) -> Vec<String>
+    fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>)
     {
         if self.is_active() {
             self.complete_own_object(line)
         } else {
-            Vec::new()
+            (0, Vec::new())
         }
     }
 }
@@ -567,7 +566,7 @@ impl Completer for InnerRHDL {
     fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>)
             -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
     {
-        let parsed = Self::parse(line);
+        let parsed = Self::parse(&line[..pos]);
 
         if parsed.parsed == 0{
             return Ok((0, Vec::<Pair>::new()))
@@ -578,50 +577,50 @@ impl Completer for InnerRHDL {
                 let id1 = parsed.id1.unwrap();
                 assert!(id1.start() == 0);
                 let id1str = id1.as_str();
-                let id1str_trimmed = id1str.trim_start();
-                let ocand = self.complete_own_object(id1str_trimmed);
-                let ocandstart = id1str.len() - id1str_trimmed.len();
 
-                match ocand.len() {
-                    0 => if REGEX_ID_ONLY.is_match(line) {
-                            (pos, vec![" : ".to_string()])
-                        } else {
-                            (0, Vec::new())
-                        }
-                    1 => {
-                        /*
-                        println!("WTF start is: {}", start);
-                        println!("WTF cand is: >>>{}<<<", ocand.last().unwrap());
-                        */
-                        (ocandstart, vec![" -> ", " <- "].iter().map(|o| ocand.last().unwrap().to_string() + o).collect())
-                    },
-                    _ => (ocandstart, ocand)
+                if  !id1str.is_empty() &&
+                    id1str.chars().last().unwrap().is_whitespace() /* &&
+                    match QualifiedName::try_from(id1str) {
+                        Err(()) => false,
+                        Ok(qn) => !self.get_connectible(id1str).is_null()
+                    } */
+                {
+                    (pos, vec!["-> ", "<- "].into_iter().map(|s| s.to_string()).collect())
+                } else {
+                    let (ocandstart, ocand) = self.complete_own_object(id1str);
+
+                    match ocand.len() {
+                        0 => if REGEX_ID_ONLY.is_match(line) {
+                                (pos, vec![" : ".to_string()])
+                            } else {
+                                (0, Vec::new())
+                            },
+                        _ => (ocandstart, ocand)
+                    }
                 }
             }
             2 => {
                 let op = parsed.operator.unwrap().as_str();
 
-                (pos, match op {
-                    "-" => vec!["> ".to_string()],
-                    "<" => vec!["- ".to_string()],
+                (pos - 1, match op {
+                    "-" => vec!["-> ".to_string()],
+                    "<" => vec!["<- ".to_string()],
                     _ => Vec::new()
                 })
             }
             3 | 4 => {
                 let id2 = parsed.id2.unwrap();
-                let id2str = id2.as_str();
-                let id2str_trimmed = id2str.trim_start();
-                (
-                    id2.start() + id2str.len() - id2str_trimmed.len(),
-                    self.complete_2nd_id(id2str_trimmed, parsed.operator.unwrap().as_str() == ":"))
+                let (cand_pos, cand) = self.complete_2nd_id(
+                    id2.as_str(), parsed.operator.unwrap().as_str() == ":");
+                (id2.start() + cand_pos, cand)
             }
             _ => panic!("wat: {}", parsed.parsed)
         };
 
-        let (pos, vec) = result;
+        let (cand_pos, vec) = result;
 
         Ok((pos, vec.into_iter().map(|c| Pair{
-            display: c.to_string(), replacement: c.to_string()}).collect()))
+            display: c.to_string(), replacement: c[pos - cand_pos..].to_string()}).collect()))
     }
 }
 
@@ -719,7 +718,7 @@ impl<'a> interpreter::Processor for OuterRHDL {
         self.rhdd.eat(orig)
     }
     
-    fn complete_object_contextually(&self, line: &str) -> Vec<String>
+    fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>)
     {
         return self.rhdd.complete_object_contextually(line);
     }
@@ -882,7 +881,7 @@ impl interpreter::Processor for RHDC {
         &self.rhdl
     }
 
-    fn complete_object_contextually(&self, line: &str) -> Vec<String>
+    fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>)
     {
         return self.rhdl.get_commands().complete_object_contextually(line);
     }
@@ -921,48 +920,52 @@ pub static NO_COMPLETER : NoCompleter =  NoCompleter{};
 pub struct NoCompleter {}
 
 impl CommandCompleter for NoCompleter {
-    fn complete(&self, _text: &str) -> Vec<String> {
-        Vec::new()
+    fn complete(&self, _text: &str) -> (usize, Vec<String>) {
+        (0, Vec::new())
     }
 }
 
 pub struct ObjectCompleter {}
 
 impl ObjectCompleter {
-    fn complete_with_base<S: Selectable>(&self, base: *const S, base_qn: &str, qn_str: &str) -> Vec<String>
+    fn complete_with_base<S: Selectable>(&self, base: *const S, qn_str: &str) -> (usize, Vec<String>)
     {
         assert!(!base.is_null());
 
-        let (most, mostbase, last) = match qn_str.rsplit_once(".") {
-            Some((m, l)) => {
-                let qn = match QualifiedName::try_from(qn_str) {
+        let (most_resolved, most_len, last) = match qn_str.rsplit_once(".") {
+            Some((most, l)) => {
+                let qn = match QualifiedName::try_from(most) {
                     Ok(result) => result,
-                    Err(_) => return Vec::new()
-
+                    Err(_) => return (0, Vec::new())
                 };
 
                 let mb = resolve_with_base_noerr(base, qn.slice());
 
                 if mb.is_null() {
-                    return Vec::new();
+                    return (0, Vec::new());
                 }
 
-                (if base_qn == "" {m.to_string()} else {base_qn.to_string() + "." + m}, mb, l)
+                (mb, most.len(), l)
             },
-            None => (base_qn.to_string(), base, qn_str)
+            None => (base, 0, qn_str)
         };
 
-        self.complete_last_component(mostbase, &most, last)
+        self.complete_last_component(most_resolved, most_len, last)
     }
 
 
-    fn complete_last_component<S: Selectable>(&self, base: *const S, base_qn: &str, last: &str) -> Vec<String>
+    fn complete_last_component<S: Selectable>(&self, base: *const S, base_qn_len: usize, last: &str) -> (usize, Vec<String>)
     {
         assert!(!base.is_null());
         assert!(!last.contains("."));
 
         let mut result = Vec::<String>::new();
         let last_trimmed = last.trim_start();
+
+        assert!(!last_trimmed.contains(char::is_whitespace));
+
+        let lws = last.len() - last_trimmed.len();
+        let pos = if base_qn_len == 0 {0} else {base_qn_len + 1} + lws;
         let members = unsafe{(*base).members()};
         let mut current_name: &str = "";
 
@@ -971,20 +974,14 @@ impl ObjectCompleter {
                 continue;
             }
 
-            let member_lws =
-                String::from_utf8(vec![b' '; last.len() - last_trimmed.len()]).unwrap() + name;
-            let cand = match base_qn {
-                "" => member_lws.to_string(),
-                bqn => format!("{}.{}", bqn, member_lws)
-            };
-            result.push(cand);
+            result.push(name.to_string());
             current_name = name;
         }
 
         let mut current_base = base;
 
         if result.len() != 1 {
-            return result;
+            return (pos, result);
         }
 
         loop {
@@ -1010,20 +1007,20 @@ impl ObjectCompleter {
             }
 
             if result.len() != 1 {
-                return vec![oldresult]
+                return (pos, vec![oldresult])
             }
         }
     }
 }
 
 impl<'a> CommandCompleter for ObjectCompleter {
-    fn complete(&self, text: &str) -> Vec<String>
+    fn complete(&self, text: &str) -> (usize, Vec<String>)
     {
         let (most, last) = match text.rsplit_once('.') {
             None => ("", text),
             Some((m, l)) => {
                 if m.trim() == "" {
-                    return Vec::new()
+                    return (0, Vec::new())
                 } else {
                     (m,l)
                 }
@@ -1032,16 +1029,16 @@ impl<'a> CommandCompleter for ObjectCompleter {
 
         let most_qn = match QualifiedName::try_from(most) {
             Ok(qn) => qn,
-            Err(_) => return Vec::new()
+            Err(_) => return (0, Vec::new())
         };
 
         let base = resolve_object_noerr(most_qn.slice());
 
         if base.is_null() {
-            return Vec::<String>::new()
+            return (0, Vec::new())
         }
 
-        self.complete_last_component(base, most, last)
+        self.complete_last_component(base, most.len(), last)
     }
 }
 
@@ -1137,17 +1134,20 @@ mod tests {
     #[test]
     fn object_completer_complete_last_single() {
         let base_qn = "entities.Inverter.interface";
-        let cand = OBJECT_COMPLETER.complete_last_component(
-            resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn, "i");
+        let (pos, cand) = OBJECT_COMPLETER.complete_last_component(
+            resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn.len(), "i");
+        assert!(pos == base_qn.len() + 1);
         assert!(cand.len() == 1);
-        assert!(cand.last().unwrap() == "entities.Inverter.interface.in.direction");
+        dbg!(cand.last().unwrap());
+        assert!(cand.last().unwrap() == "in.direction");
     }
 
     #[test]
     fn object_completer_complete_last_none() {
         let base_qn = "entities.Inverter.interface.in.direction";
-        let cand = OBJECT_COMPLETER.complete_last_component(
-            resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn, "");
+        let (pos, cand) = OBJECT_COMPLETER.complete_last_component(
+            resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn.len(), "");
+        assert!(pos == base_qn.len() + 1);
         assert!(cand.is_empty());
     }
 }

@@ -8,6 +8,7 @@ use crate::interpreter::SimpleInterpreter;
 use crate::wod::WriteOrDie;
 use crate::stdemerg::StdEmerg;
 
+use rustyline::config::Configurer;
 use rustyline_derive::{Helper, Completer, Highlighter, Hinter, Validator};
 use rustyline::error::ReadlineError;
 use rustyline::history::DefaultHistory;
@@ -146,6 +147,7 @@ impl Console {
             //validator: MatchingBracketValidator::new()
         };
         rl.set_helper(Some(h));
+        rl.set_completion_type(rustyline::CompletionType::List);
 
         /*
         if rl.load_history("history.txt").is_err() {
