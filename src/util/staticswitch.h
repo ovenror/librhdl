@@ -64,6 +64,31 @@ public:
 	using Switch = typename DoSwitch<SWITCH, DEFAULT, CASES...>::result;
 };
 
+template <>
+struct Setup<Class, Class> {
+	template <class CASE, class RESULT> struct Case;
+
+private:
+	template <class SWITCH, class DEFAULT, class... CASES>
+	struct DoSwitch {
+		using result = DEFAULT;
+	};
+
+	template <
+			class SWITCH, class DEFAULT,
+			class CASE, class RESULT,
+			class... CASES>
+	struct DoSwitch<SWITCH, DEFAULT, Case<CASE, RESULT>, CASES...> {
+		using result = std::conditional_t<
+				std::is_same_v<CASE, SWITCH>,
+				RESULT, typename DoSwitch<SWITCH, DEFAULT, CASES...>::result>;
+	};
+
+public:
+	template <class SWITCH, class DEFAULT, class... CASES>
+	using Switch = typename DoSwitch<SWITCH, DEFAULT, CASES...>::result;
+};
+
 }}
 
 #endif /* SRC_UTIL_STATICSWITCH_H_ */
