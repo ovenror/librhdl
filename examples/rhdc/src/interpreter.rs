@@ -458,17 +458,6 @@ impl<C: Processor> SimpleInterpreter<C> {
     pub fn get_processor(&self) -> &C {
         &self.processor
     }
-
-    fn crop_candidate(c: &Pair, by: usize) -> Pair {
-        let (_, d) = c.display.split_at(by);
-        let (_, r) = c.replacement.split_at(by);
-
-        Pair{display: d.to_string(), replacement: r.to_string()}
-    }
-
-    fn crop_candidates(v: &Vec<Pair>, by: usize) -> Vec<Pair> {
-        v.into_iter().map(|c| Self::crop_candidate(c, by)).collect()
-    }
 }
 
 impl<C : Processor> Interpreter for SimpleInterpreter<C>
@@ -520,15 +509,7 @@ impl<'a, C : Processor> Completer for SimpleInterpreter<C> {
             return Ok((p1, vec1))
         }
 
-        if p1 < p2 {
-            vec1 = Self::crop_candidates(&vec1, p2 - p1);
-            p1 = p2;
-        }
-
-        if p2 < p1 {
-            vec2 = Self::crop_candidates(&vec2, p1 - p2);
-        }
-
+        assert!(p1 == p2);
         vec1.append(&mut vec2);
         return Ok((p1, vec1))
     }
