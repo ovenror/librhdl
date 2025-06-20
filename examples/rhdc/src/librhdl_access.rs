@@ -6,6 +6,7 @@ use std::fmt;
 use std::ffi::CString;
 use std::ffi::CStr;
 use std::io::Write;
+use std::ptr;
 
 pub fn errstr() -> &'static str {
     let eptr = unsafe {rhdl_errstr()};
@@ -61,6 +62,16 @@ pub trait Selectable : fmt::Display {
     fn fmt_short(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
         self.fmt(f)
+    }
+}
+
+pub trait Root : Selectable {
+    fn root_() -> *const Self;
+
+    fn root() -> *const Self {
+        let result = Self::root_();
+        assert!(!result.is_null());
+        result
     }
 }
 
@@ -143,6 +154,12 @@ impl Selectable for rhdl_namespace_t {
     }
 }
 
+impl Root for rhdl_namespace_t {
+    fn root_() -> *const Self {
+        unsafe {rhdl_namespace(ptr::null(), ptr::null())}
+    }
+}
+
 fn translate_otype<'a>(t: rhdl_type) -> &'a str {
     unsafe{CStr::from_ptr(rhdl_type_names[t as usize])}.to_str().unwrap()
 }
@@ -170,6 +187,12 @@ impl Selectable for rhdl_object_t {
         } else {
             Ok(())
         }
+    }
+}
+
+impl Root for rhdl_object_t {
+    fn root_() -> *const Self {
+        unsafe {rhdlo_get(ptr::null(), ptr::null())}
     }
 }
 
