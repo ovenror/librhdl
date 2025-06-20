@@ -248,6 +248,16 @@ fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn 
     return curbase
 }
 
+pub fn resolve_with_bases_noerr<S: Selectable>(bases : &Vec<(*const S, &str)>, qn : &QNSlice) -> *const S
+{
+    resolve_with_bases(bases, qn, &mut NOPResolveErrorCollector::new())
+}
+
+pub fn resolve_with_bases_err<S: Selectable>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut dyn Write) -> *const S
+{
+    resolve_with_bases(bases, qn, &mut PrintingResolveErrorCollector::new(err))
+}
+
 fn resolve_with_bases<S: Selectable, E: ResolveErrorHandler, C: ResolveErrorCollector<E>>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut C) -> *const S
 {
     for (base, basename) in bases.into_iter() {
@@ -267,8 +277,6 @@ fn resolve_with_bases<S: Selectable, E: ResolveErrorHandler, C: ResolveErrorColl
 #[cfg(test)]
 mod tests {
     use std::ffi::{CStr, CString};
-    use std::io::stdout;
-
     use super::*;
 
     #[test]
@@ -335,9 +343,9 @@ mod tests {
         let entities = unsafe{rhdlo_get(root, entities_cstr.as_ptr())};
         let trans_cstr = CString::new("transformations").unwrap();
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
-        resolve_with_bases(
+        resolve_with_bases_noerr(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
-            &["Inverter", "in"], &mut NOPResolveErrorCollector::new());
+            &["Inverter", "in"]);
     }
 
     #[test]
@@ -347,9 +355,9 @@ mod tests {
         let entities = unsafe{rhdlo_get(root, entities_cstr.as_ptr())};
         let trans_cstr = CString::new("transformations").unwrap();
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
-        resolve_with_bases(
+        resolve_with_bases_noerr(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
-            &["Inverter", "lol", "bla"], &mut NOPResolveErrorCollector::new());
+            &["Inverter", "lol", "bla"]);
     }
 
     #[test]
