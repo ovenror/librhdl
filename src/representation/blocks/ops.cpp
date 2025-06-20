@@ -9,12 +9,51 @@
 
 #include "util/marray_slicing_3D.h"
 #include "util/marray_eiterator.h"
+#include "util/util.h"
+#include "util/staticswitch.h"
 
 #include <array>
 #include <cassert>
 
 namespace rhdl {
 namespace blocks {
+
+template <class T>
+constexpr bool isConstNoRef =
+		std::is_const_v<T> ||
+		std::is_same_v<T, ConstLine> ||
+		std::is_same_v<T, ConstWall> ||
+		std::is_same_v<T, ConstCuboid>;
+
+template <class T>
+constexpr bool isConst = isConstNoRef<std::remove_reference_t<T>>;
+
+
+using Setup = staticswitch::Setup<staticswitch::Class, staticswitch::Class>;
+
+template <class SWITCH, class DEFAULT, class... CASES>
+using Switch = Setup::Switch<SWITCH, DEFAULT, CASES...>;
+
+template <class CASE, class RESULT>
+using Case = Setup::Case<CASE, RESULT>;
+
+template <class T>
+using View =
+		Switch<std::remove_reference_t<T>, T,
+			Case<Container, Cuboid>,
+			Case<const Container, ConstCuboid>
+			>;
+
+template <class VIEW>
+using Constify =
+		Switch<VIEW, VIEW,
+			Case<Line, ConstLine>,
+			Case<Wall, ConstWall>,
+			Case<Cuboid, ConstCuboid>
+			>;
+
+template <class VIEW, bool CONST>
+using CondConstify = std::conditional_t<CONST, Constify<VIEW>, VIEW>;
 
 
 Vec2 dimensions(const Wall &wall)
@@ -68,6 +107,7 @@ CVec csidestep(const DimGE3 &blocks, Vec origin, Direction direction)
 }
 
 template CVec csidestep(const Cuboid &blocks, Vec origin, Direction direction);
+template CVec csidestep(const ConstCuboid &blocks, Vec origin, Direction direction);
 template CVec csidestep(const Container &blocks, Vec origin, Direction direction);
 
 Vec toGlobal(const Cuboid &blocks, Vec v)
@@ -83,7 +123,9 @@ Vec toGlobal(const Cuboid &blocks, Vec v)
 }
 
 template <class DimGE2>
-static Line slice1_internal(DimGE2 &&blocks, FullIndex<typename std::remove_reference<DimGE2>::type> position, Axis axis, index_t length)
+static CondConstify<Line, isConst<DimGE2>> slice1_internal(
+		DimGE2 &&blocks, FullIndex<typename std::remove_reference<DimGE2>::type> position,
+		Axis axis, index_t length)
 {
 	return std::forward<DimGE2>(blocks)[marray::mkIndex1<std::remove_reference<DimGE2>::type::dimensionality>(position, axis, length)];
 }
@@ -103,7 +145,17 @@ Line slice1(Cuboid blocks, Vec position, Axis axis, index_t length)
 	return slice1_internal(blocks, position, axis, length);
 }
 
+ConstLine slice1(ConstCuboid blocks, Vec position, Axis axis, index_t length)
+{
+	return slice1_internal(blocks, position, axis, length);
+}
+
 Line slice1(Container &blocks, Vec position, Axis axis, index_t length)
+{
+	return slice1_internal(blocks, position, axis, length);
+}
+
+ConstLine slice1(const Container &blocks, Vec position, Axis axis, index_t length)
 {
 	return slice1_internal(blocks, position, axis, length);
 }
@@ -130,7 +182,8 @@ Wall slice2(Container &blocks, Vec position, Axis normal, Vec2 dimensions)
 }
 
 template<class DimGE3>
-static Cuboid slice3_internal(DimGE3 &&blocks, Vec position, Vec dimensions)
+static CondConstify<Cuboid, isConst<DimGE3>> slice3_internal(
+			DimGE3 &&blocks, Vec position, Vec dimensions)
 {
 	return std::forward<DimGE3>(blocks)[boost::indices
 			[dimensions[0]?range(position[0], position[0]+dimensions[0]):range().start(position[0])]
@@ -144,6 +197,11 @@ Cuboid slice3(Cuboid blocks, Vec position, Vec dimensions)
 }
 
 Cuboid slice3(Container &blocks, Vec position, Vec dimensions)
+{
+	return slice3_internal(blocks, position, dimensions);
+}
+
+ConstCuboid slice3(const Container &blocks, Vec position, Vec dimensions)
 {
 	return slice3_internal(blocks, position, dimensions);
 }

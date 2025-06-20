@@ -1,6 +1,9 @@
 #include "blocks.h"
 #include "simulation/blockssim.h"
+#include "representation/spatial/tree/treemodel.h"
+#include "transformation/bgtree.h"
 #include <cassert>
+#include <sstream>
 
 namespace rhdl::blocks {
 
@@ -48,6 +51,21 @@ std::vector<Vec> Blocks::validSides(const Vec &origin) const
 std::array<CVec, 4> Blocks::allSides(const Vec &origin) const
 {
 	return blocks::allSides(the_blocks_, origin);
+}
+
+inline void Blocks::compute_content(std::string &content) const
+{
+	if (!parent() || parent() -> typeID() != spatial::TreeModel::ID) {
+		Super::compute_content(content);
+	}
+
+	std::stringstream ss;
+	const auto lol = BGTree::project(slice3({0,0,0}));
+	const auto &bol = lol;
+	//std::cout << bol;
+	//static_cast<std::ostream &>(ss) << bol;
+	rhdl::operator <<(ss, bol);
+	content = ss.str();
 }
 
 #if 0

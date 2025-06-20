@@ -26,10 +26,10 @@ public:
 			const spatial::TreeModel &source,
 			const std::string &result_name = "") const override;
 
-	static boost::multi_array<char, 2> project(blocks::Cuboid blocks);
+	static boost::multi_array<char, 2> project(blocks::ConstCuboid blocks);
 
 private:
-	static char project(blocks::Line line, bool shortCut);
+	static char project(const blocks::ConstLine &line, bool shortCut);
 };
 
 std::ostream &operator<<(std::ostream &os, const boost::multi_array<char, 2> &ascii_img);

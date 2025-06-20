@@ -48,6 +48,7 @@ Line slice1(Line line, index_t position, index_t length = 0);
 Line slice1(Wall blocks, Vec2 position, Axis axis, index_t length = 0);
 Line slice1(Cuboid blocks, Vec position, Axis axis, index_t length = 0);
 Line slice1(Container &blocks, Vec position, Axis axis, index_t length = 0);
+ConstLine slice1(const Container &blocks, Vec position, Axis axis, index_t length = 0);
 
 Wall slice2(Wall wall, Vec2 position, Vec2 dimensions= {0,0});
 Wall slice2(Cuboid blocks, Vec position, Axis normal, Vec2 dimensions = {0,0});
@@ -55,6 +56,7 @@ Wall slice2(Container &blocks, Vec position, Axis normal, Vec2 dimensions = {0,0
 
 Cuboid slice3(Cuboid blocks, Vec position, Vec dimensions = {0,0,0});
 Cuboid slice3(Container &blocks, Vec position, Vec dimensions = {0,0,0});
+ConstCuboid slice3(const Container &blocks, Vec position, Vec dimensions = {0,0,0});
 
 void project2(Cuboid blocks, Axis axis, Wall target);
 void project2(Container &blocks, Axis axis, Wall target);

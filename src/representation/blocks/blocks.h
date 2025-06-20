@@ -22,7 +22,9 @@ namespace blocks {
 
 class Blocks : public MappedRepresentation<Blocks, BlockRef>
 {
+	using Super = MappedRepresentation<Blocks, BlockRef>;
 	static_assert(ID == RHDL_BLOCKS);
+
 public:
 	Blocks(
 			const Entity &entity, const Representation *parent,
@@ -65,12 +67,14 @@ public:
 	Line slice1(Vec position, Axis axis, index_t length = 0);
 	Wall slice2(Vec position, Axis normal, Vec2 dimensions = {0,0});
 	Cuboid slice3(Vec position, Vec dimensions = {0,0,0});
+	ConstCuboid slice3(Vec position, Vec dimensions = {0,0,0}) const;
 
 	void project2(Axis axis, Wall target);
 
 	void fill(Block value);
 
 private:
+	void compute_content(std::string&) const override;
 	bool existsElementRef(BlockRef) override;
 
 	Container the_blocks_;
@@ -107,6 +111,11 @@ inline Wall Blocks::slice2(Vec position, Axis normal, Vec2 dimensions)
 }
 
 inline Cuboid Blocks::slice3(Vec position, Vec dimensions)
+{
+	return blocks::slice3(the_blocks_, position, dimensions);
+}
+
+inline ConstCuboid Blocks::slice3(Vec position, Vec dimensions) const
 {
 	return blocks::slice3(the_blocks_, position, dimensions);
 }

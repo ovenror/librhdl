@@ -60,11 +60,12 @@ protected:
 
 	Representation(const Entity &entity);
 
+	virtual void compute_content(std::string&) const;
+	const Representation *parent() const {return parent_;}
+
 private:
 	size_t register_descendant() const;
-	virtual void compute_content(std::string&) const;
 	const rhdl_representation *&cparent() {return c_.content().parent;}
-	const Representation *parent() const {return parent_;}
 
 	const TypeID typeID_;
 	const Entity &entity_;

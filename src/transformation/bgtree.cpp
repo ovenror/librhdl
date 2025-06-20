@@ -41,12 +41,17 @@ std::unique_ptr<Blocks> BGTree::execute(
 	return result;
 }
 
-static bool maybeShortcut(const blocks::Cuboid &blocks, blocks::Vec invBlockPosStart)
+/* Check whether the inverter at invBlockPosStart could be shortcut-connected,
+ * i.e. powering a wire directly underneath instead of a wire in front of it.
+ */
+static bool maybeShortcut(const blocks::ConstCuboid &blocks, blocks::Vec invBlockPosStart)
 {
 	using blocks::Direction;
 
+	// positions walking to the left and the right from the inverter
 	std::array<blocks::CVec, 2> lr;
 
+	// first, initialize to inverter position
 	for (unsigned int idx = 0; idx <= 1; ++idx) {
 		lr[idx].first = true;
 		lr[idx].second = invBlockPosStart;
@@ -73,6 +78,8 @@ static bool maybeShortcut(const blocks::Cuboid &blocks, blocks::Vec invBlockPosS
 			blocks::Vec abov = blocks::above(theSide);
 			blocks::Vec belo = blocks::below(theSide);
 
+			/* FIXME: Does the perpendicular wire below really have to
+			 * take the whole breadth? */
 			if (blocks::index(blocks, belo) != Block::REDSTONE)
 				return false;
 
@@ -80,6 +87,7 @@ static bool maybeShortcut(const blocks::Cuboid &blocks, blocks::Vec invBlockPosS
 				return blocks::index(blocks, abov) != Block::REDSTONE;
 			}
 
+			// now do the walking step (dir = left or right)
 			side = blocks::csidestep(blocks, theSide, dir);
 		}
 	}
@@ -87,7 +95,7 @@ static bool maybeShortcut(const blocks::Cuboid &blocks, blocks::Vec invBlockPosS
 	return false;
 }
 
-boost::multi_array<char, 2> BGTree::project(blocks::Cuboid blocks)
+boost::multi_array<char, 2> BGTree::project(blocks::ConstCuboid blocks)
 {
 	blocks::index_t width = blocks::dimensions(blocks)[1];
 	blocks::index_t height = blocks::dimensions(blocks)[2];
@@ -104,7 +112,7 @@ boost::multi_array<char, 2> BGTree::project(blocks::Cuboid blocks)
 	return result;
 }
 
-char BGTree::project(blocks::Line line, bool shortCut)
+char BGTree::project(const blocks::ConstLine &line, bool shortCut)
 {
 	using blocks::Direction;
 	using blocks::RIGHT;
