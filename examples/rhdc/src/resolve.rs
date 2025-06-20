@@ -135,9 +135,7 @@ pub fn resolve_object_err(qn : &QNSlice, err: &mut dyn Write) -> *const rhdl_obj
 
 fn resolve_object<E: ResolveErrorHandler>(qn : &QNSlice, err: &mut E) -> *const rhdl_object_t
 {
-    let root: *const rhdl_object_t = unsafe{rhdlo_get(ptr::null(), ptr::null())};
-    assert!(!root.is_null());
-    resolve_with_base(root, qn, err)
+    resolve_with_base(rhdl_object_t::root(), qn, err)
 }
 
 pub fn resolve_namespace_noerr(qn : &QNSlice) -> *const rhdl_namespace_t
@@ -152,9 +150,7 @@ pub fn resolve_namespace_err(qn : &QNSlice, err: &mut dyn Write) -> *const rhdl_
 
 fn resolve_namespace<E: ResolveErrorHandler>(qn : &QNSlice, err: &mut E) -> *const rhdl_namespace_t
 {
-    let root: *const rhdl_namespace_t = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
-    assert!(!root.is_null());
-    resolve_with_base(root, qn, err)
+    resolve_with_base(rhdl_namespace_t::root(), qn, err)
 }
 
 pub fn resolve_with_object_noerr(base: *const rhdl_object_t, qn : &QNSlice) -> *const rhdl_object_t
