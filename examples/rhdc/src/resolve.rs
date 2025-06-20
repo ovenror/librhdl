@@ -25,7 +25,13 @@ impl QNAccumulator {
         self.qn += component;
     }
 
-    fn get_qn(&self) -> &str {&self.qn}
+    fn get_qn(&self) -> &str {
+        if self.qn.starts_with(".") {
+            &self.qn[1..]
+        } else {
+            &self.qn
+        }
+    }
 }
 trait ResolveErrorHandler {
     fn record(&mut self, _component: &str);
@@ -119,44 +125,36 @@ pub type QNSlice<'a> = [&'a str];
 
 pub fn resolve_object_noerr(qn : &QNSlice) -> *const rhdl_object_t
 {
-    resolve_object(qn, Option::None)
+    resolve_object(qn, &mut NOPResolveErrorHandler::new())
 }
 
 pub fn resolve_object_err(qn : &QNSlice, err: &mut dyn Write) -> *const rhdl_object_t
 {
-    resolve_object(qn, Some(err))
+    resolve_object(qn, &mut PrintingResolveErrorHandler::new(err, ""))
 }
 
-fn resolve_object(qn : &QNSlice, err: Option<&mut dyn Write>) -> *const rhdl_object_t
+fn resolve_object<E: ResolveErrorHandler>(qn : &QNSlice, err: &mut E) -> *const rhdl_object_t
 {
     let root: *const rhdl_object_t = unsafe{rhdlo_get(ptr::null(), ptr::null())};
-    return match err {
-        Some(stream) => resolve_with_base(
-            root, qn,
-            &mut PrintingResolveErrorHandler::new(
-                stream, unsafe{CStr::from_ptr((*root).name)}.to_str().unwrap())),
-        None => resolve_with_base(root, qn, &mut NOPResolveErrorHandler::new())
-    }
+    assert!(!root.is_null());
+    resolve_with_base(root, qn, err)
 }
 
 pub fn resolve_namespace_noerr(qn : &QNSlice) -> *const rhdl_namespace_t
 {
-    resolve_namespace(qn, Option::None)
+    resolve_namespace(qn, &mut NOPResolveErrorHandler::new())
 }
 
 pub fn resolve_namespace_err(qn : &QNSlice, err: &mut dyn Write) -> *const rhdl_namespace_t
 {
-    resolve_namespace(qn, Some(err))
+    resolve_namespace(qn, &mut PrintingResolveErrorHandler::new(err, ""))
 }
 
-fn resolve_namespace(qn : &QNSlice, err: Option<&mut dyn Write>) -> *const rhdl_namespace_t
+fn resolve_namespace<E: ResolveErrorHandler>(qn : &QNSlice, err: &mut E) -> *const rhdl_namespace_t
 {
     let root: *const rhdl_namespace_t = unsafe{rhdl_namespace(ptr::null(), ptr::null())};
-    return match err {
-        Some(stream) => resolve_with_base(
-            root, qn, &mut PrintingResolveErrorHandler::new(stream, "root")),
-        None => resolve_with_base(root, qn, &mut NOPResolveErrorHandler::new())
-    }
+    assert!(!root.is_null());
+    resolve_with_base(root, qn, err)
 }
 
 pub fn resolve_with_object_noerr(base: *const rhdl_object_t, qn : &QNSlice) -> *const rhdl_object_t
