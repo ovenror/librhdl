@@ -5,7 +5,6 @@ use crate::librhdl_access::*;
 
 use std::io::Write;
 use std::ptr;
-use std::ffi::CStr;
 
 struct QNAccumulator {
     qn: String
@@ -121,6 +120,59 @@ impl ActiveResolveErrorHandler for DeferringResolveErrorHandler {
     fn accu(&mut self) -> &mut QNAccumulator {&mut self.accu}
 }
 
+trait ResolveErrorCollector<H: ResolveErrorHandler> {
+    fn new_handler(&mut self, basename: &str) -> &mut H;
+    fn whine(&mut self);
+}
+
+struct PrintingResolveErrorCollector<'a> {
+    stream: &'a mut dyn Write,
+    handlers: Vec<DeferringResolveErrorHandler>
+}
+
+impl<'a> PrintingResolveErrorCollector<'a> {
+    fn new(stream: &'a mut dyn Write) -> Self
+    {
+        Self {stream, handlers: Vec::new()}
+    }
+}
+
+impl<'a> ResolveErrorCollector<DeferringResolveErrorHandler>
+        for PrintingResolveErrorCollector<'a>
+{
+    fn new_handler(&mut self, basename: &str) -> &mut DeferringResolveErrorHandler {
+        self.handlers.push(DeferringResolveErrorHandler::new(basename));
+        self.handlers.last_mut().unwrap()
+    }
+
+    fn whine(&mut self) {
+        for handler in self.handlers.iter() {
+            handler.whine_later(&mut self.stream);
+        }
+    }
+}
+
+struct NOPResolveErrorCollector {
+    handler: NOPResolveErrorHandler
+}
+
+impl NOPResolveErrorCollector {
+    fn new() -> Self
+    {
+        Self {handler: NOPResolveErrorHandler::new()}
+    }
+}
+
+impl ResolveErrorCollector<NOPResolveErrorHandler>
+        for NOPResolveErrorCollector
+{
+    fn new_handler(&mut self, _basename: &str) -> &mut NOPResolveErrorHandler {
+        &mut self.handler
+    }
+
+    fn whine(&mut self) {}
+}
+
 pub type QNSlice<'a> = [&'a str];
 
 pub fn resolve_object_noerr(qn : &QNSlice) -> *const rhdl_object_t
@@ -196,30 +248,25 @@ fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn 
     return curbase
 }
 
-pub fn resolve_with_bases<S: Selectable>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut dyn Write) -> *const S
+fn resolve_with_bases<S: Selectable, E: ResolveErrorHandler, C: ResolveErrorCollector<E>>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut C) -> *const S
 {
-    let mut handlers: Vec<DeferringResolveErrorHandler> = Vec::new();
-
     for (base, basename) in bases.into_iter() {
-        let mut handler = DeferringResolveErrorHandler::new(*basename);
-        let result = resolve_with_base(*base, qn, &mut handler);
-        handlers.push(handler);
+        let handler = err.new_handler(basename);
+        let result = resolve_with_base(*base, qn, handler);
 
         if !result.is_null() {
             return result
         }
     }
 
-    for handler in handlers.into_iter() {
-        handler.whine_later(err);
-    }
+    err.whine();
 
     return ptr::null();
 }
 
 #[cfg(test)]
 mod tests {
-    use std::ffi::CString;
+    use std::ffi::{CStr, CString};
     use std::io::stdout;
 
     use super::*;
@@ -278,7 +325,7 @@ mod tests {
         let entities = unsafe{rhdlo_get(ptr::null(), entities_cstr.as_ptr())};
         resolve_with_bases(
             &vec![(entities, "entities")],
-            &["Inverter", "in"], &mut stdout());
+            &["Inverter", "in"], &mut NOPResolveErrorCollector::new());
     }
 
     #[test]
@@ -290,7 +337,7 @@ mod tests {
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
         resolve_with_bases(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
-            &["Inverter", "in"], &mut stdout());
+            &["Inverter", "in"], &mut NOPResolveErrorCollector::new());
     }
 
     #[test]
@@ -302,7 +349,7 @@ mod tests {
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
         resolve_with_bases(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
-            &["Inverter", "lol", "bla"], &mut stdout());
+            &["Inverter", "lol", "bla"], &mut NOPResolveErrorCollector::new());
     }
 
     #[test]
