@@ -248,31 +248,87 @@ fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn 
     return curbase
 }
 
-pub fn resolve_with_bases_noerr<S: Selectable>(bases : &Vec<(*const S, &str)>, qn : &QNSlice) -> *const S
+pub fn resolve_with_bases_noerr<S: Selectable, R: ResolveResult<S>>(bases : &Vec<(*const S, &str)>, qn : &QNSlice) -> R
 {
     resolve_with_bases(bases, qn, &mut NOPResolveErrorCollector::new())
 }
 
-pub fn resolve_with_bases_err<S: Selectable>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut dyn Write) -> *const S
+pub fn resolve_with_bases_err<S: Selectable, R: ResolveResult<S>>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut dyn Write) -> R
 {
     resolve_with_bases(bases, qn, &mut PrintingResolveErrorCollector::new(err))
 }
 
-fn resolve_with_bases<S: Selectable, E: ResolveErrorHandler, C: ResolveErrorCollector<E>>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut C) -> *const S
+fn resolve_with_bases<
+        S: Selectable, E: ResolveErrorHandler, C: ResolveErrorCollector<E>,
+        R: ResolveResult<S>> (
+                bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut C) -> R
 {
+    let mut result = R::new();
+
     for (base, basename) in bases.into_iter() {
         let handler = err.new_handler(basename);
-        let result = resolve_with_base(*base, qn, handler);
+        let resolved = resolve_with_base(*base, qn, handler);
 
-        if !result.is_null() {
-            return result
+        if !resolved.is_null() {
+            result.add(resolved);
+        }
+
+        if result.done() {
+            break
         }
     }
 
-    err.whine();
+    if result.is_empty() {
+        err.whine()
+    }
 
-    return ptr::null();
+    result
 }
+
+pub trait ResolveResult<S: Selectable> {
+    fn new() -> Self;
+    fn add(&mut self, resolved: *const S);
+    fn done(&self) -> bool;
+    fn is_empty(&self) -> bool;
+}
+
+
+impl<S: Selectable> ResolveResult<S> for *const S {
+    fn new() -> Self {
+        ptr::null()
+    }
+
+    fn add(&mut self, resolved: *const S) {
+        *self = resolved;
+    }
+
+    fn done(&self) -> bool {
+        !self.is_empty()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.is_null()
+    }
+}
+
+impl<S: Selectable> ResolveResult<S> for Vec<*const S> {
+    fn new() -> Self {
+        Vec::new()
+    }
+
+    fn add(&mut self, resolved: *const S) {
+        self.push(resolved)
+    }
+
+    fn done(&self) -> bool {
+        false
+    }
+
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -331,9 +387,11 @@ mod tests {
     fn resolve_with_1_bases() {
         let entities_cstr = CString::new("entities").unwrap();
         let entities = unsafe{rhdlo_get(ptr::null(), entities_cstr.as_ptr())};
-        resolve_with_bases(
+        let result: Vec<*const rhdl_object_t> = resolve_with_bases_noerr(
             &vec![(entities, "entities")],
-            &["Inverter", "in"], &mut NOPResolveErrorCollector::new());
+            &["Inverter", "interface", "in"]);
+        assert!(result.len() == 1);
+        assert!(!result.last().unwrap().is_null())
     }
 
     #[test]
@@ -343,9 +401,11 @@ mod tests {
         let entities = unsafe{rhdlo_get(root, entities_cstr.as_ptr())};
         let trans_cstr = CString::new("transformations").unwrap();
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
-        resolve_with_bases_noerr(
+        let result: Vec<*const rhdl_object_t> = resolve_with_bases_noerr(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
-            &["Inverter", "in"]);
+            &["Inverter", "interface", "in"]);
+        assert!(result.len() == 1);
+        assert!(!result.last().unwrap().is_null())
     }
 
     #[test]
@@ -355,9 +415,10 @@ mod tests {
         let entities = unsafe{rhdlo_get(root, entities_cstr.as_ptr())};
         let trans_cstr = CString::new("transformations").unwrap();
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
-        resolve_with_bases_noerr(
+        let result: Vec<*const rhdl_object_t> = resolve_with_bases_noerr(
             &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
             &["Inverter", "lol", "bla"]);
+        assert!(result.is_empty());
     }
 
     #[test]
