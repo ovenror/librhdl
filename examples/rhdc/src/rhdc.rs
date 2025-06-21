@@ -901,8 +901,6 @@ impl<'a> Processor for RHDC<'a> {
     }
 }
 
-pub static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
-
 pub struct NoCompleter {}
 
 impl CommandCompleter for NoCompleter {
@@ -920,9 +918,30 @@ impl CompleterFactory for NoCompleter {
     }
 }
 
-pub struct ObjectCompleter {}
+pub struct ObjectCompleter<'a> {
+    bases : Vec<(*const rhdl_object_t, &'a str)>
+}
 
-impl ObjectCompleter {
+impl<'a> ObjectCompleter<'a> {
+    fn new(baseqnstrs: &[&'a str]) -> Self
+    {
+        let mut bases = Vec::<(*const rhdl_object_t, &'a str)>::new();
+        bases.push((rhdl_object_t::root(), ""));
+
+        for qnstr in baseqnstrs.iter() {
+            let base = resolve_object_noerr(
+                    QualifiedName::try_from(qnstr).unwrap().slice());
+
+            if base.is_null() {
+                panic!("Could not resolve {}", qnstr);
+            }
+
+            bases.push((base, qnstr));
+        }
+
+        Self {bases}
+    }
+
     fn complete_with_base<S: Selectable>(&self, base: *const S, qn_str: &str) -> (usize, Vec<String>)
     {
         assert!(!base.is_null());
@@ -1008,7 +1027,7 @@ impl ObjectCompleter {
     }
 }
 
-impl<'a> CommandCompleter for ObjectCompleter {
+impl<'a> CommandCompleter for ObjectCompleter<'a> {
     fn complete(&self, text: &str) -> (usize, Vec<String>)
     {
         let (most, last) = match text.rsplit_once('.') {
@@ -1027,13 +1046,18 @@ impl<'a> CommandCompleter for ObjectCompleter {
             Err(_) => return (0, Vec::new())
         };
 
-        let base = resolve_object_noerr(most_qn.slice());
+        let bases: Vec<*const rhdl_object_t> = resolve_with_bases_noerr(&self.bases, most_qn.slice());
 
-        if base.is_null() {
-            return (0, Vec::new())
+        let position = if most.trim().is_empty() {most.len()} else {most.len() + 1};
+        let mut candidates = Vec::<String>::new();
+
+        for base in bases.into_iter() {
+            let (p, mut c) = self.complete_last_component(base, most.len(), last);
+            assert!(p == position);
+            candidates.append(&mut c);
         }
 
-        self.complete_last_component(base, most.len(), last)
+        (position, candidates)
     }
 }
 

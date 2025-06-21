@@ -220,6 +220,17 @@ pub fn resolve_with_base_err<S: Selectable>(base : *const S, qn : &QNSlice, base
     resolve_with_base(base, qn, &mut PrintingResolveErrorHandler::new(err, basename))
 }
 
+fn resolve_with_nullable_base<S: Root, E: ResolveErrorHandler>(base : *const S, qn : &QNSlice) -> *const S
+{
+    let guaranteed_base = if base.is_null() {
+        S::root()
+    } else {
+        base
+    };
+
+    resolve_with_base(guaranteed_base, qn, &mut NOPResolveErrorHandler::new())
+}
+
 fn resolve_with_base<S: Selectable, E: ResolveErrorHandler>(base : *const S, qn : &QNSlice, err: &mut E) -> *const S
 {
     assert!(!base.is_null());
@@ -402,7 +413,7 @@ mod tests {
         let trans_cstr = CString::new("transformations").unwrap();
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
         let result: Vec<*const rhdl_object_t> = resolve_with_bases_noerr(
-            &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
+            &vec![(root, ""), (entities, "entities"), (trans, "transformations")],
             &["Inverter", "interface", "in"]);
         assert!(result.len() == 1);
         assert!(!result.last().unwrap().is_null())
@@ -416,7 +427,7 @@ mod tests {
         let trans_cstr = CString::new("transformations").unwrap();
         let trans = unsafe{rhdlo_get(root, trans_cstr.as_ptr())};
         let result: Vec<*const rhdl_object_t> = resolve_with_bases_noerr(
-            &vec![(root, "root"), (entities, "entities"), (trans, "transformations")],
+            &vec![(root, ""), (entities, "entities"), (trans, "transformations")],
             &["Inverter", "lol", "bla"]);
         assert!(result.is_empty());
     }
