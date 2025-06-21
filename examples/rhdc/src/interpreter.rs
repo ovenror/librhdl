@@ -491,7 +491,7 @@ impl<'a, C : Processor> Completer for SimpleInterpreter<C> {
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
     {
-        let (mut p1, mut vec1) = match self.processor.complete(&self.commands, line, pos, ctx) {
+        let (p1, mut vec1) = match self.processor.complete(&self.commands, line, pos, ctx) {
             Ok(result) => result,
             _ => (0, Vec::<Pair>::new())
         };
