@@ -348,7 +348,7 @@ impl InnerRHDL {
 
         if base.is_null() {
             writeln!(self.outputs.err, "{} is neither the definee nor one of its components", basename).unwrap();
-            return ptr::null_mut(); 
+            return ptr::null();
         }
 
         match QualifiedName::try_from(components) {
