@@ -1,7 +1,9 @@
 extern crate paste;
 
+use std::any::Any;
 use std::collections::HashMap;
 use std::io::Write;
+use std::marker::PhantomData;
 use std::usize;
 
 use rustyline::Context;
@@ -21,22 +23,27 @@ lazy_static! {
     static ref REGEX_CMDLINE: Regex = Regex::new(CMDLINE).unwrap();
 }
 
+pub trait CompleterArgsContainer<CF: CompleterFactory> {
+    const ARGS: CF::Args;
+}
+
+pub struct DefaultCompleterArgsContainer {}
+
+impl<CF: CompleterFactory> CompleterArgsContainer<CF>
+        for DefaultCompleterArgsContainer {
+    const ARGS: CF::Args = CF::DEFAULT_ARGS;
+}
+
 pub trait Parameter : Sized {
     type Arg<'a> : Argument<'a>;
+    type CF: CompleterFactory;
+    const COMPLETER_ARGS: <<Self as Parameter>::CF as CompleterFactory>::Args = Self::CF::DEFAULT_ARGS;
 
     fn regex() -> &'static Regex;
     fn usage() -> &'static str;
 
-    fn completer() -> &'static dyn CommandCompleter;
-
     fn usage_gr() -> String {
         return "<".to_string() + Self::usage() + ">"
-    }
-
-    fn complete(args: &str, from: usize) -> (usize, Vec<String>)
-    {
-        let (pos, cand) = Self::completer().complete(&args[from..]);
-        (from + pos, cand)
     }
 
     fn extract<'a, 'b>(args: &'a str, from: usize) -> Result<(&'a str, usize), ExtractErr<'b>>
@@ -76,6 +83,12 @@ pub trait Parameter : Sized {
     }
 }
 
+fn complete(completer: &dyn CommandCompleter, args: &str, from: usize) -> (usize, Vec<String>)
+{
+    let (pos, cand) = completer.complete(&args[from..]);
+    (from + pos, cand)
+}
+
 pub enum ExtractErr<'a> {
     Missing,
     Match,
@@ -100,6 +113,7 @@ pub trait Argument<'a> : Sized + Parameter
 
 impl<P: Parameter> Parameter for Option<P> {
     type Arg<'a> = Option<P::Arg<'a>>;
+    type CF = P::CF;
 
     fn regex() -> &'static Regex {
         P::regex()
@@ -112,9 +126,29 @@ impl<P: Parameter> Parameter for Option<P> {
     fn usage() -> &'static str {
         P::usage()
     }
+}
 
-    fn completer() -> &'static dyn CommandCompleter {
-        P::completer()
+pub struct CompletionSpecializedParameter<
+        P: Parameter,
+        A: CompleterArgsContainer<CF> = DefaultCompleterArgsContainer,
+        CF: CompleterFactory = <P as Parameter>::CF,
+        > {
+    phantom: PhantomData<(P, A, CF)>
+}
+
+impl<P: Parameter, A: CompleterArgsContainer<CF>, CF: CompleterFactory> Parameter
+        for CompletionSpecializedParameter<P, A, CF>
+{
+    type Arg<'a> = P::Arg<'a>;
+    type CF = CF;        
+    const COMPLETER_ARGS: <<Self as Parameter>::CF as CompleterFactory>::Args = A::ARGS;
+
+    fn regex() -> &'static Regex {
+        P::regex()
+    }
+
+    fn usage() -> &'static str {
+        P::usage()
     }
 }
 
@@ -135,6 +169,78 @@ impl<'a, A: Argument<'a>> Argument<'a> for Option<A> {
             Ok(arg) => Ok(Some(arg)),
             Err(e) => Err(e)
         }
+    }
+}
+pub trait CompleterFactory : 'static {
+    type Args : Any + std::cmp::Eq + std::hash::Hash + Clone + 'static;
+    const DEFAULT_ARGS : Self::Args;
+    type Completer : CommandCompleter;
+
+    fn create(args: &Self::Args) -> Self::Completer;
+
+    fn id() -> std::any::TypeId
+    {
+        std::any::TypeId::of::<Self>()
+    }
+}
+
+
+trait AbstractCompleterInstances<'a> {
+    fn ensure_exists(&mut self, args: &dyn Any);
+    fn get(&self, args: &dyn Any) -> &dyn CommandCompleter;
+}
+
+struct CompleterInstances<F: CompleterFactory> {
+    completers: HashMap<F::Args, F::Completer>
+}
+
+impl<F: CompleterFactory> CompleterInstances<F> {
+    fn new() -> Self {
+        Self {completers: HashMap::new()}
+    }
+}
+
+impl<'a, F: CompleterFactory> AbstractCompleterInstances<'a> for CompleterInstances<F> {
+    fn ensure_exists(&mut self, args: &dyn Any) {
+        let typed_args = args.downcast_ref::<F::Args>().unwrap();
+
+        if self.completers.contains_key(typed_args) {
+            return
+        }
+
+        self.completers.insert(typed_args.clone(), F::create(typed_args));
+    }
+
+    fn get(&self, args: &dyn Any) -> &dyn CommandCompleter {
+        let typed_args = args.downcast_ref::<F::Args>().unwrap();
+        self.completers.get(typed_args).unwrap()
+    }
+}
+
+pub struct CompleterManager<'a> {
+    completers: HashMap<std::any::TypeId, Box<dyn AbstractCompleterInstances<'a> + 'a>>
+}
+
+impl<'a> CompleterManager<'a> {
+    pub fn new() -> Self {
+        Self {completers: HashMap::new()}
+    }
+
+    fn ensure_exists<F: CompleterFactory>(&mut self, args: &F::Args) {
+        let factory_id = F::id();
+
+        if !self.completers.contains_key(&factory_id) {
+            let ci = CompleterInstances::<F>::new();
+            self.completers.insert(factory_id, Box::new(ci));
+        }
+
+        self.completers.get_mut(&factory_id).unwrap().ensure_exists(args);
+    }
+
+
+    fn get<F: CompleterFactory>(&self, args: &F::Args) -> &dyn CommandCompleter {
+        let factory_id = F::id();
+        self.completers.get(&factory_id).unwrap().get(args)
     }
 }
 
@@ -181,6 +287,41 @@ pub fn lws(text: &str) -> usize {
     text.len() - text.trim_start().len()
 }
 
+trait AbstractCommandBuilder<'a, 'b: 'a, T: 'b> {
+    fn ensure_completers(&self, cm: &mut CompleterManager);
+    fn build<'c: 'b>(&self, cm: &'b CompleterManager<'c>) -> Box<dyn AbstractCommand<T> + 'b>;
+}
+
+pub struct CommandsBuilder<'a, 'b: 'a, T: 'b> {
+    builders: Vec<Box<dyn AbstractCommandBuilder<'a, 'b, T> + 'a>>
+}
+
+impl<'a, 'b: 'a, T: 'b> CommandsBuilder<'a, 'b, T> {
+    pub fn new() -> Self
+    {
+        Self {builders: Vec::new()}
+    }
+
+    pub fn ensure_completers(&self, cm: &mut CompleterManager)
+    {
+        for builder in self.builders.iter() {
+            builder.as_ref().ensure_completers(cm)
+        }
+    }
+
+    pub fn get_commands<'c: 'b>(&self, cm: &'b CompleterManager<'c>) -> Commands<'b, T>
+    {
+        let mut commands = Commands::new();
+
+        for builder in self.builders.iter() {
+            let cmd = builder.as_ref().build(cm);
+            commands.insert(cmd.name(), cmd);
+        }
+
+        commands
+    }
+}
+
 macro_rules! cmdimpl {
     ($param_count:expr) => {
         cmdimpl!($param_count, );
@@ -189,25 +330,63 @@ macro_rules! cmdimpl {
         paste! {
             type [<CmdFn $param_count>]<T, $($param),*> = for <'a> fn(&mut T, $(&<$param as Parameter>::Arg<'a>),*);
 
-            struct [<Cmd $param_count>]<T, $($param: Parameter),*> {
+            struct [<Cmd $param_count>]<'a, T, $($param: Parameter),*> {
+                name: &'static str,
+                func: [<CmdFn $param_count>]<T, $($param),*>,
+                phantom: PhantomData<&'a bool>,
+                $([<completer $param:lower>]: &'a dyn CommandCompleter),*
+            }
+
+            impl <'a, T, $($param: Parameter),*> [<Cmd $param_count>]<'a, T, $($param),*> {
+                pub fn new(
+                        name: &'static str,
+                        func: [<CmdFn $param_count>]<T, $($param),*>,
+                        $([<completer $param:lower>]: &'a dyn CommandCompleter),*) -> Self
+                {
+                    Self{name, func, phantom: PhantomData, $([<completer $param:lower>]),*}
+                }
+            }
+
+            struct [<CmdBuilder $param_count>]<T, $($param: Parameter),*> {
                 name: &'static str,
                 func: [<CmdFn $param_count>]<T, $($param),*>
             }
 
-            impl <T, $($param: Parameter),*> [<Cmd $param_count>]<T, $($param),*> {
-                pub fn new(name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>) -> Self {
-                    Self{name, func}
+            impl<T, $($param: Parameter),*> [<CmdBuilder $param_count>]<T, $($param),*> {
+                fn new(name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>) -> Self {
+                    Self {name, func}
                 }
             }
 
-            pub fn [<command $param_count>]<T: 'static, $($param: Parameter + 'static),*>(
-                name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>, cmds: &mut Commands<T>)
+            impl<'a, 'b: 'a, T: 'b, $($param: Parameter + 'b),*> AbstractCommandBuilder<'a, 'b, T>
+                    for [<CmdBuilder $param_count>]<T, $($param),*>
             {
-                cmds.insert(name, Box::new([<Cmd $param_count>]::new(name, func)));
+                fn ensure_completers(&self, cm: &mut CompleterManager)
+                {
+                    let _ignore = &cm;
+                    $(cm.ensure_exists::<$param::CF>(&$param::COMPLETER_ARGS);)*
+                }
+
+                fn build<'c: 'b>(&self, cm: &'b CompleterManager<'c>) -> Box<dyn AbstractCommand<T> + 'b>
+                {
+                    let _ignore = &cm;
+                    Box::new([<Cmd $param_count>]::new(
+                        self.name, self.func, $(cm.get::<$param::CF>(&$param::COMPLETER_ARGS)),*))
+                }
             }
 
-            impl <T, $($param: Parameter),*> AbstractCommand<T> for [<Cmd $param_count>]<T, $($param),*> {
-                fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), (usize, ExecErr<'a>)> {
+            impl<'a, 'b: 'a, T: 'b> CommandsBuilder<'a, 'b, T> {
+                pub fn [<command $param_count>]<$($param: Parameter + 'static),*> (
+                        &mut self,
+                        name: &'static str,
+                        func: [<CmdFn $param_count>]<T, $($param),*>)
+                {
+                    self.builders.push(Box::new([<CmdBuilder $param_count>]::<T, $($param),*>::new(name, func)));
+                }
+            }
+
+            impl <'a, T, $($param: Parameter),*> AbstractCommand<T> for [<Cmd $param_count>]<'a, T, $($param),*> {
+                fn exec<'b>(&self, processor: &mut T, args: &str) -> Result<(), (usize, ExecErr<'b>)> {
                     let mut next_at = lws(args);
                     let mut expect_next_at = 1;
 
@@ -247,14 +426,14 @@ macro_rules! cmdimpl {
 
                     $(
                         let arg_end = match $param::ends_at(args, next_at) {
-                            0 => return $param::complete(args, next_at),
+                            0 => return complete(self.[<completer $param:lower>], args, next_at),
                             pos => pos
                         };
 
                         assert!(arg_end <= args.len());
 
                         if arg_end == args.len() {
-                            return $param::complete(args, next_at);
+                            return complete(self.[<completer $param:lower>], args, next_at);
                         }
 
                         next_at = arg_end + lws(&args[arg_end..]);
@@ -299,13 +478,13 @@ pub trait Interpreter : Completer {
 }
 
 //pub type TheCommands<T, const N: usize> = [Box<dyn AbstractCommand<'static, T>>; N];
-pub type Commands<T> = HashMap<&'static str, Box<dyn AbstractCommand<T> + 'static>>;
+pub type Commands<'a, T> = HashMap<&'static str, Box<dyn AbstractCommand<T> + 'a>>;
+
 
 pub trait Processor : Sized {
     type Fallback : Interpreter<Candidate = Pair>;
 
-    fn commands() -> Commands<Self>;
-
+    fn commands(cb: &mut CommandsBuilder<Self>);
     fn fallback_mut(&mut self) -> &mut Self::Fallback;
     fn fallback(&self) -> &Self::Fallback;
     fn stderr(&mut self) -> &mut dyn Write;
@@ -441,14 +620,16 @@ pub trait Processor : Sized {
     }
 }
 
-pub struct SimpleInterpreter<C : Processor> {
-    processor : C,
-    commands: Commands<C>
+pub struct SimpleInterpreter<'a, C: Processor> {
+    processor: C,
+    commands: Commands<'a, C>,
 }
 
-impl<C: Processor> SimpleInterpreter<C> {
-    pub fn new(processor : C) -> Self {
-        Self {processor: processor, commands: C::commands()}
+impl<'a, C: Processor> SimpleInterpreter<'a, C> {
+    pub fn new<'b: 'a>(processor: C, cb: CommandsBuilder<'_, 'a, C>, cm: &'a CompleterManager<'b>) -> Self {
+    //pub fn new(processor: C, commands: Commands<'a, C>) -> Self {
+        let commands = cb.get_commands(cm);
+        Self {processor, commands}
     }
 
     fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
@@ -460,7 +641,7 @@ impl<C: Processor> SimpleInterpreter<C> {
     }
 }
 
-impl<C : Processor> Interpreter for SimpleInterpreter<C>
+impl<'a, C : Processor> Interpreter for SimpleInterpreter<'a, C>
 {
     fn eat(self : &mut Self, line : &String) -> bool {
         let caps = match REGEX_CMDLINE.captures(line) {
@@ -485,7 +666,7 @@ impl<C : Processor> Interpreter for SimpleInterpreter<C>
     }
 }
 
-impl<'a, C : Processor> Completer for SimpleInterpreter<C> {
+impl<'a, C : Processor> Completer for SimpleInterpreter<'a, C> {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)

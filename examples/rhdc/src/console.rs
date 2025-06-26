@@ -3,6 +3,8 @@ use std::io::Write;
 use std::process::exit;
 
 use crate::interpreter;
+use crate::interpreter::CommandsBuilder;
+use crate::interpreter::CompleterManager;
 use crate::interpreter::Interpreter;
 use crate::interpreter::SimpleInterpreter;
 use crate::wod::WriteOrDie;
@@ -59,14 +61,15 @@ pub trait ConsoleInterpreter : interpreter::Interpreter {
     fn prompt_info(&self) -> &str;
 }
 
-pub struct SimpleConsoleInterpreter<C: Processor> {
-    interpreter: SimpleInterpreter<C>
+pub struct SimpleConsoleInterpreter<'a, C: Processor> {
+    interpreter: SimpleInterpreter<'a, C>
 }
 
-impl<'a, P: Processor> SimpleConsoleInterpreter<P> {
-    pub fn new(processor: P) -> Self {
+impl<'a, P: Processor> SimpleConsoleInterpreter<'a, P> {
+    pub fn new<'b: 'a>(processor: P, cb: CommandsBuilder<'_, 'a, P>, cm: &'a CompleterManager<'b>) -> Self {
+    //pub fn new(processor: P, commands: Commands<'a, P>) -> Self {
         Self {
-            interpreter: SimpleInterpreter::new(processor),
+            interpreter: SimpleInterpreter::new(processor, cb, cm),
         }
     }
     
@@ -75,13 +78,13 @@ impl<'a, P: Processor> SimpleConsoleInterpreter<P> {
     }
 }
 
-impl<'a, C: Processor> ConsoleInterpreter for SimpleConsoleInterpreter<C> {
+impl<'a, C: Processor> ConsoleInterpreter for SimpleConsoleInterpreter<'a, C> {
     fn prompt_info(&self) -> &str {
         self.interpreter.get_processor().prompt_info()
     }
 }
 
-impl<'a, C: Processor> interpreter::Interpreter for SimpleConsoleInterpreter<C> {
+impl<'a, C: Processor> interpreter::Interpreter for SimpleConsoleInterpreter<'a, C> {
     fn eat(self : &mut Self, line: &String) -> bool
     {
         self.interpreter.eat(line)
@@ -93,7 +96,7 @@ impl<'a, C: Processor> interpreter::Interpreter for SimpleConsoleInterpreter<C> 
     }
 }
 
-impl<'a, C: Processor> Completer for SimpleConsoleInterpreter<C> {
+impl<'a, C: Processor> Completer for SimpleConsoleInterpreter<'a, C> {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)

@@ -4,11 +4,13 @@ extern crate const_format;
 
 use crate::interpreter;
 use crate::interpreter::CommandCompleter;
+use crate::interpreter::CommandsBuilder;
+use crate::interpreter::CompleterArgsContainer;
+use crate::interpreter::CompleterFactory;
+use crate::interpreter::CompletionSpecializedParameter;
 use crate::interpreter::Interpreter;
 use crate::interpreter::Parameter;
 use crate::interpreter::Argument;
-use crate::interpreter::Commands;
-use crate::interpreter::{command0, command1, command2, command3};
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::console::Processor;
@@ -112,6 +114,7 @@ impl<'a> QualifiedName<'a> {
 
 impl Parameter for &str {
     type Arg<'a> = &'a str;
+    type CF = NoCompleter;
 
     fn regex() -> &'static Regex {
         return &REGEX_ID
@@ -119,10 +122,6 @@ impl Parameter for &str {
 
     fn usage() -> &'static str {
         "identifier"
-    }
-
-    fn completer() -> &'static dyn CommandCompleter {
-        &NO_COMPLETER
     }
 }
 
@@ -135,6 +134,7 @@ impl<'a> Argument<'a> for &'a str
 
 impl<'a> Parameter for QualifiedName<'a> {
     type Arg<'b> = QualifiedName<'b>;
+    type CF = ObjectCompleter;
 
     fn regex() -> &'static Regex {
         return &REGEX_QN
@@ -142,10 +142,6 @@ impl<'a> Parameter for QualifiedName<'a> {
 
     fn usage() -> &'static str {
         "qualified name"
-    }
-
-    fn completer() -> &'static dyn CommandCompleter {
-        &OBJECT_COMPLETER
     }
 }
 
@@ -158,6 +154,7 @@ impl<'a> Argument<'a> for QualifiedName<'a>
 
 impl Parameter for &rhdl_object_t {
     type Arg<'a> = &'a rhdl_object_t;
+    type CF = ObjectCompleter;
 
     fn regex() -> &'static Regex {
         QualifiedName::regex()
@@ -165,10 +162,6 @@ impl Parameter for &rhdl_object_t {
 
     fn usage() -> &'static str {
         QualifiedName::usage()
-    }
-
-    fn completer() -> &'static dyn CommandCompleter {
-        QualifiedName::completer()
     }
 }
 
@@ -193,6 +186,12 @@ impl<'a> Argument<'a> for &'a rhdl_object_t {
         }
     }
 }
+
+struct EntityObjectCompleterArgs {}
+impl CompleterArgsContainer<ObjectCompleter> for EntityObjectCompleterArgs {
+    const ARGS: <ObjectCompleter as CompleterFactory>::Args = &["entities"];
+}
+type EntityObject<'a> = CompletionSpecializedParameter<&'a rhdl_object_t, EntityObjectCompleterArgs>;
 
 struct InnerRHDLParseResult<'a> {
     parsed: u8,
@@ -224,9 +223,9 @@ pub struct InnerRHDL {
 }
 
 impl InnerRHDL {
-    fn new(outputs: Outputs) -> InnerRHDL {
+    pub fn new(outputs: Outputs) -> InnerRHDL {
         InnerRHDL {
-            outputs: outputs,
+            outputs,
             active: false,
             ename: String::from(""),
             structure: ptr::null(),
@@ -630,13 +629,8 @@ pub struct OuterRHDL {
 }
 
 impl OuterRHDL {
-    fn new(outputs: Outputs) -> Self {
-        let oc = outputs.clone();
-
-        OuterRHDL {
-            outputs: outputs,
-            rhdd: InnerRHDL::new(oc)
-        }
+    pub fn new(outputs: Outputs, rhdd: InnerRHDL) -> Self {
+        Self {outputs, rhdd}
     }
     
     fn define(&mut self, arg: &QualifiedName) {
@@ -680,18 +674,14 @@ impl OuterRHDL {
     }
 }
 
-impl<'a> interpreter::Processor for OuterRHDL {
+impl interpreter::Processor for OuterRHDL {
     type Fallback = InnerRHDL;
             
-    fn commands() -> Commands<Self> {
-        let mut commands: Commands<Self> = HashMap::new();
-
-        command1::<OuterRHDL, QualifiedName>("def", Self::define, &mut commands);
-        command1::<OuterRHDL, QualifiedName>("define", Self::define, &mut commands);
-        command1::<OuterRHDL, QualifiedName>("stateful", Self::stateful, &mut commands);
-        command0("enddef", Self::enddef, &mut commands);
-
-        commands
+    fn commands(cb: &mut CommandsBuilder<Self>) {
+        cb.command1::<QualifiedName>("def", Self::define);
+        cb.command1::<QualifiedName>("define", Self::define);
+        cb.command1::<QualifiedName>("stateful", Self::stateful);
+        cb.command0("enddef", Self::enddef);
     }
 
     fn stderr(&mut self) -> &mut dyn Write {
@@ -751,19 +741,14 @@ impl<'a> Processor for OuterRHDL {
     }
 }
     
-pub struct RHDC {
+pub struct RHDC<'a> {
     outputs: Outputs,
-    rhdl: SimpleConsoleInterpreter<OuterRHDL>
+    rhdl: SimpleConsoleInterpreter<'a, OuterRHDL>
 }
 
-impl RHDC {
-    pub fn new(outputs: Outputs) -> Self {
-        let oc = outputs.clone();
-
-        RHDC {
-            outputs: outputs,
-            rhdl: SimpleConsoleInterpreter::new(OuterRHDL::new(oc))
-        }
+impl<'a> RHDC<'a> {
+    pub fn new(outputs: Outputs, rhdl: SimpleConsoleInterpreter<'a, OuterRHDL>) -> Self {
+        Self {outputs, rhdl}
     }
 
     fn quit(&mut self) {
@@ -855,7 +840,7 @@ impl RHDC {
     fn test(&mut self, _: &&rhdl_object_t, _: &&rhdl_object_t) {}
 }
 
-impl<'a> Completer for RHDC {
+impl<'a> Completer for RHDC<'a> {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
@@ -866,8 +851,8 @@ impl<'a> Completer for RHDC {
     }
 }
 
-impl interpreter::Processor for RHDC {
-    type Fallback = SimpleConsoleInterpreter<OuterRHDL>;
+impl<'a> interpreter::Processor for RHDC<'a> {
+    type Fallback = SimpleConsoleInterpreter<'a, OuterRHDL>;
 
     fn stderr(&mut self) -> &mut dyn Write {
         self.outputs.err.as_mut()
@@ -886,17 +871,13 @@ impl interpreter::Processor for RHDC {
         return self.rhdl.get_commands().complete_object_contextually(line);
     }
     
-    fn commands() -> Commands<Self> {
-        let mut commands: Commands<Self> = HashMap::new();
-
-        command0("quit", Self::quit, &mut commands);
-        command0("panic", Self::panic, &mut commands);
-        command1::<RHDC, Option<QualifiedName>>("ls", Self::ls, &mut commands);
-        command1::<RHDC, &str>("synth", Self::synth, &mut commands);
-        command2::<RHDC, &rhdl_object_t, &rhdl_object_t>("test", Self::test, &mut commands);
-        command3::<RHDC, &rhdl_object_t, &rhdl_object_t, &str>("transform", Self::transform, &mut commands);
-
-        commands
+    fn commands(cb: &mut CommandsBuilder<Self>)  {
+        cb.command0("quit", Self::quit);
+        cb.command0("panic", Self::panic);
+        cb.command1::<Option<QualifiedName>>("ls", Self::ls);
+        cb.command1::<&str>("synth", Self::synth);
+        cb.command2::<&rhdl_object_t, &rhdl_object_t>("test", Self::test);
+        cb.command3::<&rhdl_object_t, &rhdl_object_t, &str>("transform", Self::transform);
     }
 
     fn prompt_size(&self) -> usize {
@@ -908,20 +889,28 @@ impl interpreter::Processor for RHDC {
     }
 }
 
-impl Processor for RHDC {
+impl<'a> Processor for RHDC<'a> {
     fn prompt_info(&self) -> &str {
         self.rhdl.get_commands().prompt_info()
     }
 }
 
 pub static OBJECT_COMPLETER : ObjectCompleter =  ObjectCompleter{};
-pub static NO_COMPLETER : NoCompleter =  NoCompleter{};
 
 pub struct NoCompleter {}
 
 impl CommandCompleter for NoCompleter {
     fn complete(&self, _text: &str) -> (usize, Vec<String>) {
         (0, Vec::new())
+    }
+}
+impl CompleterFactory for NoCompleter {
+    type Args = ();
+    const DEFAULT_ARGS : Self::Args = ();
+    type Completer = NoCompleter;
+
+    fn create(_args: &()) -> NoCompleter {
+        NoCompleter {}
     }
 }
 
@@ -1039,6 +1028,16 @@ impl<'a> CommandCompleter for ObjectCompleter {
         }
 
         self.complete_last_component(base, most.len(), last)
+    }
+}
+
+impl CompleterFactory for ObjectCompleter {
+    type Args = &'static [&'static str];
+    const DEFAULT_ARGS : Self::Args = &[];
+    type Completer = ObjectCompleter;
+
+    fn create(_args: &Self::Args) -> ObjectCompleter {
+        ObjectCompleter {}
     }
 }
 
