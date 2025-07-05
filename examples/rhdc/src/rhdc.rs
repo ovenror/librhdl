@@ -193,6 +193,12 @@ impl CompleterArgsContainer<ObjectCompleter> for EntityObjectCompleterArgs {
 }
 type EntityObject<'a> = CompletionSpecializedParameter<&'a rhdl_object_t, EntityObjectCompleterArgs>;
 
+struct TransformationObjectCompleterArgs {}
+impl CompleterArgsContainer<ObjectCompleter> for TransformationObjectCompleterArgs {
+    const ARGS: <ObjectCompleter as CompleterFactory>::Args = &["transformations"];
+}
+type TransformationObject<'a> = CompletionSpecializedParameter<&'a rhdl_object_t, TransformationObjectCompleterArgs>;
+
 struct InnerRHDLParseResult<'a> {
     parsed: u8,
     id1: Option<Match<'a>>,
@@ -877,7 +883,7 @@ impl<'a> interpreter::Processor for RHDC<'a> {
         cb.command1::<Option<QualifiedName>>("ls", Self::ls);
         cb.command1::<&str>("synth", Self::synth);
         cb.command2::<&rhdl_object_t, &rhdl_object_t>("test", Self::test);
-        cb.command3::<&rhdl_object_t, &rhdl_object_t, &str>("transform", Self::transform);
+        cb.command3::<EntityObject, TransformationObject, &str>("transform", Self::transform);
     }
 
     fn prompt_size(&self) -> usize {
