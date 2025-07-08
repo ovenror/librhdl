@@ -238,7 +238,7 @@ impl<'a> CompleterManager<'a> {
     }
 
 
-    fn get<F: CompleterFactory>(&self, args: &F::Args) -> &dyn CommandCompleter {
+    pub fn get<F: CompleterFactory>(&self, args: &F::Args) -> &dyn CommandCompleter {
         let factory_id = F::id();
         self.completers.get(&factory_id).unwrap().get(args)
     }

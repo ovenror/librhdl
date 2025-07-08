@@ -187,6 +187,8 @@ impl<'a> Argument<'a> for &'a rhdl_object_t {
     }
 }
 
+
+
 struct EntityObjectCompleterArgs {}
 impl CompleterArgsContainer<ObjectCompleter> for EntityObjectCompleterArgs {
     const ARGS: <ObjectCompleter as CompleterFactory>::Args = &["entities"];
@@ -225,17 +227,20 @@ pub struct InnerRHDL {
     active: bool,
     ename: String,
     structure: *const rhdl_structure_t,
-    components: HashMap<String, *const rhdl_connector_t>
+    components: HashMap<String, *const rhdl_connector_t>,
+    object_completer: ObjectCompleter
 }
 
 impl InnerRHDL {
-    pub fn new(outputs: Outputs) -> InnerRHDL {
-        InnerRHDL {
+    pub fn new(outputs: Outputs /* , cm: &'a CompleterManager */) -> Self {
+        Self {
             outputs,
             active: false,
             ename: String::from(""),
             structure: ptr::null(),
-            components: HashMap::new()
+            components: HashMap::new(),
+            //object_completer: cm.get::<ObjectCompleter>(&ObjectCompleter::DEFAULT_ARGS)
+            object_completer: ObjectCompleter::create(&ObjectCompleter::DEFAULT_ARGS)
         }
     }
 
@@ -481,7 +486,7 @@ impl InnerRHDL {
                 return (0, Vec::new());
             }
 
-            return OBJECT_COMPLETER.complete_last_component(most_resolved, basedmost.len(), last)
+            return self.object_completer.complete_last_component(most_resolved, basedmost.len(), last)
         }
 
         if components != "" {
@@ -512,10 +517,10 @@ impl InnerRHDL {
 
             let entities_name = CString::new("entities").unwrap();
             let entities = unsafe{rhdlo_get(ptr::null(), entities_name.as_ptr())};
-            let (pos, cand_entity) = OBJECT_COMPLETER.complete_with_base(entities, qn);
+            let (pos, cand_entity) = self.object_completer.complete_with_base(entities, qn);
 
             if cand_entity.is_empty() {
-                OBJECT_COMPLETER.complete(qn)
+                self.object_completer.complete(qn)
             } else {
                 (pos, cand_entity)
             }
@@ -918,14 +923,14 @@ impl CompleterFactory for NoCompleter {
     }
 }
 
-pub struct ObjectCompleter<'a> {
-    bases : Vec<(*const rhdl_object_t, &'a str)>
+pub struct ObjectCompleter {
+    bases : Vec<(*const rhdl_object_t, &'static str)>
 }
 
-impl<'a> ObjectCompleter<'a> {
-    fn new(baseqnstrs: &[&'a str]) -> Self
+impl ObjectCompleter {
+    fn new(baseqnstrs: &[&'static str]) -> Self
     {
-        let mut bases = Vec::<(*const rhdl_object_t, &'a str)>::new();
+        let mut bases = Vec::<(*const rhdl_object_t, &'static str)>::new();
         bases.push((rhdl_object_t::root(), ""));
 
         for qnstr in baseqnstrs.iter() {
@@ -1027,7 +1032,7 @@ impl<'a> ObjectCompleter<'a> {
     }
 }
 
-impl<'a> CommandCompleter for ObjectCompleter<'a> {
+impl CommandCompleter for ObjectCompleter {
     fn complete(&self, text: &str) -> (usize, Vec<String>)
     {
         let (most, last) = match text.rsplit_once('.') {
@@ -1066,16 +1071,16 @@ impl CompleterFactory for ObjectCompleter {
     const DEFAULT_ARGS : Self::Args = &[];
     type Completer = ObjectCompleter;
 
-    fn create(_args: &Self::Args) -> ObjectCompleter {
-        ObjectCompleter {}
+    fn create(args: &Self::Args) -> ObjectCompleter {
+        ObjectCompleter::new(args)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::resolve::resolve_object_noerr;
+    use crate::{resolve::resolve_object_noerr, rhdc::ObjectCompleter};
 
-    use super::{InnerRHDL, OBJECT_COMPLETER};
+    use super::InnerRHDL;
 
     #[test]
     fn parse_empty() {
@@ -1163,7 +1168,7 @@ mod tests {
     #[test]
     fn object_completer_complete_last_single() {
         let base_qn = "entities.Inverter.interface";
-        let (pos, cand) = OBJECT_COMPLETER.complete_last_component(
+        let (pos, cand) = ObjectCompleter::new(&[]).complete_last_component(
             resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn.len(), "i");
         assert!(pos == base_qn.len() + 1);
         assert!(cand.len() == 1);
@@ -1174,7 +1179,7 @@ mod tests {
     #[test]
     fn object_completer_complete_last_none() {
         let base_qn = "entities.Inverter.interface.in.direction";
-        let (pos, cand) = OBJECT_COMPLETER.complete_last_component(
+        let (pos, cand) = ObjectCompleter::new(&[]).complete_last_component(
             resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn.len(), "");
         assert!(pos == base_qn.len() + 1);
         assert!(cand.is_empty());
