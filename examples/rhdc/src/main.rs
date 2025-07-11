@@ -22,7 +22,7 @@ mod resolve;
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::interpreter::CommandsBuilder;
-use crate::interpreter::CompleterManager;
+use crate::interpreter::ParameterManager;
 use crate::interpreter::Processor;
 use crate::rhdc::{RHDC, OuterRHDL, InnerRHDL};
 
@@ -38,18 +38,18 @@ fn main(){
     let cons = console::Console::new(istty);
     let outputs = Outputs::new(istty);
     let inner_rhdl = InnerRHDL::new(outputs.clone());
-    let mut cm = CompleterManager::new();
+    let mut pm = ParameterManager::new();
 
     let mut cb_outer_rhdl = CommandsBuilder::<OuterRHDL>::new();
     let mut cb_rhdc = CommandsBuilder::<RHDC>::new();
     OuterRHDL::commands(&mut cb_outer_rhdl);
     RHDC::commands(&mut cb_rhdc);
-    cb_outer_rhdl.ensure_completers(&mut cm); 
-    cb_rhdc.ensure_completers(&mut cm); 
+    cb_outer_rhdl.ensure_parameters(&mut pm); 
+    cb_rhdc.ensure_parameters(&mut pm); 
     let p_outer_rhdl = OuterRHDL::new(outputs.clone(), inner_rhdl);
-    let outer_rhdl = SimpleConsoleInterpreter::new(p_outer_rhdl, cb_outer_rhdl, &cm);
+    let outer_rhdl = SimpleConsoleInterpreter::new(p_outer_rhdl, cb_outer_rhdl, &pm);
     let p_rhdc = RHDC::new(outputs, outer_rhdl);
-    let rhdc = SimpleConsoleInterpreter::new(p_rhdc, cb_rhdc, &cm);
+    let rhdc = SimpleConsoleInterpreter::new(p_rhdc, cb_rhdc, &pm);
 
     cons.run(rhdc);
 }

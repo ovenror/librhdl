@@ -5,12 +5,11 @@ extern crate const_format;
 use crate::interpreter;
 use crate::interpreter::CommandCompleter;
 use crate::interpreter::CommandsBuilder;
-use crate::interpreter::CompleterArgsContainer;
-use crate::interpreter::CompleterFactory;
-use crate::interpreter::CompletionSpecializedParameter;
+use crate::interpreter::OptionalParameter;
+use crate::interpreter::ParameterArgsContainer;
+use crate::interpreter::ArgsSpecializedParameter;
 use crate::interpreter::Interpreter;
 use crate::interpreter::Parameter;
-use crate::interpreter::Argument;
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
 use crate::console::Processor;
@@ -112,9 +111,12 @@ impl<'a> QualifiedName<'a> {
 
 }
 
-impl Parameter for &str {
-    type Arg<'a> = &'a str;
-    type CF = NoCompleter;
+struct Identifier {}
+
+impl Parameter for Identifier {
+    type Argument<'a> = &'a str;
+    type CreationArguments = ();
+    const ARGS: Self::CreationArguments = ();    
 
     fn regex() -> &'static Regex {
         return &REGEX_ID
@@ -123,18 +125,29 @@ impl Parameter for &str {
     fn usage() -> &'static str {
         "identifier"
     }
-}
-
-impl<'a> Argument<'a> for &'a str
-{
-    fn parse_extracted<'b>(arg: &'a str) -> Result<Self, &'b str> {
+    
+    fn create(_args: Self::CreationArguments) -> Self {
+        Identifier {}
+    }
+    
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
         Ok(arg)
     }
+    
+    fn completer(&self) -> &dyn CommandCompleter {
+        &NO_COMPLETER
+    }
+
 }
 
-impl<'a> Parameter for QualifiedName<'a> {
-    type Arg<'b> = QualifiedName<'b>;
-    type CF = ObjectCompleter;
+struct QName {
+    completer: ObjectCompleter
+}
+
+impl Parameter for QName {
+    type Argument<'a> = QualifiedName<'a>;
+    type CreationArguments = ();
+    const ARGS: Self::CreationArguments = ();    
 
     fn regex() -> &'static Regex {
         return &REGEX_QN
@@ -143,30 +156,43 @@ impl<'a> Parameter for QualifiedName<'a> {
     fn usage() -> &'static str {
         "qualified name"
     }
-}
 
-impl<'a> Argument<'a> for QualifiedName<'a>
-{
-    fn parse_extracted<'b>(arg: &'a str) -> Result<Self, &'b str> {
+    fn create(_args: Self::CreationArguments) -> Self {
+        QName {completer: ObjectCompleter::new(&[])}
+    }
+
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
         Ok(QualifiedName::from(arg))
+    }
+    
+    fn completer(&self) -> &dyn CommandCompleter {
+        &self.completer
     }
 }
 
-impl Parameter for &rhdl_object_t {
-    type Arg<'a> = &'a rhdl_object_t;
-    type CF = ObjectCompleter;
+struct Object {
+    completer: ObjectCompleter,
+    bases: Vec<(&'static str, *const rhdl_object_t)>
+}
+
+impl Parameter for Object {
+    type Argument<'a> = &'a rhdl_object_t;
+    type CreationArguments = &'static [&'static str];    
+    const ARGS: Self::CreationArguments = &[];
 
     fn regex() -> &'static Regex {
-        QualifiedName::regex()
+        QName::regex()
     }
 
     fn usage() -> &'static str {
-        QualifiedName::usage()
+        QName::usage()
     }
-}
-
-impl<'a> Argument<'a> for &'a rhdl_object_t {
-    fn parse_extracted<'b>(arg: &'a str) -> Result<Self, &'b str> {
+       
+    fn create(args: Self::CreationArguments) -> Self {
+        Object {completer: ObjectCompleter::new(args), bases: Vec::new()}
+    }
+    
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
         let qn = QualifiedName::from(arg);
         let root_resolved = resolve_object_noerr(qn.slice());
 
@@ -185,21 +211,11 @@ impl<'a> Argument<'a> for &'a rhdl_object_t {
             Ok(unsafe{&*root_resolved})
         }
     }
+    
+    fn completer(&self) -> &dyn CommandCompleter {
+        &self.completer
+    }
 }
-
-
-
-struct EntityObjectCompleterArgs {}
-impl CompleterArgsContainer<ObjectCompleter> for EntityObjectCompleterArgs {
-    const ARGS: <ObjectCompleter as CompleterFactory>::Args = &["entities"];
-}
-type EntityObject<'a> = CompletionSpecializedParameter<&'a rhdl_object_t, EntityObjectCompleterArgs>;
-
-struct TransformationObjectCompleterArgs {}
-impl CompleterArgsContainer<ObjectCompleter> for TransformationObjectCompleterArgs {
-    const ARGS: <ObjectCompleter as CompleterFactory>::Args = &["transformations"];
-}
-type TransformationObject<'a> = CompletionSpecializedParameter<&'a rhdl_object_t, TransformationObjectCompleterArgs>;
 
 struct InnerRHDLParseResult<'a> {
     parsed: u8,
@@ -240,7 +256,7 @@ impl InnerRHDL {
             structure: ptr::null(),
             components: HashMap::new(),
             //object_completer: cm.get::<ObjectCompleter>(&ObjectCompleter::DEFAULT_ARGS)
-            object_completer: ObjectCompleter::create(&ObjectCompleter::DEFAULT_ARGS)
+            object_completer: ObjectCompleter::new(&[])
         }
     }
 
@@ -689,9 +705,9 @@ impl interpreter::Processor for OuterRHDL {
     type Fallback = InnerRHDL;
             
     fn commands(cb: &mut CommandsBuilder<Self>) {
-        cb.command1::<QualifiedName>("def", Self::define);
-        cb.command1::<QualifiedName>("define", Self::define);
-        cb.command1::<QualifiedName>("stateful", Self::stateful);
+        cb.command1::<QName>("def", Self::define);
+        cb.command1::<QName>("define", Self::define);
+        cb.command1::<QName>("stateful", Self::stateful);
         cb.command0("enddef", Self::enddef);
     }
 
@@ -885,10 +901,10 @@ impl<'a> interpreter::Processor for RHDC<'a> {
     fn commands(cb: &mut CommandsBuilder<Self>)  {
         cb.command0("quit", Self::quit);
         cb.command0("panic", Self::panic);
-        cb.command1::<Option<QualifiedName>>("ls", Self::ls);
-        cb.command1::<&str>("synth", Self::synth);
-        cb.command2::<&rhdl_object_t, &rhdl_object_t>("test", Self::test);
-        cb.command3::<EntityObject, TransformationObject, &str>("transform", Self::transform);
+        cb.command1::<OptionalParameter<QName>>("ls", Self::ls);
+        cb.command1::<Identifier>("synth", Self::synth);
+        cb.command2::<Object, Object>("test", Self::test);
+        cb.command3::<Object, Object, Identifier>("transform", Self::transform);
     }
 
     fn prompt_size(&self) -> usize {
@@ -906,20 +922,13 @@ impl<'a> Processor for RHDC<'a> {
     }
 }
 
+static NO_COMPLETER: NoCompleter = NoCompleter {};
+
 pub struct NoCompleter {}
 
 impl CommandCompleter for NoCompleter {
     fn complete(&self, _text: &str) -> (usize, Vec<String>) {
         (0, Vec::new())
-    }
-}
-impl CompleterFactory for NoCompleter {
-    type Args = ();
-    const DEFAULT_ARGS : Self::Args = ();
-    type Completer = NoCompleter;
-
-    fn create(_args: &()) -> NoCompleter {
-        NoCompleter {}
     }
 }
 
@@ -1063,16 +1072,6 @@ impl CommandCompleter for ObjectCompleter {
         }
 
         (position, candidates)
-    }
-}
-
-impl CompleterFactory for ObjectCompleter {
-    type Args = &'static [&'static str];
-    const DEFAULT_ARGS : Self::Args = &[];
-    type Completer = ObjectCompleter;
-
-    fn create(args: &Self::Args) -> ObjectCompleter {
-        ObjectCompleter::new(args)
     }
 }
 

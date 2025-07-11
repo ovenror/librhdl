@@ -23,24 +23,47 @@ lazy_static! {
     static ref REGEX_CMDLINE: Regex = Regex::new(CMDLINE).unwrap();
 }
 
-pub trait CompleterArgsContainer<CF: CompleterFactory> {
-    const ARGS: CF::Args;
+pub trait ParameterArgsContainer<P: Parameter> {
+    const ARGS: P::CreationArguments;
 }
 
-pub struct DefaultCompleterArgsContainer {}
+pub struct DefaultParameterArgsContainer {}
 
-impl<CF: CompleterFactory> CompleterArgsContainer<CF>
-        for DefaultCompleterArgsContainer {
-    const ARGS: CF::Args = CF::DEFAULT_ARGS;
+impl<P: Parameter> ParameterArgsContainer<P>
+        for DefaultParameterArgsContainer {
+    const ARGS: P::CreationArguments = P::ARGS;
 }
 
-pub trait Parameter : Sized {
-    type Arg<'a> : Argument<'a>;
-    type CF: CompleterFactory;
-    const COMPLETER_ARGS: <<Self as Parameter>::CF as CompleterFactory>::Args = Self::CF::DEFAULT_ARGS;
+pub trait Parameter : Any + Sized {
+    type Argument<'a>;
+    type CreationArguments;
+    const ARGS: Self::CreationArguments;
 
+    fn create(args: Self::CreationArguments) -> Self;
     fn regex() -> &'static Regex;
     fn usage() -> &'static str;
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str>;
+    fn completer(&self) -> &dyn CommandCompleter;
+
+    fn new() -> Self {
+        Self::create(Self::ARGS)
+    }
+
+    fn id() -> std::any::TypeId
+    {
+        std::any::TypeId::of::<Self>()
+    }
+
+    fn parse<'a, 'b>(&self, args: &'a str, from: usize) -> Result<(Self::Argument<'a>, usize), ExtractErr<'b>>
+    {
+        match Self::extract(args, from) {
+            Err(e) => Err(e),
+            Ok((argstr, end)) => match self.parse_extracted(argstr) {
+                Ok(arg) => Ok((arg, end)),
+                Err(e) => Err(ExtractErr::Parse(e))
+            }
+        }
+    }
 
     fn usage_gr() -> String {
         return "<".to_string() + Self::usage() + ">"
@@ -81,12 +104,46 @@ pub trait Parameter : Sized {
             Err(_) => 0
         }
     }
+
+    fn complete(&self, args: &str, from: usize) -> (usize, Vec<String>)
+    {
+        let (pos, cand) = self.completer().complete(&args[from..]);
+        (from + pos, cand)
+    }
+
+}
+pub struct ArgsSpecializedParameter<P: Parameter, A: ParameterArgsContainer<P>> {
+    parameter: P,
+    phantom: PhantomData<A>
 }
 
-fn complete(completer: &dyn CommandCompleter, args: &str, from: usize) -> (usize, Vec<String>)
-{
-    let (pos, cand) = completer.complete(&args[from..]);
-    (from + pos, cand)
+impl<P: Parameter, A: ParameterArgsContainer<P> + 'static> Parameter for ArgsSpecializedParameter<P, A> {
+    type Argument<'a> = P::Argument<'a>;
+    type CreationArguments = P::CreationArguments;
+    const ARGS: Self::CreationArguments = A::ARGS;
+
+    #[inline]
+    fn create(args: Self::CreationArguments) -> Self {
+        Self {parameter: P::create(args), phantom: PhantomData}
+    }
+
+    #[inline]
+    fn regex() -> &'static Regex {
+        P::regex()
+    }
+
+    #[inline]
+    fn usage() -> &'static str {
+        P::usage()
+    }
+
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
+        self.parameter.parse_extracted(arg)
+    }
+
+    fn completer(&self) -> &dyn CommandCompleter {
+        self.parameter.completer()
+    }
 }
 
 pub enum ExtractErr<'a> {
@@ -95,67 +152,32 @@ pub enum ExtractErr<'a> {
     Parse(&'a str)
 }
 
-pub trait Argument<'a> : Sized + Parameter
-{
-    fn parse_extracted<'b>(arg: &'a str) -> Result<Self, &'b str>;
-
-    fn parse<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>>
-    {
-        match Self::extract(args, from) {
-            Err(e) => Err(e),
-            Ok((argstr, end)) => match Self::parse_extracted(argstr) {
-                Ok(arg) => Ok((arg, end)),
-                Err(e) => Err(ExtractErr::Parse(e))
-            }
-        }
-    }
+pub struct OptionalParameter<P: Parameter> {
+    p: P
 }
 
-impl<P: Parameter> Parameter for Option<P> {
-    type Arg<'a> = Option<P::Arg<'a>>;
-    type CF = P::CF;
+impl<P: Parameter> Parameter for OptionalParameter<P> {
+    type Argument<'a> = Option<P::Argument<'a>>;
+    type CreationArguments = P::CreationArguments;
+    const ARGS: Self::CreationArguments = P::ARGS;
+        
+    fn create(args: Self::CreationArguments) -> Self {
+        Self {p: P::create(args)}
+    }
 
+    #[inline]
     fn regex() -> &'static Regex {
         P::regex()
     }
 
-    fn usage_gr() -> String {
-        return "[".to_string() + Self::usage() + "]"
-    }
-
+    #[inline]
     fn usage() -> &'static str {
         P::usage()
     }
-}
 
-pub struct CompletionSpecializedParameter<
-        P: Parameter,
-        A: CompleterArgsContainer<CF> = DefaultCompleterArgsContainer,
-        CF: CompleterFactory = <P as Parameter>::CF,
-        > {
-    phantom: PhantomData<(P, A, CF)>
-}
-
-impl<P: Parameter, A: CompleterArgsContainer<CF>, CF: CompleterFactory> Parameter
-        for CompletionSpecializedParameter<P, A, CF>
-{
-    type Arg<'a> = P::Arg<'a>;
-    type CF = CF;        
-    const COMPLETER_ARGS: <<Self as Parameter>::CF as CompleterFactory>::Args = A::ARGS;
-
-    fn regex() -> &'static Regex {
-        P::regex()
-    }
-
-    fn usage() -> &'static str {
-        P::usage()
-    }
-}
-
-impl<'a, A: Argument<'a>> Argument<'a> for Option<A> {
-    fn parse<'b>(args: &'a str, from: usize) -> Result<(Self, usize), ExtractErr<'b>> {
+    fn parse<'a, 'b>(&self, args: &'a str, from: usize) -> Result<(Self::Argument<'a>, usize), ExtractErr<'b>> {
         match Self::extract(args, from) {
-            Ok((argstr, end)) => match Self::parse_extracted(argstr) {
+            Ok((argstr, end)) => match self.parse_extracted(argstr) {
                 Err(e) => Err(ExtractErr::Parse(e)),
                 Ok(arg) => Ok((arg, end))
             }
@@ -164,83 +186,39 @@ impl<'a, A: Argument<'a>> Argument<'a> for Option<A> {
         }
     }
 
-    fn parse_extracted<'b>(arg: &'a str) -> Result<Self, &'b str> {
-        match A::parse_extracted(arg) {
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
+        match self.p.parse_extracted(arg) {
             Ok(arg) => Ok(Some(arg)),
             Err(e) => Err(e)
         }
     }
-}
-pub trait CompleterFactory : 'static {
-    type Args : Any + std::cmp::Eq + std::hash::Hash + Clone + 'static;
-    const DEFAULT_ARGS : Self::Args;
-    type Completer : CommandCompleter;
 
-    fn create(args: &Self::Args) -> Self::Completer;
-
-    fn id() -> std::any::TypeId
-    {
-        std::any::TypeId::of::<Self>()
+    fn completer(&self) -> &dyn CommandCompleter {
+        self.p.completer()
     }
 }
 
 
-trait AbstractCompleterInstances<'a> {
-    fn ensure_exists(&mut self, args: &dyn Any);
-    fn get(&self, args: &dyn Any) -> &dyn CommandCompleter;
+pub struct ParameterManager {
+    instances: HashMap<std::any::TypeId, Box<dyn Any>>
 }
 
-struct CompleterInstances<F: CompleterFactory> {
-    completers: HashMap<F::Args, F::Completer>
-}
-
-impl<F: CompleterFactory> CompleterInstances<F> {
-    fn new() -> Self {
-        Self {completers: HashMap::new()}
-    }
-}
-
-impl<'a, F: CompleterFactory> AbstractCompleterInstances<'a> for CompleterInstances<F> {
-    fn ensure_exists(&mut self, args: &dyn Any) {
-        let typed_args = args.downcast_ref::<F::Args>().unwrap();
-
-        if self.completers.contains_key(typed_args) {
-            return
-        }
-
-        self.completers.insert(typed_args.clone(), F::create(typed_args));
-    }
-
-    fn get(&self, args: &dyn Any) -> &dyn CommandCompleter {
-        let typed_args = args.downcast_ref::<F::Args>().unwrap();
-        self.completers.get(typed_args).unwrap()
-    }
-}
-
-pub struct CompleterManager<'a> {
-    completers: HashMap<std::any::TypeId, Box<dyn AbstractCompleterInstances<'a> + 'a>>
-}
-
-impl<'a> CompleterManager<'a> {
+impl ParameterManager {
     pub fn new() -> Self {
-        Self {completers: HashMap::new()}
+        Self {instances: HashMap::new()}
     }
 
-    fn ensure_exists<F: CompleterFactory>(&mut self, args: &F::Args) {
-        let factory_id = F::id();
+    fn ensure_exists<P: Parameter>(&mut self) {
+        let id = P::id();
 
-        if !self.completers.contains_key(&factory_id) {
-            let ci = CompleterInstances::<F>::new();
-            self.completers.insert(factory_id, Box::new(ci));
+        if !self.instances.contains_key(&id) {
+            self.instances.insert(id, Box::new(P::new()));
         }
-
-        self.completers.get_mut(&factory_id).unwrap().ensure_exists(args);
     }
 
-
-    pub fn get<F: CompleterFactory>(&self, args: &F::Args) -> &dyn CommandCompleter {
-        let factory_id = F::id();
-        self.completers.get(&factory_id).unwrap().get(args)
+    pub fn get<P: Parameter>(&self) -> &P {
+        let factory_id = P::id();
+        self.instances.get(&factory_id).unwrap().downcast_ref::<P>().unwrap()
     }
 }
 
@@ -288,8 +266,8 @@ pub fn lws(text: &str) -> usize {
 }
 
 trait AbstractCommandBuilder<'a, 'b: 'a, T: 'b> {
-    fn ensure_completers(&self, cm: &mut CompleterManager);
-    fn build<'c: 'b>(&self, cm: &'b CompleterManager<'c>) -> Box<dyn AbstractCommand<T> + 'b>;
+    fn ensure_parameters(&self, pm: &mut ParameterManager);
+    fn build<'c: 'b>(&self, pm: &'b ParameterManager) -> Box<dyn AbstractCommand<T> + 'b>;
 }
 
 pub struct CommandsBuilder<'a, 'b: 'a, T: 'b> {
@@ -302,19 +280,19 @@ impl<'a, 'b: 'a, T: 'b> CommandsBuilder<'a, 'b, T> {
         Self {builders: Vec::new()}
     }
 
-    pub fn ensure_completers(&self, cm: &mut CompleterManager)
+    pub fn ensure_parameters(&self, pm: &mut ParameterManager)
     {
         for builder in self.builders.iter() {
-            builder.as_ref().ensure_completers(cm)
+            builder.as_ref().ensure_parameters(pm)
         }
     }
 
-    pub fn get_commands<'c: 'b>(&self, cm: &'b CompleterManager<'c>) -> Commands<'b, T>
+    pub fn get_commands<'c: 'b>(&self, pm: &'b ParameterManager) -> Commands<'b, T>
     {
         let mut commands = Commands::new();
 
         for builder in self.builders.iter() {
-            let cmd = builder.as_ref().build(cm);
+            let cmd = builder.as_ref().build(pm);
             commands.insert(cmd.name(), cmd);
         }
 
@@ -328,22 +306,22 @@ macro_rules! cmdimpl {
     };
     ($param_count:expr, $($param:ident),*) => {
         paste! {
-            type [<CmdFn $param_count>]<T, $($param),*> = for <'a> fn(&mut T, $(&<$param as Parameter>::Arg<'a>),*);
+            type [<CmdFn $param_count>]<T, $($param),*> = for <'a> fn(&mut T, $(&<$param as Parameter>::Argument<'a>),*);
 
             struct [<Cmd $param_count>]<'a, T, $($param: Parameter),*> {
                 name: &'static str,
                 func: [<CmdFn $param_count>]<T, $($param),*>,
                 phantom: PhantomData<&'a bool>,
-                $([<completer $param:lower>]: &'a dyn CommandCompleter),*
+                $([<$param:lower>]: &'a $param),*
             }
 
             impl <'a, T, $($param: Parameter),*> [<Cmd $param_count>]<'a, T, $($param),*> {
                 pub fn new(
                         name: &'static str,
                         func: [<CmdFn $param_count>]<T, $($param),*>,
-                        $([<completer $param:lower>]: &'a dyn CommandCompleter),*) -> Self
+                        $([<$param:lower>]: &'a $param),*) -> Self
                 {
-                    Self{name, func, phantom: PhantomData, $([<completer $param:lower>]),*}
+                    Self{name, func, phantom: PhantomData, $([<$param:lower>]),*}
                 }
             }
 
@@ -361,17 +339,17 @@ macro_rules! cmdimpl {
             impl<'a, 'b: 'a, T: 'b, $($param: Parameter + 'b),*> AbstractCommandBuilder<'a, 'b, T>
                     for [<CmdBuilder $param_count>]<T, $($param),*>
             {
-                fn ensure_completers(&self, cm: &mut CompleterManager)
+                fn ensure_parameters(&self, pm: &mut ParameterManager)
                 {
-                    let _ignore = &cm;
-                    $(cm.ensure_exists::<$param::CF>(&$param::COMPLETER_ARGS);)*
+                    let _ignore = &pm;
+                    $(pm.ensure_exists::<$param>();)*
                 }
 
-                fn build<'c: 'b>(&self, cm: &'b CompleterManager<'c>) -> Box<dyn AbstractCommand<T> + 'b>
+                fn build<'c: 'b>(&self, pm: &'b ParameterManager) -> Box<dyn AbstractCommand<T> + 'b>
                 {
-                    let _ignore = &cm;
+                    let _ignore = &pm;
                     Box::new([<Cmd $param_count>]::new(
-                        self.name, self.func, $(cm.get::<$param::CF>(&$param::COMPLETER_ARGS)),*))
+                        self.name, self.func, $(pm.get::<$param>()),*))
                 }
             }
 
@@ -393,7 +371,7 @@ macro_rules! cmdimpl {
                     $(
                         assert!(next_at <= args.len());
 
-                        let ([<arg_ $param:lower>], arg_end) = match $param::Arg::parse(&args, next_at) {
+                        let ([<arg_ $param:lower>], arg_end) = match self.[<$param:lower>].parse(&args, next_at) {
                             Ok(result) => result,
                             Err(e) => return Err(match e {
                                 ExtractErr::Missing => (expect_next_at, ExecErr::TooFew),
@@ -426,14 +404,14 @@ macro_rules! cmdimpl {
 
                     $(
                         let arg_end = match $param::ends_at(args, next_at) {
-                            0 => return complete(self.[<completer $param:lower>], args, next_at),
+                            0 => return self.[<$param:lower>].complete(args, next_at),
                             pos => pos
                         };
 
                         assert!(arg_end <= args.len());
 
                         if arg_end == args.len() {
-                            return complete(self.[<completer $param:lower>], args, next_at);
+                            return self.[<$param:lower>].complete(args, next_at);
                         }
 
                         next_at = arg_end + lws(&args[arg_end..]);
@@ -626,7 +604,7 @@ pub struct SimpleInterpreter<'a, C: Processor> {
 }
 
 impl<'a, C: Processor> SimpleInterpreter<'a, C> {
-    pub fn new<'b: 'a>(processor: C, cb: CommandsBuilder<'_, 'a, C>, cm: &'a CompleterManager<'b>) -> Self {
+    pub fn new<'b: 'a>(processor: C, cb: CommandsBuilder<'_, 'a, C>, cm: &'a ParameterManager) -> Self {
     //pub fn new(processor: C, commands: Commands<'a, C>) -> Self {
         let commands = cb.get_commands(cm);
         Self {processor, commands}

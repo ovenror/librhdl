@@ -4,7 +4,7 @@ use std::process::exit;
 
 use crate::interpreter;
 use crate::interpreter::CommandsBuilder;
-use crate::interpreter::CompleterManager;
+use crate::interpreter::ParameterManager;
 use crate::interpreter::Interpreter;
 use crate::interpreter::SimpleInterpreter;
 use crate::wod::WriteOrDie;
@@ -66,7 +66,7 @@ pub struct SimpleConsoleInterpreter<'a, C: Processor> {
 }
 
 impl<'a, P: Processor> SimpleConsoleInterpreter<'a, P> {
-    pub fn new<'b: 'a>(processor: P, cb: CommandsBuilder<'_, 'a, P>, cm: &'a CompleterManager<'b>) -> Self {
+    pub fn new<'b: 'a>(processor: P, cb: CommandsBuilder<'_, 'a, P>, cm: &'a ParameterManager) -> Self {
     //pub fn new(processor: P, commands: Commands<'a, P>) -> Self {
         Self {
             interpreter: SimpleInterpreter::new(processor, cb, cm),
