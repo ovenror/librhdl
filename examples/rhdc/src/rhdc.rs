@@ -158,7 +158,7 @@ impl Parameter for QName {
     }
 
     fn create(_args: Self::CreationArguments) -> Self {
-        QName {completer: ObjectCompleter::new(&[])}
+        QName {completer: ObjectCompleter::new(vec![(rhdl_object_t::root(), &"")])}
     }
 
     fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
@@ -170,12 +170,12 @@ impl Parameter for QName {
     }
 }
 
-struct Object {
-    completer: ObjectCompleter,
-    bases: Vec<(&'static str, *const rhdl_object_t)>
+struct Object<'a> {
+    completer: ObjectCompleter<'a>,
+    bases: Vec<(*const rhdl_object_t, &'static str)>
 }
 
-impl Parameter for Object {
+impl<'hmpf> Parameter for Object<'hmpf> {
     type Argument<'a> = &'a rhdl_object_t;
     type CreationArguments = &'static [&'static str];    
     const ARGS: Self::CreationArguments = &[];
@@ -189,7 +189,21 @@ impl Parameter for Object {
     }
        
     fn create(args: Self::CreationArguments) -> Self {
-        Object {completer: ObjectCompleter::new(args), bases: Vec::new()}
+        let mut bases = Vec::<(*const rhdl_object_t, &'static str)>::new();
+        bases.push((rhdl_object_t::root(), ""));
+
+        for qnstr in args.iter() {
+            let base = resolve_object_noerr(
+                    QualifiedName::try_from(qnstr).unwrap().slice());
+
+            if base.is_null() {
+                panic!("Could not resolve {}", qnstr);
+            }
+
+            bases.push((base, qnstr));
+        }
+
+        Self {completer: ObjectCompleter::new(&bases), bases}
     }
     
     fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
@@ -256,7 +270,7 @@ impl InnerRHDL {
             structure: ptr::null(),
             components: HashMap::new(),
             //object_completer: cm.get::<ObjectCompleter>(&ObjectCompleter::DEFAULT_ARGS)
-            object_completer: ObjectCompleter::new(&[])
+            object_completer: ObjectCompleter::new(vec![(rhdl_object_t::root(), &"")])
         }
     }
 
@@ -932,27 +946,13 @@ impl CommandCompleter for NoCompleter {
     }
 }
 
-pub struct ObjectCompleter {
-    bases : Vec<(*const rhdl_object_t, &'static str)>
+pub struct ObjectCompleter<'a> {
+    bases : &'a Vec<(*const rhdl_object_t, &'static str)>
 }
 
-impl ObjectCompleter {
-    fn new(baseqnstrs: &[&'static str]) -> Self
+impl<'a> ObjectCompleter<'a> {
+    fn new(bases: &'a Vec<(*const rhdl_object_t, &'static str)>) -> Self
     {
-        let mut bases = Vec::<(*const rhdl_object_t, &'static str)>::new();
-        bases.push((rhdl_object_t::root(), ""));
-
-        for qnstr in baseqnstrs.iter() {
-            let base = resolve_object_noerr(
-                    QualifiedName::try_from(qnstr).unwrap().slice());
-
-            if base.is_null() {
-                panic!("Could not resolve {}", qnstr);
-            }
-
-            bases.push((base, qnstr));
-        }
-
         Self {bases}
     }
 
@@ -1041,7 +1041,7 @@ impl ObjectCompleter {
     }
 }
 
-impl CommandCompleter for ObjectCompleter {
+impl<'a> CommandCompleter for ObjectCompleter<'a> {
     fn complete(&self, text: &str) -> (usize, Vec<String>)
     {
         let (most, last) = match text.rsplit_once('.') {
