@@ -170,12 +170,12 @@ impl Parameter for QName {
     }
 }
 
-struct Object<'a> {
-    completer: ObjectCompleter<'a>,
+struct Object {
+    completer: ObjectCompleter,
     bases: Vec<(*const rhdl_object_t, &'static str)>
 }
 
-impl<'hmpf> Parameter for Object<'hmpf> {
+impl Parameter for Object {
     type Argument<'a> = &'a rhdl_object_t;
     type CreationArguments = &'static [&'static str];    
     const ARGS: Self::CreationArguments = &[];
@@ -203,7 +203,7 @@ impl<'hmpf> Parameter for Object<'hmpf> {
             bases.push((base, qnstr));
         }
 
-        Self {completer: ObjectCompleter::new(&bases), bases}
+        Self {completer: ObjectCompleter::new(bases.clone()), bases}
     }
     
     fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
@@ -946,12 +946,12 @@ impl CommandCompleter for NoCompleter {
     }
 }
 
-pub struct ObjectCompleter<'a> {
-    bases : &'a Vec<(*const rhdl_object_t, &'static str)>
+pub struct ObjectCompleter {
+    bases : Vec<(*const rhdl_object_t, &'static str)>
 }
 
-impl<'a> ObjectCompleter<'a> {
-    fn new(bases: &'a Vec<(*const rhdl_object_t, &'static str)>) -> Self
+impl ObjectCompleter {
+    fn new(bases: Vec<(*const rhdl_object_t, &'static str)>) -> Self
     {
         Self {bases}
     }
@@ -1041,7 +1041,7 @@ impl<'a> ObjectCompleter<'a> {
     }
 }
 
-impl<'a> CommandCompleter for ObjectCompleter<'a> {
+impl CommandCompleter for ObjectCompleter {
     fn complete(&self, text: &str) -> (usize, Vec<String>)
     {
         let (most, last) = match text.rsplit_once('.') {
