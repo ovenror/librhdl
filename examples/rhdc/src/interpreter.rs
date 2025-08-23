@@ -354,7 +354,7 @@ macro_rules! cmdimpl {
             }
 
             impl<'a, 'b: 'a, T: 'b> CommandsBuilder<'a, 'b, T> {
-                pub fn [<command $param_count>]<$($param: Parameter + 'static),*> (
+                pub fn [<command $param_count>]<$($param: Parameter + 'b),*> (
                         &mut self,
                         name: &'static str,
                         func: [<CmdFn $param_count>]<T, $($param),*>)
