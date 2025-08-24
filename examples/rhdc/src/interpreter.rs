@@ -42,7 +42,7 @@ pub trait Parameter : Any + Sized {
     fn create(args: Self::CreationArguments) -> Self;
     fn regex() -> &'static Regex;
     fn usage() -> &'static str;
-    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str>;
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String>;
     fn completer(&self) -> &dyn CommandCompleter;
 
     fn new() -> Self {
@@ -54,7 +54,7 @@ pub trait Parameter : Any + Sized {
         std::any::TypeId::of::<Self>()
     }
 
-    fn parse<'a, 'b>(&self, args: &'a str, from: usize) -> Result<(Self::Argument<'a>, usize), ExtractErr<'b>>
+    fn parse<'a>(&self, args: &'a str, from: usize) -> Result<(Self::Argument<'a>, usize), ExtractErr>
     {
         match Self::extract(args, from) {
             Err(e) => Err(e),
@@ -69,7 +69,7 @@ pub trait Parameter : Any + Sized {
         return "<".to_string() + Self::usage() + ">"
     }
 
-    fn extract<'a, 'b>(args: &'a str, from: usize) -> Result<(&'a str, usize), ExtractErr<'b>>
+    fn extract<'a>(args: &'a str, from: usize) -> Result<(&'a str, usize), ExtractErr>
     {
         if from >= args.len() {
             return Err(ExtractErr::Missing)
@@ -137,7 +137,7 @@ impl<P: Parameter, A: ParameterArgsContainer<P> + 'static> Parameter for ArgsSpe
         P::usage()
     }
 
-    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
+    fn parse_extracted<'a>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String> {
         self.parameter.parse_extracted(arg)
     }
 
@@ -146,10 +146,10 @@ impl<P: Parameter, A: ParameterArgsContainer<P> + 'static> Parameter for ArgsSpe
     }
 }
 
-pub enum ExtractErr<'a> {
+pub enum ExtractErr {
     Missing,
     Match,
-    Parse(&'a str)
+    Parse(String)
 }
 
 pub struct OptionalParameter<P: Parameter> {
@@ -160,7 +160,7 @@ impl<P: Parameter> Parameter for OptionalParameter<P> {
     type Argument<'a> = Option<P::Argument<'a>>;
     type CreationArguments = P::CreationArguments;
     const ARGS: Self::CreationArguments = P::ARGS;
-        
+
     fn create(args: Self::CreationArguments) -> Self {
         Self {p: P::create(args)}
     }
@@ -175,7 +175,9 @@ impl<P: Parameter> Parameter for OptionalParameter<P> {
         P::usage()
     }
 
-    fn parse<'a, 'b>(&self, args: &'a str, from: usize) -> Result<(Self::Argument<'a>, usize), ExtractErr<'b>> {
+    fn parse<'a>(&self, args: &'a str, from: usize)
+            -> Result<(Self::Argument<'a>, usize), ExtractErr>
+    {
         match Self::extract(args, from) {
             Ok((argstr, end)) => match self.parse_extracted(argstr) {
                 Err(e) => Err(ExtractErr::Parse(e)),
@@ -186,7 +188,7 @@ impl<P: Parameter> Parameter for OptionalParameter<P> {
         }
     }
 
-    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
+    fn parse_extracted<'a>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String> {
         match self.p.parse_extracted(arg) {
             Ok(arg) => Ok(Some(arg)),
             Err(e) => Err(e)
@@ -226,15 +228,19 @@ pub trait CommandCompleter {
     fn complete(&self, text: &str) -> (usize, Vec<String>);
 }
 
-pub enum ExecErr<'a> {
+pub enum NoParseExecErr {
     TooFew,
     TooMany,
     Match,
-    Parse(&'a str)
+}
+
+pub enum ExecErr {
+    NoParse(NoParseExecErr),
+    Parse(String),
 }
 
 pub trait AbstractCommand<T> {
-    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), (usize, ExecErr<'a>)>;
+    fn exec<'a>(&self, processor: &mut T, args: &str) -> Result<(), (usize, ExecErr)>;
     fn complete(&self, text: &str) -> (usize, Vec<String>);
     fn name(&self) -> &'static str;
     fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error>;
@@ -251,12 +257,14 @@ pub trait AbstractCommand<T> {
 
     fn error(&self, err: &mut dyn Write, e: (usize, ExecErr), extra: usize) {
         self.indicator(err, e.0, extra);
-        writeln!(err, "{}", match e.1 {
-            ExecErr::TooFew => "Too few arguments.",
-            ExecErr::TooMany => "Too many arguments.",
-            ExecErr::Match => "Parse error.",
-            ExecErr::Parse(reason) => reason,
-        }).unwrap();
+        match e.1 {
+            ExecErr::NoParse(np) => writeln!(err, "{}", match np {
+                NoParseExecErr::TooFew => "Too few arguments.",
+                NoParseExecErr::TooMany => "Too many arguments.",
+                NoParseExecErr::Match => "Parse error.",
+            }),
+            ExecErr::Parse(reason) => writeln!(err, "{}", reason),
+        }.unwrap();
         self.usage(err);
     }
 }
@@ -364,7 +372,7 @@ macro_rules! cmdimpl {
             }
 
             impl <'a, T, $($param: Parameter),*> AbstractCommand<T> for [<Cmd $param_count>]<'a, T, $($param),*> {
-                fn exec<'b>(&self, processor: &mut T, args: &str) -> Result<(), (usize, ExecErr<'b>)> {
+                fn exec(&self, processor: &mut T, args: &str) -> Result<(), (usize, ExecErr)> {
                     let mut next_at = lws(args);
                     let mut expect_next_at = 1;
 
@@ -374,9 +382,9 @@ macro_rules! cmdimpl {
                         let ([<arg_ $param:lower>], arg_end) = match self.[<$param:lower>].parse(&args, next_at) {
                             Ok(result) => result,
                             Err(e) => return Err(match e {
-                                ExtractErr::Missing => (expect_next_at, ExecErr::TooFew),
-                                ExtractErr::Match => (next_at, ExecErr::Match),
-                                ExtractErr::Parse(reason) => (next_at, ExecErr::Parse(reason))
+                                ExtractErr::Missing => (expect_next_at, ExecErr::NoParse(NoParseExecErr::TooFew)),
+                                ExtractErr::Match => (next_at, ExecErr::NoParse(NoParseExecErr::Match)),
+                                ExtractErr::Parse(reason) => (next_at, ExecErr::Parse(reason)),
                             })
                         };
 
@@ -387,7 +395,7 @@ macro_rules! cmdimpl {
 
                     //More arguments than expected is an error
                     if (next_at < args.len()) {
-                        return Err((next_at, ExecErr::TooMany));
+                        return Err((next_at, ExecErr::NoParse(NoParseExecErr::TooMany)));
                     }
 
                     //Prevent compiler from whining when there are no parameters

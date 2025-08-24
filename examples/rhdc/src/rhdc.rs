@@ -130,7 +130,7 @@ impl Parameter for Identifier {
         Identifier {}
     }
     
-    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
+    fn parse_extracted<'a>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String> {
         Ok(arg)
     }
     
@@ -161,7 +161,7 @@ impl Parameter for QName {
         QName {completer: ObjectCompleter::new(vec![(rhdl_object_t::root(), &"")])}
     }
 
-    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
+    fn parse_extracted<'a>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String> {
         Ok(QualifiedName::from(arg))
     }
     
