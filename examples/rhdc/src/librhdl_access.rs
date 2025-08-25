@@ -21,6 +21,13 @@ pub fn perror(err: &mut dyn Write) {
     writeln!(err, ": error #{}: {}", ec, msg).unwrap();
 }
 
+pub fn sperror(err: &mut String) {
+    use std::fmt::Write;
+    let ec = unsafe {rhdl_errno()};
+    let msg = errstr();
+    writeln!(err, ": error #{}: {}", ec, msg).unwrap();
+}
+
 pub trait Selectable : fmt::Display {
     fn select(&self, name: &str) -> *const Self;
     fn members<'a>(&'a self) -> StrIter<'a>;

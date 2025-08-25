@@ -32,6 +32,7 @@ impl QNAccumulator {
         }
     }
 }
+
 trait ResolveErrorHandler {
     fn record(&mut self, _component: &str);
     fn whine(&mut self, _component: &str);
@@ -48,6 +49,13 @@ trait ActiveResolveErrorHandler : ResolveErrorHandler {
     {
         write!(stream, "{} contains no member named \"{}\"", base_qn, component).unwrap();
         perror(stream)
+    }
+
+    fn whine_to_string(base_qn: &str, component: &str, string: &mut String)
+    {
+        use std::fmt::Write;
+        write!(string, "{} contains no member named \"{}\"", base_qn, component).unwrap();
+        sperror(string)
     }
 }
 
@@ -109,6 +117,11 @@ impl<'a> DeferringResolveErrorHandler {
     {
         Self::do_whine(self.accu.get_qn(), &self.last_component, stream);
     }
+
+    pub fn whine_later_to_string(&self, string: &mut String)
+    {
+        Self::whine_to_string(self.accu.get_qn(), &self.last_component, string);
+    }
 }
 
 impl ResolveErrorHandler for DeferringResolveErrorHandler {
@@ -148,6 +161,7 @@ impl<'a> ResolveErrorCollector<DeferringResolveErrorHandler>
     fn whine(&mut self) {
         for handler in self.handlers.iter() {
             handler.whine_later(&mut self.stream);
+            write!(self.stream, "\n").unwrap();
         }
     }
 }
@@ -171,6 +185,38 @@ impl ResolveErrorCollector<NOPResolveErrorHandler>
     }
 
     fn whine(&mut self) {}
+}
+
+struct RecordingResolveErrorCollector {
+    handlers: Vec<DeferringResolveErrorHandler>,
+    recorded: String
+}
+
+impl RecordingResolveErrorCollector {
+    fn new() -> Self
+    {
+        Self {handlers: Vec::new(), recorded: String::new()}
+    }
+
+    fn obtain(&mut self) -> String {
+        std::mem::take(&mut self.recorded)
+    }
+}
+
+impl ResolveErrorCollector<DeferringResolveErrorHandler>
+        for RecordingResolveErrorCollector
+{
+    fn new_handler(&mut self, basename: &str) -> &mut DeferringResolveErrorHandler {
+        self.handlers.push(DeferringResolveErrorHandler::new(basename));
+        self.handlers.last_mut().unwrap()
+    }
+
+    fn whine(&mut self) {
+        for handler in self.handlers.iter() {
+            handler.whine_later_to_string(&mut self.recorded);
+            self.recorded += "\n";
+        }
+    }
 }
 
 pub type QNSlice<'a> = [&'a str];
@@ -267,6 +313,19 @@ pub fn resolve_with_bases_noerr<S: Selectable, R: ResolveResult<S>>(bases : &Vec
 pub fn resolve_with_bases_err<S: Selectable, R: ResolveResult<S>>(bases : &Vec<(*const S, &str)>, qn : &QNSlice, err: &mut dyn Write) -> R
 {
     resolve_with_bases(bases, qn, &mut PrintingResolveErrorCollector::new(err))
+}
+
+pub fn resolve_with_bases_result<S: Selectable, R: ResolveResult<S>> (
+        bases : &Vec<(*const S, &str)>, qn : &QNSlice) -> Result<R, String>
+{
+    let mut collector = RecordingResolveErrorCollector::new();
+    let resolved: R = resolve_with_bases(bases, qn, &mut collector);
+
+    if resolved.is_empty() {
+        Err(collector.obtain())
+    } else {
+        Ok(resolved)
+    }
 }
 
 fn resolve_with_bases<

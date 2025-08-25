@@ -17,6 +17,8 @@ use crate::util::split_qn_once;
 use crate::librhdl::*;
 use crate::resolve::*;
 use crate::librhdl_access::*;
+use crate::librhdl::rhdl_object_t;
+use crate::librhdl_access::Selectable;
 
 use lazy_static::lazy_static;
 use std::iter;
@@ -206,23 +208,12 @@ impl Parameter for Object {
         Self {completer: ObjectCompleter::new(bases.clone()), bases}
     }
     
-    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, &'b str> {
+    fn parse_extracted<'a>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String> {
         let qn = QualifiedName::from(arg);
-        let root_resolved = resolve_object_noerr(qn.slice());
 
-        if root_resolved.is_null() {
-                let err = errstr();
-                let entities = resolve_object_noerr(&["entities"]);
-                assert!(!entities.is_null());
-                let entities_resolved = resolve_with_base_noerr(entities, qn.slice());
-
-                if entities_resolved.is_null() {
-                    Err(err)
-                } else {
-                    Ok(unsafe{&*entities_resolved})
-                }
-        } else {
-            Ok(unsafe{&*root_resolved})
+        match resolve_with_bases_result::<rhdl_object_t, *const rhdl_object_t>(&self.bases, qn.slice()) {
+            Ok(obj) => Ok(unsafe{&*obj}),
+            Err(err) => Err(err),
         }
     }
     
