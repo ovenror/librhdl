@@ -222,6 +222,22 @@ impl Parameter for Object {
     }
 }
 
+struct EntityParameterArgs;
+
+impl ParameterArgsContainer<Object> for EntityParameterArgs {
+    const ARGS: <Object as Parameter>::CreationArguments = &["entities"];
+}
+
+type Entity = ArgsSpecializedParameter<Object, EntityParameterArgs>;
+
+struct TransformationParameterArgs;
+
+impl ParameterArgsContainer<Object> for TransformationParameterArgs {
+    const ARGS: <Object as Parameter>::CreationArguments = &["transformations"];
+}
+
+type Transformation = ArgsSpecializedParameter<Object, TransformationParameterArgs>;
+
 struct InnerRHDLParseResult<'a> {
     parsed: u8,
     id1: Option<Match<'a>>,
@@ -909,7 +925,7 @@ impl<'a> interpreter::Processor for RHDC<'a> {
         cb.command1::<OptionalParameter<QName>>("ls", Self::ls);
         cb.command1::<Identifier>("synth", Self::synth);
         cb.command2::<Object, Object>("test", Self::test);
-        cb.command3::<Object, Object, Identifier>("transform", Self::transform);
+        cb.command3::<Entity, Transformation, Identifier>("transform", Self::transform);
     }
 
     fn prompt_size(&self) -> usize {
