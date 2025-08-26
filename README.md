@@ -18,7 +18,7 @@ And yes, others build complete CPUs in that size, I know. Currently, *everything
 
 You'll need:
 * cmake 3.13
-* C++-Compiler capable of C++17
+* C++-Compiler capable of C++20
 * boost 1.71
 
 If you want to build the tests
@@ -30,17 +30,15 @@ On UNIX-like systems, it should suffice to run `cmake .` and then `make` in the 
 ### rhdc
 
 You'll need:
-* Rust 2018
+* Rust 2021
 
 Run "make rhdc" in the same directory as above. The directory `bin/` should now contain the executable `rhdc`.
 
 ## Using rhdc
 
-* `> ls` shows a list of available entities. The `Inverter` is the basis for everything, the others are hackishly created on library startup and not adhering to some kind of common naming scheme etc. As they mainly serve a testing purpose, they might be changed or removed, so don't rely on them too much.
-* `> ls D_Flipflop` lists the d-flip-flops interfaces
-* `> ls D_Flipflop.clk` displays the properties of the clock interface. The library forbids connecting an open output to an open input. An interface is "open" if
-  * it is an output, but powering it would affect the entities circuit
-  * it is an input that might be powered by the entitiy itself
+* `> ls entities` shows a list of available entities. The `Inverter` is the basis for everything, the others are hackishly created on library startup and not adhering to some kind of common naming scheme etc. As they mainly serve a testing purpose, they might be changed or removed, so don't rely on them too much.
+* `> ls entities.D_Flipflop.interface` lists the d-flip-flops interfaces
+* `> ls entities.D_Flipflop.interface.clk` displays the properties of the clock interface.
 
 ### Defining an Entity with Combinational Logic
 
@@ -70,11 +68,11 @@ Now, we want to connect both a and i0 (the inverted b) to a0 (the first AND). Ho
       out
 
     XOR> ls a0.in0
-    Direction: IN, open: NO
+    Direction: IN
     XOR> ls a0.in1
-    Direction: IN, open: NO
+    Direction: IN
     XOR> ls a0.out
-    Direction: OUT, open: NO
+    Direction: OUT
 
 Let's hope it does what it seems to do:
 
