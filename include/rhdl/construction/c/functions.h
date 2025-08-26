@@ -43,6 +43,7 @@ enum rhdl_reptype rhdlo_read_reptype(const rhdl_object_t *);
 rhdl_object_t *rhdlo_transform(
 		rhdl_object_t *representation, rhdl_object_t *transformation,
 		const char *result_name);
+int rhdlo_print_commands(const rhdl_object_t *entity);
 
 rhdl_entity_t *rhdlo_entity(rhdl_object_t *);
 

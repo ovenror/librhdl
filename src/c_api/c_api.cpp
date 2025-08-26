@@ -308,16 +308,32 @@ int rhdl_connect(rhdl_connector_t *from, rhdl_connector_t *to)
 	return -1;
 }
 
+static void print_commands(const rhdl::Entity &entity)
+{
+	auto *commands = entity.getRepresentation<rhdl::txt::Commands>();
+	assert (commands);
+	std::cout << *commands;
+}
+
 int rhdl_print_commands(const char *entity_name) {
 	auto f = [=]() {
 		const rhdl::Entity &entity = rhdl::defaultLib -> at(entity_name);
-		auto *commands = entity.getRepresentation<rhdl::txt::Commands>();
-		assert (commands);
-		std::cout << *commands;
+		print_commands(entity);
 		return 0;
 	};
 
 	return cerror<int, 1>(f, std::array<int, 1>{E_NO_SUCH_MEMBER});
+}
+
+int rhdlo_print_commands(const rhdl_object_t *o)
+{
+	auto f = [=]() {
+		const rhdl::Entity &entity = recover<rhdl::CObject>(o);
+		print_commands(entity);
+		return 0;
+	};
+
+	return cerror<int, 1>(f, std::array<int, 1>{E_WRONG_OBJECT_TYPE});
 }
 
 const rhdl_object * rhdlo_get(const rhdl_object_t *o, const char *member) {
