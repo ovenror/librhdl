@@ -835,30 +835,23 @@ impl<'a> RHDC<'a> {
             None => panic!()
         };
 
-        let tname = CString::new(basename).unwrap();
-        
-        let entity = unsafe {rhdl_entity(ptr::null(), tname.as_ptr())};
-        if !(entity.is_null()) {
-            let iface = unsafe{*entity}.iface;
-            return self.ls_internal(basename, iface, components);
-        }
-        
-        let object = unsafe {rhdlo_get(ptr::null(), tname.as_ptr())};
+        let object = resolve_object_noerr(qn.slice());
         if !(object.is_null()) {
-            return self.ls_internal(basename, object, components);
+            println!("{}", unsafe{&*object});
+            return
         }
 
         let connector = match self.rhdl.get_commands().get_connector(basename) {
             Ok(ptr) => ptr,
             Err(_) => {
-                write!(self.outputs.err, "Unknown entity {}", basename).unwrap();
+                write!(self.outputs.err, "Unknown object {}", basename).unwrap();
                 perror(&mut self.outputs.err);
                 return;
             }
         };
 
         if connector.is_null() {
-            writeln!(self.outputs.err, "{} is neither a known entity, nor an identifier used in the current structure definition", basename).unwrap();
+            writeln!(self.outputs.err, "{} is neither a known object, nor an identifier used in the current structure definition", basename).unwrap();
             return;
         }
             
