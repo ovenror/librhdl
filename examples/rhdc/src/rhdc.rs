@@ -858,12 +858,11 @@ impl<'a> RHDC<'a> {
         return self.ls_internal(basename, connector, components);
     }
 
-    fn synth(&mut self, name: &&str) {
-        let ec;
-        let tname = CString::new(*name).unwrap();
-        unsafe {ec = rhdl_print_commands(tname.as_ptr());}
+    fn synth(&mut self, entity: &&rhdl_object_t) {
+        let ec: i32;
+        unsafe {ec = rhdlo_print_commands(*entity);}
         if ec != 0 {
-            write!(self.outputs.err, "{}", name).unwrap();
+            write!(self.outputs.err, "{}", entity.name()).unwrap();
             perror(&mut self.outputs.err);
         }
     }
@@ -916,7 +915,7 @@ impl<'a> interpreter::Processor for RHDC<'a> {
         cb.command0("quit", Self::quit);
         cb.command0("panic", Self::panic);
         cb.command1::<OptionalParameter<QName>>("ls", Self::ls);
-        cb.command1::<Identifier>("synth", Self::synth);
+        cb.command1::<Entity>("synth", Self::synth);
         cb.command2::<Object, Object>("test", Self::test);
         cb.command3::<Entity, Transformation, Identifier>("transform", Self::transform);
     }
