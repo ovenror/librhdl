@@ -31,6 +31,9 @@ pub fn sperror(err: &mut String) {
 pub trait Selectable : fmt::Display {
     fn select(&self, name: &str) -> *const Self;
     fn members<'a>(&'a self) -> StrIter<'a>;
+    fn name(&self) -> &str {
+        unsafe{CStr::from_ptr(self.select("name") as *const i8)}.to_str().unwrap()
+    }
 
 /*
     fn fmt_member(&self, member: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result
