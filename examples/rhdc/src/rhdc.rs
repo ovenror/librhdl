@@ -726,10 +726,10 @@ impl interpreter::Processor for OuterRHDL {
     type Fallback = InnerRHDL;
             
     fn commands(cb: &mut CommandsBuilder<Self>) {
-        cb.command1::<QName>("def", Self::define);
-        cb.command1::<QName>("define", Self::define);
-        cb.command1::<QName>("stateful", Self::stateful);
-        cb.command0("enddef", Self::enddef);
+        cb.command1::<QName>("def", Self::define, "Short for define");
+        cb.command1::<QName>("define", Self::define, "Define a new stateless structure");
+        cb.command1::<QName>("stateful", Self::stateful, "Define a new stateful structure");
+        cb.command0("enddef", Self::enddef, "End the current structure definition");
     }
 
     fn stderr(&mut self) -> &mut dyn Write {
@@ -841,7 +841,7 @@ impl<'a> RHDC<'a> {
             return
         }
 
-        let connector = match self.rhdl.get_commands().get_connector(basename) {
+        let connector = match self.rhdl.get_processor().get_connector(basename) {
             Ok(ptr) => ptr,
             Err(_) => {
                 write!(self.outputs.err, "Unknown object {}", basename).unwrap();
@@ -908,16 +908,18 @@ impl<'a> interpreter::Processor for RHDC<'a> {
 
     fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>)
     {
-        return self.rhdl.get_commands().complete_object_contextually(line);
+        return self.rhdl.get_processor().complete_object_contextually(line);
     }
     
     fn commands(cb: &mut CommandsBuilder<Self>)  {
-        cb.command0("quit", Self::quit);
-        cb.command0("panic", Self::panic);
-        cb.command1::<OptionalParameter<QName>>("ls", Self::ls);
-        cb.command1::<Entity>("synth", Self::synth);
-        cb.command2::<Object, Object>("test", Self::test);
-        cb.command3::<Entity, Transformation, Identifier>("transform", Self::transform);
+        cb.command0("quit", Self::quit, "Quit RHDC");
+        cb.command0("panic", Self::panic, "Panic!!!1");
+        cb.command1::<OptionalParameter<QName>>("ls", Self::ls,
+            "List subobjects of root or the (optionally) given object");
+        cb.command1::<Entity>("synth", Self::synth, "Synthesize the given entity");
+        cb.command2::<Object, Object>("test", Self::test, "Test command, does nothing");
+        cb.command3::<Entity, Transformation, Identifier>("transform", Self::transform,
+            "Apply a transformation to a entity representation, creating a new representation");
     }
 
     fn prompt_size(&self) -> usize {
@@ -927,11 +929,19 @@ impl<'a> interpreter::Processor for RHDC<'a> {
     fn interactive(&self) -> bool {
         self.outputs.interactive
     }
+
+    fn help_list_fb(&mut self) {
+        self.rhdl.help_list();
+    }
+
+    fn get_fallback_cmd_names(&self) -> Vec<&'static str> {
+        self.rhdl.get_commands().keys().cloned().collect()
+    }
 }
 
 impl<'a> Processor for RHDC<'a> {
     fn prompt_info(&self) -> &str {
-        self.rhdl.get_commands().prompt_info()
+        self.rhdl.get_processor().prompt_info()
     }
 }
 

@@ -207,6 +207,8 @@ pub struct ParameterManager {
 
 impl ParameterManager {
     pub fn new() -> Self {
+        let mut map = HashMap::<std::any::TypeId, Box<dyn Any>>::new();
+        map.insert(Command::id(), Box::new(Command::new()));
         Self {instances: HashMap::new()}
     }
 
@@ -244,6 +246,7 @@ pub trait AbstractCommand<T> {
     fn complete(&self, text: &str) -> (usize, Vec<String>);
     fn name(&self) -> &'static str;
     fn param_usage(&self, err: &mut dyn Write) -> Result<(), std::io::Error>;
+    fn help_short(&self) -> &'static str;
 
     fn usage(&self, err: &mut dyn Write) {
         write!(err, "usage: {} ", self.name()).unwrap();
@@ -319,6 +322,7 @@ macro_rules! cmdimpl {
             struct [<Cmd $param_count>]<'a, T, $($param: Parameter),*> {
                 name: &'static str,
                 func: [<CmdFn $param_count>]<T, $($param),*>,
+                help_short: &'static str,
                 phantom: PhantomData<&'a bool>,
                 $([<$param:lower>]: &'a $param),*
             }
@@ -327,20 +331,25 @@ macro_rules! cmdimpl {
                 pub fn new(
                         name: &'static str,
                         func: [<CmdFn $param_count>]<T, $($param),*>,
+                        help_short: &'static str,
                         $([<$param:lower>]: &'a $param),*) -> Self
                 {
-                    Self{name, func, phantom: PhantomData, $([<$param:lower>]),*}
+                    Self{
+                        name, func, help_short, phantom: PhantomData,
+                        $([<$param:lower>]),*
+                    }
                 }
             }
 
             struct [<CmdBuilder $param_count>]<T, $($param: Parameter),*> {
                 name: &'static str,
-                func: [<CmdFn $param_count>]<T, $($param),*>
+                func: [<CmdFn $param_count>]<T, $($param),*>,
+                help_short: &'static str,
             }
 
             impl<T, $($param: Parameter),*> [<CmdBuilder $param_count>]<T, $($param),*> {
-                fn new(name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>) -> Self {
-                    Self {name, func}
+                fn new(name: &'static str, func: [<CmdFn $param_count>]<T, $($param),*>, help_short: &'static str) -> Self {
+                    Self {name, func, help_short}
                 }
             }
 
@@ -357,7 +366,8 @@ macro_rules! cmdimpl {
                 {
                     let _ignore = &pm;
                     Box::new([<Cmd $param_count>]::new(
-                        self.name, self.func, $(pm.get::<$param>()),*))
+                        self.name, self.func, self.help_short,
+                        $(pm.get::<$param>()),*))
                 }
             }
 
@@ -365,9 +375,12 @@ macro_rules! cmdimpl {
                 pub fn [<command $param_count>]<$($param: Parameter + 'b),*> (
                         &mut self,
                         name: &'static str,
-                        func: [<CmdFn $param_count>]<T, $($param),*>)
+                        func: [<CmdFn $param_count>]<T, $($param),*>,
+                        help_short: &'static str)
                 {
-                    self.builders.push(Box::new([<CmdBuilder $param_count>]::<T, $($param),*>::new(name, func)));
+                    self.builders.push(Box::new(
+                        [<CmdBuilder $param_count>]::<T, $($param),*>::new(
+                            name, func, help_short)));
                 }
             }
 
@@ -448,6 +461,10 @@ macro_rules! cmdimpl {
                 fn name(&self) -> &'static str {
                     return self.name;
                 }
+
+                fn help_short(&self) -> &'static str {
+                    return self.help_short;
+                }
             }
         }
     };
@@ -466,6 +483,69 @@ pub trait Interpreter : Completer {
 //pub type TheCommands<T, const N: usize> = [Box<dyn AbstractCommand<'static, T>>; N];
 pub type Commands<'a, T> = HashMap<&'static str, Box<dyn AbstractCommand<T> + 'a>>;
 
+struct CmdCompleter {
+    cmds: Vec<&'static str>
+}
+
+impl CmdCompleter {
+    fn new() -> Self {
+        Self {cmds: Vec::new()}
+    }
+
+    fn add(&mut self, cmds: Vec<&'static str>) {
+        self.cmds.extend(cmds.into_iter());
+    }
+}
+
+impl CommandCompleter for CmdCompleter {
+    fn complete(&self, text: &str) -> (usize, Vec<String>) {
+        let candidates: Vec<String> = self.cmds.iter().
+                filter(|cmd| cmd.starts_with(text)).
+                map(|cmd| cmd.to_string()).
+                collect();
+        (0, candidates)
+    }
+}
+
+pub struct Command {
+    completer: CmdCompleter
+}
+
+impl Command {
+    fn new() -> Self {
+        Self {completer: CmdCompleter::new()}
+    }
+
+    fn add(&mut self, cmds: Vec<&'static str>) {
+        self.completer.add(cmds);
+    }
+}
+
+impl Parameter for Command {
+    type Argument<'a> = &'a str;
+    type CreationArguments = Vec<&'static str>;
+    const ARGS: Self::CreationArguments = vec![];
+
+    fn create(args: Self::CreationArguments) -> Self {
+        Command {completer: CmdCompleter {cmds: args}}
+    }
+
+    fn regex() -> &'static Regex {
+        &REGEX_CMDLINE
+    }
+
+    fn usage() -> &'static str {
+        "command"
+    }
+
+    fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String> {
+        Ok(arg)
+    }
+
+    fn completer(&self) -> &dyn CommandCompleter {
+        &self.completer
+    }
+}
 
 pub trait Processor : Sized {
     type Fallback : Interpreter<Candidate = Pair>;
@@ -477,9 +557,56 @@ pub trait Processor : Sized {
     fn interactive(&self) -> bool;
     fn prompt_size(&self) -> usize;
 
+    fn help_list_fb(&mut self) {}
+
+    fn get_fallback_cmd_names(&self) -> Vec<&'static str>
+    {
+        Vec::new()
+    }
+
+    fn help_dummy(&mut self, _cmd: &Option<&str>) {}
+
+    fn help(&mut self, cmd: &str, cmds: &Commands<Self>) {
+        if cmd.is_empty() {
+            self.help_overview(cmds);
+        } else {
+            self.help_command(cmd, cmds);
+        }
+    }
+
+    fn help_command(&mut self, cmd: &str, cmds: &Commands<Self>) {
+        match cmds.get(cmd) {
+            Some(c) => {
+                c.usage(self.stderr());
+            }
+            None => {
+                writeln!(self.stderr(), "No such command: {}", cmd).unwrap();
+                writeln!(self.stderr(), "Type 'help' for a list of commands.").unwrap();
+            }
+        }
+    }
+
+    fn help_overview(&mut self, cmds: &Commands<Self>) {
+        writeln!(self.stderr(), "Available commands:").unwrap();
+        self.help_list(cmds);
+        self.help_list_fb();
+        writeln!(self.stderr(), "Type 'help <command>' for details.").unwrap();
+    }
+
+    fn help_list(&mut self, cmds: &Commands<Self>) {
+        cmds.iter().for_each(|(_, cmd)| {
+            writeln!(self.stderr(), "{:20} {}", cmd.name(), cmd.help_short()).unwrap();
+        });
+    }
+
     fn exec(&mut self, cmds: &Commands<Self>, cmd: &str, args: &str, orig: &String) -> bool {
         let command = match cmds.get(cmd) {
-            Some(c) => c.as_ref(),
+            Some(c) =>
+                if cmd == "help" {
+                    self.help(args.trim(), cmds); return true;
+                } else {
+                    c.as_ref()
+                },
             None => return self.exec_fb(cmd, args, orig)
         };
 
@@ -515,6 +642,9 @@ pub trait Processor : Sized {
             -> Result<(usize, Vec<Pair>), ReadlineError>
     {
         let line_trimmed = line.trim_start();
+        let line_lws = line.len() - line_trimmed.len();
+        let cursor_pos_in_line_trimmed = pos - line_lws;
+
         let (command, args) = match line_trimmed.split_once(' ') {
             Some((c, a)) => (c,a),
             None => {
@@ -526,7 +656,7 @@ pub trait Processor : Sized {
                     let cmds : Vec<Pair> = cmditer2.
                             filter(|cmd| cmd.starts_with(&line_trimmed))
                             .map(|cmd| {
-                                let (_, repl) = cmd.split_at(pos + line_trimmed.len() - line.len());
+                                let (_, repl) = cmd.split_at(cursor_pos_in_line_trimmed);
                                 Pair{
                                     display: cmd.to_string(),
                                     replacement: repl.to_string()
@@ -540,10 +670,9 @@ pub trait Processor : Sized {
         };
 
         let optcmd = cmds.get(command); 
-        
+
         match optcmd {
             Some(cmd) => {
-                let cursor_pos_in_line_trimmed = pos + line.len() - line_trimmed.len();
                 let args_lws = lws(args);
                 let cursor_pos_in_args = cursor_pos_in_line_trimmed + args.len() - line_trimmed.len();
                 let to_complete = &args[args_lws..cursor_pos_in_args];
@@ -575,6 +704,7 @@ pub trait Processor : Sized {
                  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~      <- line, len() = 28
                  *  ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- pos = 22 (cursor position)
                  *    ~~~~~~~~~~~~~~~~~~~~~~~~~~      <- line_trimmed, len() = 26
+                 *  ~~                                <- line_lws = 2
                  *    ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_line_trimmed = 20
                  *       ~~~~~~~~~~~~~~~~~~~~~~~      <- args, len() = 23
                  *       ⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻⁻^           <- cursor_pos_in_args = 17
@@ -608,7 +738,7 @@ pub trait Processor : Sized {
 
 pub struct SimpleInterpreter<'a, C: Processor> {
     processor: C,
-    commands: Commands<'a, C>,
+    commands: Commands<'a, C>
 }
 
 impl<'a, C: Processor> SimpleInterpreter<'a, C> {
@@ -618,12 +748,42 @@ impl<'a, C: Processor> SimpleInterpreter<'a, C> {
         Self {processor, commands}
     }
 
+    pub fn mk_help_param() -> OptionalParameter<Command> {
+        OptionalParameter::<Command>::new()
+    }
+
+    pub fn new_with_help<'b: 'a>(
+        processor: C, cb: CommandsBuilder<'_, 'a, C>, cm: &'a ParameterManager,
+        help_param: &'a mut OptionalParameter<Command>) -> Self
+    {
+        let mut instance = Self::new(processor, cb, cm);
+
+        help_param.p.add(vec!["help"]);
+        help_param.p.add(instance.get_commands().keys().cloned().collect());
+        help_param.p.add(instance.processor.get_fallback_cmd_names());
+
+        dbg!(&help_param.p.completer.cmds);
+
+        instance.commands.insert("help", Box::new(Cmd1::<'a, C, OptionalParameter<Command>>::new(
+            "help", C::help_dummy, "Show this help", help_param)));
+
+        instance
+    }
+
     fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
         self.processor.exec(&self.commands, cmd, args, orig)
     }
 
     pub fn get_processor(&self) -> &C {
         &self.processor
+    }
+
+    pub fn get_commands(&self) -> &Commands<'a, C> {
+        &self.commands
+    }
+
+    pub fn help_list(&mut self) {
+        self.processor.help_list(&self.commands);
     }
 }
 

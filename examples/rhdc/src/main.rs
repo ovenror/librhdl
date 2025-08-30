@@ -48,8 +48,9 @@ fn main(){
     cb_rhdc.ensure_parameters(&mut pm); 
     let p_outer_rhdl = OuterRHDL::new(outputs.clone(), inner_rhdl);
     let outer_rhdl = SimpleConsoleInterpreter::new(p_outer_rhdl, cb_outer_rhdl, &pm);
+    let mut help_param = SimpleConsoleInterpreter::<RHDC>::mk_help_param();
     let p_rhdc = RHDC::new(outputs, outer_rhdl);
-    let rhdc = SimpleConsoleInterpreter::new(p_rhdc, cb_rhdc, &pm);
+    let rhdc = SimpleConsoleInterpreter::new_with_help(p_rhdc, cb_rhdc, &pm, &mut help_param);
 
     cons.run(rhdc);
 }

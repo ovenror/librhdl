@@ -73,8 +73,29 @@ impl<'a, P: Processor> SimpleConsoleInterpreter<'a, P> {
         }
     }
     
-    pub fn get_commands(&self) -> &P {
+    pub fn new_with_help<'b: 'a>(
+        processor: P, cb: CommandsBuilder<'_, 'a, P>, cm: &'a ParameterManager,
+        cmd_param: &'a mut interpreter::OptionalParameter<interpreter::Command>) -> Self
+    {
+        Self {
+            interpreter: SimpleInterpreter::new_with_help(processor, cb, cm, cmd_param),
+        }
+    }
+
+    pub fn get_processor(&self) -> &P {
         self.interpreter.get_processor()
+    }
+
+    pub fn mk_help_param() -> interpreter::OptionalParameter<interpreter::Command> {
+        SimpleInterpreter::<P>::mk_help_param()
+    }
+
+    pub fn get_commands(&self) -> &interpreter::Commands<P> {
+        self.interpreter.get_commands()
+    }
+
+    pub fn help_list(&mut self) {
+        self.interpreter.help_list()
     }
 }
 
