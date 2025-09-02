@@ -175,6 +175,10 @@ impl<P: Parameter> Parameter for OptionalParameter<P> {
         P::usage()
     }
 
+    fn usage_gr() -> String {
+        return "[".to_string() + Self::usage() + "]"
+    }
+
     fn parse<'a>(&self, args: &'a str, from: usize)
             -> Result<(Self::Argument<'a>, usize), ExtractErr>
     {
