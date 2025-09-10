@@ -3,12 +3,15 @@ extern crate lazy_static;
 extern crate const_format;
 
 use crate::interpreter;
+use crate::interpreter::CIFallback;
 use crate::interpreter::CommandCompleter;
+use crate::interpreter::CommandInterpreter;
 use crate::interpreter::CommandsBuilder;
+use crate::interpreter::Fallback;
+use crate::interpreter::NonCIFallback;
 use crate::interpreter::OptionalParameter;
 use crate::interpreter::ParameterArgsContainer;
 use crate::interpreter::ArgsSpecializedParameter;
-use crate::interpreter::Interpreter;
 use crate::interpreter::Parameter;
 use crate::console::Outputs;
 use crate::console::SimpleConsoleInterpreter;
@@ -580,7 +583,7 @@ impl interpreter::Interpreter for InnerRHDL {
     fn eat(&mut self, line: &String) -> bool
     {
         if !self.is_active() {
-            return true
+            return false
         }
 
         let parsed = Self::parse(line);
@@ -601,10 +604,6 @@ impl interpreter::Interpreter for InnerRHDL {
 
         return true;
     }
-
-    fn exec(self : &mut Self, _command: &str, _args: &str, orig: &String) -> bool {
-        self.eat(orig)
-    }
 }
 
 impl Completer for InnerRHDL {
@@ -613,6 +612,10 @@ impl Completer for InnerRHDL {
     fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>)
             -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
     {
+        if !self.is_active() {
+            return Ok((0, Vec::new()))
+        }
+
         let parsed = Self::parse(&line[..pos]);
 
         if parsed.parsed == 0{
@@ -673,12 +676,12 @@ impl Completer for InnerRHDL {
 
 pub struct OuterRHDL {
     outputs: Outputs,
-    rhdd: InnerRHDL
+    rhdd: NonCIFallback<InnerRHDL>
 }
 
 impl OuterRHDL {
     pub fn new(outputs: Outputs, rhdd: InnerRHDL) -> Self {
-        Self {outputs, rhdd}
+        Self {outputs, rhdd: NonCIFallback::new(rhdd)}
     }
     
     fn define(&mut self, arg: &QualifiedName) {
@@ -690,8 +693,8 @@ impl OuterRHDL {
     }
 
     fn define_internal(&mut self, arg: &QualifiedName, stateless: bool) {
-        if self.rhdd.is_active() {
-            writeln!(self.outputs.err, "Already defining {}", self.rhdd.get_ename()).unwrap();
+        if self.rhdd.interpreter.is_active() {
+            writeln!(self.outputs.err, "Already defining {}", self.rhdd.interpreter.get_ename()).unwrap();
         }
 
         assert!(arg.len() > 0);
@@ -700,12 +703,12 @@ impl OuterRHDL {
             writeln!(self.outputs.err, "usage: define <qualified name>").unwrap();
         }
 
-        self.rhdd.define(arg, stateless);
+        self.rhdd.interpreter.define(arg, stateless);
     }
 
     fn enddef(&mut self) {
-        if self.rhdd.is_active() {
-            self.rhdd.enddef();
+        if self.rhdd.interpreter.is_active() {
+            self.rhdd.interpreter.enddef();
         }
         else {
             writeln!(self.outputs.err, "not currently defining a structure").unwrap();
@@ -713,8 +716,8 @@ impl OuterRHDL {
     }
     
     fn get_connector(&self, name: &str) -> std::result::Result<*const rhdl_connector_t, ()> {
-        if self.rhdd.is_active() {
-            Ok(self.rhdd.get_connector(name))
+        if self.rhdd.interpreter.is_active() {
+            Ok(self.rhdd.interpreter.get_connector(name))
         }
         else {
             Err(())
@@ -723,8 +726,6 @@ impl OuterRHDL {
 }
 
 impl interpreter::Processor for OuterRHDL {
-    type Fallback = InnerRHDL;
-            
     fn commands(cb: &mut CommandsBuilder<Self>) {
         cb.command1::<QName>("def", Self::define, "Short for define");
         cb.command1::<QName>("define", Self::define, "Define a new stateless structure");
@@ -736,39 +737,19 @@ impl interpreter::Processor for OuterRHDL {
         self.outputs.err.as_mut()
     }
 
-    fn fallback(&self) -> &Self::Fallback
+    fn fallback(&self) -> &dyn Fallback
     {
         &self.rhdd
     }
 
-    fn fallback_mut(&mut self) -> &mut Self::Fallback
+    fn fallback_mut(&mut self) -> &mut dyn Fallback
     {
         &mut self.rhdd
     }
-
-    fn exec_fb(self : &mut Self, _command: &str, _args: &str, orig: &String)
-        -> bool
-    {
-        if !self.rhdd.is_active() {
-            return false;
-        }
-
-        self.rhdd.eat(orig)
-    }
-    
+   
     fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>)
     {
-        return self.rhdd.complete_object_contextually(line);
-    }
-
-    fn complete_fb(&self, line: &str, pos: usize, ctx: &Context<'_>)
-            -> Result<(usize, Vec<Pair>), ReadlineError>
-    {
-        if !self.rhdd.is_active() {
-            return Ok((pos, Vec::<Pair>::new()))
-        }
-
-        return self.rhdd.complete(line, pos, ctx)
+        return self.rhdd.interpreter.complete_object_contextually(line);
     }
 
     fn prompt_size(&self) -> usize {
@@ -782,8 +763,8 @@ impl interpreter::Processor for OuterRHDL {
 
 impl<'a> Processor for OuterRHDL {
     fn prompt_info(&self) -> &str {
-        match self.rhdd.active {
-            true => &self.rhdd.get_ename(),
+        match self.rhdd.interpreter.active {
+            true => &self.rhdd.interpreter.get_ename(),
             false => ""
         }
     }
@@ -791,12 +772,12 @@ impl<'a> Processor for OuterRHDL {
     
 pub struct RHDC<'a> {
     outputs: Outputs,
-    rhdl: SimpleConsoleInterpreter<'a, OuterRHDL>
+    rhdl: CIFallback<'a, OuterRHDL, SimpleConsoleInterpreter<'a, OuterRHDL>>
 }
 
 impl<'a> RHDC<'a> {
     pub fn new(outputs: Outputs, rhdl: SimpleConsoleInterpreter<'a, OuterRHDL>) -> Self {
-        Self {outputs, rhdl}
+        Self {outputs, rhdl: CIFallback::new(rhdl)}
     }
 
     fn quit(&mut self) {
@@ -841,7 +822,7 @@ impl<'a> RHDC<'a> {
             return
         }
 
-        let connector = match self.rhdl.get_processor().get_connector(basename) {
+        let connector = match self.rhdl.interpreter.members().processor.get_connector(basename) {
             Ok(ptr) => ptr,
             Err(_) => {
                 write!(self.outputs.err, "Unknown object {}", basename).unwrap();
@@ -892,23 +873,21 @@ impl<'a> Completer for RHDC<'a> {
 }
 
 impl<'a> interpreter::Processor for RHDC<'a> {
-    type Fallback = SimpleConsoleInterpreter<'a, OuterRHDL>;
-
     fn stderr(&mut self) -> &mut dyn Write {
         self.outputs.err.as_mut()
     }
 
-    fn fallback_mut(&mut self) -> &mut Self::Fallback {
+    fn fallback_mut(&mut self) -> &mut dyn Fallback {
         &mut self.rhdl
     }
 
-    fn fallback(&self) -> &Self::Fallback {
+    fn fallback(&self) -> &dyn Fallback {
         &self.rhdl
     }
 
     fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>)
     {
-        return self.rhdl.get_processor().complete_object_contextually(line);
+        return self.rhdl.interpreter.members().processor.complete_object_contextually(line);
     }
     
     fn commands(cb: &mut CommandsBuilder<Self>)  {
@@ -929,19 +908,11 @@ impl<'a> interpreter::Processor for RHDC<'a> {
     fn interactive(&self) -> bool {
         self.outputs.interactive
     }
-
-    fn help_list_fb(&mut self) {
-        self.rhdl.help_list();
-    }
-
-    fn get_fallback_cmd_names(&self) -> Vec<&'static str> {
-        self.rhdl.get_commands().keys().cloned().collect()
-    }
 }
 
 impl<'a> Processor for RHDC<'a> {
     fn prompt_info(&self) -> &str {
-        self.rhdl.get_processor().prompt_info()
+        self.rhdl.interpreter.members().processor.prompt_info()
     }
 }
 

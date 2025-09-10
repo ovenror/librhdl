@@ -479,9 +479,8 @@ cmdimpl!(1, P0);
 cmdimpl!(2, P0, P1);
 cmdimpl!(3, P0, P1, P2);
 
-pub trait Interpreter : Completer {
+pub trait Interpreter : Completer<Candidate = Pair> {
     fn eat(self : &mut Self, line : &String) -> bool;
-    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool;
 }
 
 //pub type TheCommands<T, const N: usize> = [Box<dyn AbstractCommand<'static, T>>; N];
@@ -551,94 +550,94 @@ impl Parameter for Command {
     }
 }
 
-pub trait Processor : Sized {
-    type Fallback : Interpreter<Candidate = Pair>;
+pub trait Fallback {
+    fn eat(&mut self, line: &String) -> bool;
+    fn exec(&mut self, _cmd: &str, _args: &str, orig: &String) -> bool;
+    fn help_command(&mut self, _cmd: &str) -> bool;
+    fn help_list(&mut self);
+    fn get_cmd_names(&self) -> Vec<&'static str>;
+    fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
+            -> Result<(usize, Vec<Pair>), ReadlineError>;
+}
 
+pub struct CIFallback<'a, P: Processor, I: CommandInterpreter<'a, P>> {
+    pub interpreter: I,
+    phantom: PhantomData<&'a P>
+}
+
+impl<'a, P: Processor, I: CommandInterpreter<'a, P>> CIFallback<'a, P, I> {
+    pub fn new(interpreter: I) -> Self {
+        Self {interpreter, phantom: PhantomData}
+    }
+}
+
+impl<'a, P: Processor, I: CommandInterpreter<'a, P>> Fallback for CIFallback<'a, P, I> {
+    fn eat(&mut self, line: &String) -> bool {
+        self.interpreter.eat(line)
+    }
+
+    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
+        self.interpreter.exec(cmd, args, orig)
+    }
+
+    fn help_command(&mut self, cmd: &str) -> bool {
+        self.interpreter.help_command(cmd)
+    }
+
+    fn help_list(&mut self) {
+        self.interpreter.help_list();
+    }
+    
+    fn get_cmd_names(&self) -> Vec<&'static str> {
+        self.interpreter.get_cmd_names()
+    }
+    
+    fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
+            -> Result<(usize, Vec<Pair>), ReadlineError> {
+        self.interpreter.complete(line, pos, ctx)
+    }
+}
+
+pub struct NonCIFallback<I: Interpreter> {
+    pub interpreter: I
+}
+
+impl<I: Interpreter> NonCIFallback<I> {
+    pub fn new(interpreter: I) -> Self {
+        Self {interpreter}
+    }
+}
+
+impl<I: Interpreter> Fallback for NonCIFallback<I> {
+    fn eat(&mut self, line: &String) -> bool {
+        self.interpreter.eat(line)
+    }
+
+    fn exec(&mut self, _cmd: &str, _args: &str, orig: &String) -> bool {
+        self.interpreter.eat(orig)
+    }
+    
+    fn help_command(&mut self, _cmd: &str)  -> bool {false}
+    fn help_list(&mut self) {}
+    fn get_cmd_names(&self) -> Vec<&'static str> {Vec::new()}
+
+    fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
+            -> Result<(usize, Vec<Pair>), ReadlineError> {
+        self.interpreter.complete(line, pos, ctx)
+    }
+}
+
+pub trait Processor : Sized {
     fn commands(cb: &mut CommandsBuilder<Self>);
-    fn fallback_mut(&mut self) -> &mut Self::Fallback;
-    fn fallback(&self) -> &Self::Fallback;
+    fn fallback_mut(&mut self) -> &mut dyn Fallback;
+    fn fallback(&self) -> &dyn Fallback;
     fn stderr(&mut self) -> &mut dyn Write;
     fn interactive(&self) -> bool;
     fn prompt_size(&self) -> usize;
 
-    fn help_list_fb(&mut self) {}
-
-    fn get_fallback_cmd_names(&self) -> Vec<&'static str>
-    {
-        Vec::new()
-    }
-
+    /* TODO: Use a specialized Processor for help that sits on top of
+     * all others, i.e., uses them as fallbacks */
     fn help_dummy(&mut self, _cmd: &Option<&str>) {}
-
-    fn help(&mut self, cmd: &str, cmds: &Commands<Self>) {
-        if cmd.is_empty() {
-            self.help_overview(cmds);
-        } else {
-            self.help_command(cmd, cmds);
-        }
-    }
-
-    fn help_command(&mut self, cmd: &str, cmds: &Commands<Self>) {
-        match cmds.get(cmd) {
-            Some(c) => {
-                c.usage(self.stderr());
-            }
-            None => {
-                writeln!(self.stderr(), "No such command: {}", cmd).unwrap();
-                writeln!(self.stderr(), "Type 'help' for a list of commands.").unwrap();
-            }
-        }
-    }
-
-    fn help_overview(&mut self, cmds: &Commands<Self>) {
-        writeln!(self.stderr(), "Available commands:").unwrap();
-        self.help_list(cmds);
-        self.help_list_fb();
-        writeln!(self.stderr(), "Type 'help <command>' for details.").unwrap();
-    }
-
-    fn help_list(&mut self, cmds: &Commands<Self>) {
-        cmds.iter().for_each(|(_, cmd)| {
-            writeln!(self.stderr(), "{:20} {}", cmd.name(), cmd.help_short()).unwrap();
-        });
-    }
-
-    fn exec(&mut self, cmds: &Commands<Self>, cmd: &str, args: &str, orig: &String) -> bool {
-        let command = match cmds.get(cmd) {
-            Some(c) =>
-                if cmd == "help" {
-                    self.help(args.trim(), cmds); return true;
-                } else {
-                    c.as_ref()
-                },
-            None => return self.exec_fb(cmd, args, orig)
-        };
-
-        match command.exec(self, args) {
-            Ok(_) => (),
-            Err(e) => {
-                let prompt_size = if self.interactive() {
-                    self.prompt_size()
-                } else {
-                    writeln!(self.stderr(), "{}", orig).unwrap();
-                    0
-                };
-
-                command.error(self.stderr(), e, prompt_size)
-            }
-        }
-
-        true
-    }
-
-    fn eat_fb(self : &mut Self, line: &String) -> bool
-    {
-        self.fallback_mut().eat(line)
-    }
-
-    fn exec_fb(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
-        self.fallback_mut().exec(cmd, args, orig)
-    }
 
     fn complete_object_contextually(&self, line: &str) -> (usize, Vec<String>);
 
@@ -740,16 +739,109 @@ pub trait Processor : Sized {
     }
 }
 
-pub struct SimpleInterpreter<'a, C: Processor> {
-    processor: C,
-    commands: Commands<'a, C>
+pub struct CommandInterpreterMembers<'a, P: Processor> {
+    pub processor: P,
+    pub commands: Commands<'a, P>
 }
 
-impl<'a, C: Processor> SimpleInterpreter<'a, C> {
-    pub fn new<'b: 'a>(processor: C, cb: CommandsBuilder<'_, 'a, C>, cm: &'a ParameterManager) -> Self {
+pub trait CommandInterpreter<'a, P: Processor> : Interpreter {
+    fn members(&self) -> &CommandInterpreterMembers<'a, P>;
+    fn members_mut(&mut self) -> &mut CommandInterpreterMembers<'a, P>;
+
+    fn fallback<'b>(&'b self) -> &'b dyn Fallback where 'a: 'b, P: 'b {
+        self.members().processor.fallback()
+    }
+
+    fn fallback_mut<'b>(&'b mut self) -> &'b mut dyn Fallback where 'a: 'b, P: 'b {
+        self.members_mut().processor.fallback_mut()
+    }
+
+    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
+        let members = self.members_mut();
+
+        let command = match members.commands.get(cmd) {
+            Some(c) =>
+                if cmd == "help" {
+                    self.help(args.trim()); return true;
+                } else {
+                    c.as_ref()
+                },
+            None => return self.fallback_mut().exec(cmd, args, orig)
+        };
+
+        match command.exec(&mut members.processor, args) {
+            Ok(_) => (),
+            Err(e) => {
+                let prompt_size = if members.processor.interactive() {
+                    members.processor.prompt_size()
+                } else {
+                    writeln!(members.processor.stderr(), "{}", orig).unwrap();
+                    0
+                };
+
+                command.error(members.processor.stderr(), e, prompt_size)
+            }
+        }
+
+        true
+    }  
+
+    fn help(&mut self, cmd: &str) {
+        if cmd.is_empty() {
+            self.help_overview(); return
+        }
+        
+        if self.help_command(cmd) {
+            return
+        }
+                
+        if self.fallback_mut().help_command(cmd) {
+            return
+        }
+        
+        let stderr = &mut self.members_mut().processor.stderr();
+        writeln!(stderr, "No such command: {}", cmd).unwrap();
+        writeln!(stderr, "Type 'help' for a list of commands.").unwrap();
+    }
+
+    fn help_overview(&mut self) {
+        writeln!(self.members_mut().processor.stderr(), "Available commands:").unwrap();
+        self.help_list();
+        self.fallback_mut().help_list();
+        writeln!(self.members_mut().processor.stderr(), "Type 'help <command>' for details.").unwrap();
+    }
+    
+    fn help_command(&mut self, cmd: &str) -> bool {
+        let members = self.members_mut();
+        match members.commands.get(cmd) {
+            Some(c) => {
+                c.usage(members.processor.stderr()); true
+            }
+            None => false
+        }
+    }
+
+    fn help_list(&mut self) {
+        let members = self.members_mut();
+        members.commands.iter().for_each(|(_, cmd)| {
+            writeln!(members.processor.stderr(), "{:20} {}", cmd.name(), cmd.help_short()).unwrap();
+        });
+    }
+
+    fn get_cmd_names(&self) -> Vec<&'static str> {
+        self.members().commands.keys().cloned().collect()
+    }
+}
+
+pub struct SimpleInterpreter<'a, P: Processor> {
+    members: CommandInterpreterMembers<'a, P>
+}
+
+impl<'a, P: Processor> SimpleInterpreter<'a, P> {
+    pub fn new<'b: 'a>(processor: P, cb: CommandsBuilder<'_, 'a, P>, cm: &'a ParameterManager) -> Self {
     //pub fn new(processor: C, commands: Commands<'a, C>) -> Self {
         let commands = cb.get_commands(cm);
-        Self {processor, commands}
+        Self {members: CommandInterpreterMembers {processor, commands}}
     }
 
     pub fn mk_help_param() -> OptionalParameter<Command> {
@@ -757,46 +849,30 @@ impl<'a, C: Processor> SimpleInterpreter<'a, C> {
     }
 
     pub fn new_with_help<'b: 'a>(
-        processor: C, cb: CommandsBuilder<'_, 'a, C>, cm: &'a ParameterManager,
+        processor: P, cb: CommandsBuilder<'_, 'a, P>, cm: &'a ParameterManager,
         help_param: &'a mut OptionalParameter<Command>) -> Self
     {
         let mut instance = Self::new(processor, cb, cm);
 
         help_param.p.add(vec!["help"]);
-        help_param.p.add(instance.get_commands().keys().cloned().collect());
-        help_param.p.add(instance.processor.get_fallback_cmd_names());
+        help_param.p.add(instance.get_cmd_names());
+        help_param.p.add(instance.fallback().get_cmd_names());
 
-        dbg!(&help_param.p.completer.cmds);
+        let members = &mut instance.members;
 
-        instance.commands.insert("help", Box::new(Cmd1::<'a, C, OptionalParameter<Command>>::new(
-            "help", C::help_dummy, "Show this help", help_param)));
+        members.commands.insert("help", Box::new(Cmd1::<'a, P, OptionalParameter<Command>>::new(
+            "help", P::help_dummy, "Show this help", help_param)));
 
         instance
     }
-
-    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
-        self.processor.exec(&self.commands, cmd, args, orig)
-    }
-
-    pub fn get_processor(&self) -> &C {
-        &self.processor
-    }
-
-    pub fn get_commands(&self) -> &Commands<'a, C> {
-        &self.commands
-    }
-
-    pub fn help_list(&mut self) {
-        self.processor.help_list(&self.commands);
-    }
 }
 
-impl<'a, C : Processor> Interpreter for SimpleInterpreter<'a, C>
+impl<'a, P : Processor> Interpreter for SimpleInterpreter<'a, P>
 {
     fn eat(self : &mut Self, line : &String) -> bool {
         let caps = match REGEX_CMDLINE.captures(line) {
             Some(c) => c,
-            None => return self.processor.eat_fb(line)
+            None => return self.fallback_mut().eat(line)
         };
 
         if line.trim().is_empty() {
@@ -810,9 +886,15 @@ impl<'a, C : Processor> Interpreter for SimpleInterpreter<'a, C>
 
         self.exec(commandstr, argsstr, line)
     }
+}
 
-    fn exec(&mut self, cmd: &str, args: &str, orig: &String) -> bool {
-        self.processor.exec(&self.commands, cmd, args, orig)
+impl<'a, P : Processor> CommandInterpreter<'a, P> for SimpleInterpreter<'a, P> {
+    fn members(&self) -> &CommandInterpreterMembers<'a, P> {
+        &self.members
+    }
+
+    fn members_mut(&mut self) -> &mut CommandInterpreterMembers<'a, P> {
+        &mut self.members
     }
 }
 
@@ -822,12 +904,13 @@ impl<'a, C : Processor> Completer for SimpleInterpreter<'a, C> {
     fn complete(&self, line: &str, pos: usize, ctx: &Context<'_>)
             -> Result<(usize, Vec<Self::Candidate>), ReadlineError>
     {
-        let (p1, mut vec1) = match self.processor.complete(&self.commands, line, pos, ctx) {
+        let (p1, mut vec1) = match self.members.processor.complete
+                    (&self.members.commands, line, pos, ctx) {
             Ok(result) => result,
             _ => (0, Vec::<Pair>::new())
         };
         
-        let (p2, mut vec2) = match self.processor.complete_fb(line, pos, ctx) {
+        let (p2, mut vec2) = match self.members.processor.complete_fb(line, pos, ctx) {
             Ok(result) => result,
             _ => (0, Vec::<Pair>::new())
         };

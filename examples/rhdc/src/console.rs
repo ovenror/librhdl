@@ -3,9 +3,11 @@ use std::io::Write;
 use std::process::exit;
 
 use crate::interpreter;
+use crate::interpreter::CommandInterpreterMembers;
 use crate::interpreter::CommandsBuilder;
 use crate::interpreter::ParameterManager;
 use crate::interpreter::Interpreter;
+use crate::interpreter::CommandInterpreter;
 use crate::interpreter::SimpleInterpreter;
 use crate::wod::WriteOrDie;
 use crate::stdemerg::StdEmerg;
@@ -82,26 +84,14 @@ impl<'a, P: Processor> SimpleConsoleInterpreter<'a, P> {
         }
     }
 
-    pub fn get_processor(&self) -> &P {
-        self.interpreter.get_processor()
-    }
-
     pub fn mk_help_param() -> interpreter::OptionalParameter<interpreter::Command> {
         SimpleInterpreter::<P>::mk_help_param()
-    }
-
-    pub fn get_commands(&self) -> &interpreter::Commands<P> {
-        self.interpreter.get_commands()
-    }
-
-    pub fn help_list(&mut self) {
-        self.interpreter.help_list()
     }
 }
 
 impl<'a, C: Processor> ConsoleInterpreter for SimpleConsoleInterpreter<'a, C> {
     fn prompt_info(&self) -> &str {
-        self.interpreter.get_processor().prompt_info()
+        self.interpreter.members().processor.prompt_info()
     }
 }
 
@@ -110,10 +100,15 @@ impl<'a, C: Processor> interpreter::Interpreter for SimpleConsoleInterpreter<'a,
     {
         self.interpreter.eat(line)
     }
+}
 
-    fn exec(self : &mut Self, command: &str, args: &str, orig: &String) -> bool
-    {
-        self.interpreter.exec(command, args, orig)
+impl<'a, P: Processor> interpreter::CommandInterpreter<'a, P> for SimpleConsoleInterpreter<'a, P> {
+    fn members(&self) -> &CommandInterpreterMembers<'a, P> {
+        self.interpreter.members()
+    }
+
+    fn members_mut(&mut self) -> &mut CommandInterpreterMembers<'a, P> {
+        self.interpreter.members_mut()
     }
 }
 
