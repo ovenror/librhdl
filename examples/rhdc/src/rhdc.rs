@@ -1057,7 +1057,7 @@ impl ParamCompleter for ObjectCompleter {
 
 #[cfg(test)]
 mod tests {
-    use crate::{resolve::resolve_object_noerr, rhdc::ObjectCompleter};
+    use crate::{librhdl::rhdl_object_t, librhdl_access::Root, resolve::resolve_object_noerr, rhdc::ObjectCompleter};
 
     use super::InnerRHDL;
 
@@ -1147,7 +1147,7 @@ mod tests {
     #[test]
     fn object_completer_complete_last_single() {
         let base_qn = "entities.Inverter.interface";
-        let (pos, cand) = ObjectCompleter::new(&[]).complete_last_component(
+        let (pos, cand) = ObjectCompleter::new(vec![(rhdl_object_t::root(), &"")]).complete_last_component(
             resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn.len(), "i");
         assert!(pos == base_qn.len() + 1);
         assert!(cand.len() == 1);
@@ -1158,7 +1158,7 @@ mod tests {
     #[test]
     fn object_completer_complete_last_none() {
         let base_qn = "entities.Inverter.interface.in.direction";
-        let (pos, cand) = ObjectCompleter::new(&[]).complete_last_component(
+        let (pos, cand) = ObjectCompleter::new(vec![(rhdl_object_t::root(), &"")]).complete_last_component(
             resolve_object_noerr(QualifiedName::from(base_qn).slice()), base_qn.len(), "");
         assert!(pos == base_qn.len() + 1);
         assert!(cand.is_empty());
