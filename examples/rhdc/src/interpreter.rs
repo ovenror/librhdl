@@ -43,7 +43,7 @@ pub trait Parameter : Any + Sized {
     fn regex() -> &'static Regex;
     fn usage() -> &'static str;
     fn parse_extracted<'a, 'b>(&self, arg: &'a str) -> Result<Self::Argument<'a>, String>;
-    fn completer(&self) -> &dyn CommandCompleter;
+    fn completer(&self) -> &dyn ParamCompleter;
 
     fn new() -> Self {
         Self::create(Self::ARGS)
@@ -141,7 +141,7 @@ impl<P: Parameter, A: ParameterArgsContainer<P> + 'static> Parameter for ArgsSpe
         self.parameter.parse_extracted(arg)
     }
 
-    fn completer(&self) -> &dyn CommandCompleter {
+    fn completer(&self) -> &dyn ParamCompleter {
         self.parameter.completer()
     }
 }
@@ -199,7 +199,7 @@ impl<P: Parameter> Parameter for OptionalParameter<P> {
         }
     }
 
-    fn completer(&self) -> &dyn CommandCompleter {
+    fn completer(&self) -> &dyn ParamCompleter {
         self.p.completer()
     }
 }
@@ -230,7 +230,7 @@ impl ParameterManager {
     }
 }
 
-pub trait CommandCompleter {
+pub trait ParamCompleter {
     fn complete(&self, text: &str) -> (usize, Vec<String>);
 }
 
@@ -500,7 +500,7 @@ impl CmdCompleter {
     }
 }
 
-impl CommandCompleter for CmdCompleter {
+impl ParamCompleter for CmdCompleter {
     fn complete(&self, text: &str) -> (usize, Vec<String>) {
         let candidates: Vec<String> = self.cmds.iter().
                 filter(|cmd| cmd.starts_with(text)).
@@ -545,7 +545,7 @@ impl Parameter for Command {
         Ok(arg)
     }
 
-    fn completer(&self) -> &dyn CommandCompleter {
+    fn completer(&self) -> &dyn ParamCompleter {
         &self.completer
     }
 }

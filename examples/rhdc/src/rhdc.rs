@@ -4,7 +4,7 @@ extern crate const_format;
 
 use crate::interpreter;
 use crate::interpreter::CIFallback;
-use crate::interpreter::CommandCompleter;
+use crate::interpreter::ParamCompleter;
 use crate::interpreter::CommandInterpreter;
 use crate::interpreter::CommandsBuilder;
 use crate::interpreter::Fallback;
@@ -139,7 +139,7 @@ impl Parameter for Identifier {
         Ok(arg)
     }
     
-    fn completer(&self) -> &dyn CommandCompleter {
+    fn completer(&self) -> &dyn ParamCompleter {
         &NO_COMPLETER
     }
 
@@ -170,7 +170,7 @@ impl Parameter for QName {
         Ok(QualifiedName::from(arg))
     }
     
-    fn completer(&self) -> &dyn CommandCompleter {
+    fn completer(&self) -> &dyn ParamCompleter {
         &self.completer
     }
 }
@@ -220,7 +220,7 @@ impl Parameter for Object {
         }
     }
     
-    fn completer(&self) -> &dyn CommandCompleter {
+    fn completer(&self) -> &dyn ParamCompleter {
         &self.completer
     }
 }
@@ -920,7 +920,7 @@ static NO_COMPLETER: NoCompleter = NoCompleter {};
 
 pub struct NoCompleter {}
 
-impl CommandCompleter for NoCompleter {
+impl ParamCompleter for NoCompleter {
     fn complete(&self, _text: &str) -> (usize, Vec<String>) {
         (0, Vec::new())
     }
@@ -1021,7 +1021,7 @@ impl ObjectCompleter {
     }
 }
 
-impl CommandCompleter for ObjectCompleter {
+impl ParamCompleter for ObjectCompleter {
     fn complete(&self, text: &str) -> (usize, Vec<String>)
     {
         let (most, last) = match text.rsplit_once('.') {
