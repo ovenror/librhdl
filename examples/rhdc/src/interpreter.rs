@@ -280,13 +280,13 @@ pub fn lws(text: &str) -> usize {
     text.len() - text.trim_start().len()
 }
 
-trait AbstractCommandBuilder<'a, 'b: 'a, T: 'b> {
+trait AbstractCommandBuilder<'a, T: 'a> {
     fn ensure_parameters(&self, pm: &mut ParameterManager);
-    fn build<'c: 'b>(&self, pm: &'b ParameterManager) -> Box<dyn AbstractCommand<T> + 'b>;
+    fn build<'b: 'a>(&self, pm: &'a ParameterManager) -> Box<dyn AbstractCommand<T> + 'a>;
 }
 
 pub struct CommandsBuilder<'a, 'b: 'a, T: 'b> {
-    builders: Vec<Box<dyn AbstractCommandBuilder<'a, 'b, T> + 'a>>
+    builders: Vec<Box<dyn AbstractCommandBuilder<'b, T> + 'a>>
 }
 
 impl<'a, 'b: 'a, T: 'b> CommandsBuilder<'a, 'b, T> {
@@ -357,7 +357,7 @@ macro_rules! cmdimpl {
                 }
             }
 
-            impl<'a, 'b: 'a, T: 'b, $($param: Parameter + 'b),*> AbstractCommandBuilder<'a, 'b, T>
+            impl<'b, T: 'b, $($param: Parameter + 'b),*> AbstractCommandBuilder<'b, T>
                     for [<CmdBuilder $param_count>]<T, $($param),*>
             {
                 fn ensure_parameters(&self, pm: &mut ParameterManager)
