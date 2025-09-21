@@ -47,6 +47,7 @@ Vec toGlobal(const Cuboid &blocks, Vec v);
 Line slice1(Line line, index_t position, index_t length = 0);
 Line slice1(Wall blocks, Vec2 position, Axis axis, index_t length = 0);
 Line slice1(Cuboid blocks, Vec position, Axis axis, index_t length = 0);
+ConstLine slice1(ConstCuboid blocks, Vec position, Axis axis, index_t length = 0);
 Line slice1(Container &blocks, Vec position, Axis axis, index_t length = 0);
 ConstLine slice1(const Container &blocks, Vec position, Axis axis, index_t length = 0);
 
